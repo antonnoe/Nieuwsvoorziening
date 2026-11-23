@@ -1,11 +1,11 @@
 // De motor: oogst, groeperen, synthese, poort, score, PEIL, beeld, opslag.
 // Elke stap faalt netjes: een fout wordt vastgelegd en de volgende stap gaat door
 // met wat er wel is.
-import type { ModelClient } from "./ai";
+import { haalJson, type ModelClient } from "./ai";
 import { laadConfig, actieveBronnen, modelSynthese, type MotorConfig } from "./config";
 import { aantalBronnen, clusterItems } from "./cluster";
 import { oogstBronnen, type OogstBronResultaat } from "./feeds";
-import { beeldResultaat, type BeeldGenerator, actieveGenerator } from "./beeld";
+import { schoneZoektermen, beeldResultaat, type BeeldGenerator, actieveGenerator } from "./beeld";
 import "./beeld-unsplash";
 import type { Opslag, RunRecord, PeilSignaalIn } from "./opslag";
 import { laadPeil, peilKoppeling } from "./peil";
@@ -37,6 +37,8 @@ export interface RunUitslag {
   berichten: Bericht[];
   fouten: string[];
 }
+
+const ZOEKTERMEN_SYSTEEM = `Geef een JSON-lijst van 3 Engelse zoektermen van 2 tot 4 woorden om een foto te zoeken die zichtbaar bij dit nieuwsbericht past, van specifiek naar algemeen. Zoek het onderwerp zelf, letterlijk en concreet (bijvoorbeeld "flooded street", "airplane factory", "fuel pump prices"), niet de streek of een beroemde plek. Nooit een persoon of naam. Alleen de JSON-lijst.`;
 
 const fout = (e: unknown) => (e instanceof Error ? e.message : String(e)).slice(0, 200);
 
@@ -129,6 +131,8 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
   }
 
   // 6. Synthese, poort, score, PEIL, beeld, opslag
+  const beeldGen = o.generator === undefined ? actieveGenerator() : o.generator;
+  beeldGen?.startRun?.(); // Unsplash-aanvraagbudget per run
   if (!o.client) {
     noteer({ stap: "synthese", ok: true, aantal: 0, detail: { overgeslagen: "geen ANTHROPIC_API_KEY (synthese ongetest in deze run)" } });
   } else if (kandidaten.length) {
@@ -178,7 +182,7 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
           koppeling = p.koppeling;
           if (p.fout) noteer({ stap: "peil_oordeel", ok: false, fout: p.fout });
         }
-        const beeld = status === "gepubliceerd" ? await beeldResultaat({ kop: s.kop, samenvatting: s.samenvatting, categorie: s.categorie, zoekterm: s.beeldZoekterm }, generator) : null;
+        const beeld = status === "gepubliceerd" ? await beeldResultaat({ kop: s.kop, samenvatting: s.samenvatting, categorie: s.categorie, zoektermen: s.beeldZoektermen, zoekterm: s.beeldZoekterm, client: o.client }, generator) : null;
         const beeldUrl = beeld?.url ?? null;
         const beeldCredit = beeld?.credit ?? null;
         const bericht: Bericht = {
@@ -206,21 +210,22 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
     noteer({ stap: "synthese", ok: true, aantal: 0, detail: { reden: "geen kandidaten" } });
   }
 
-  // 6b. Beeld aanvullen: gepubliceerde berichten zonder beeld krijgen er alsnog een (hooguit 6 per run).
+  // 6b. Beeld aanvullen: gepubliceerde berichten zonder beeld krijgen er alsnog een (hooguit 10 per run;
+  // de generator bewaakt zelf het aanvraagbudget en stopt netjes bij een uitgeputte limiet).
   {
     const generator = o.generator === undefined ? actieveGenerator() : o.generator;
     if (generator) {
       try {
         let aangevuld = 0;
-        for (const b of await o.opslag.zonderBeeld(6)) {
-          let zoekterm: string | undefined;
+        for (const b of await o.opslag.zonderBeeld(10)) {
+          let zoektermen: string[] | undefined;
           if (o.client) {
             const antw = await o.client
-              .tekst({ model: modelGoedkoop(), maxTokens: 30, system: "Geef 2 tot 4 Engelse woorden om een passende sfeerfoto te zoeken voor dit nieuwsbericht: de plek of situatie, nooit een persoon of naam. Alleen de woorden.", user: `${b.kop}\n${b.samenvatting}` })
+              .tekst({ model: modelGoedkoop(), maxTokens: 100, system: ZOEKTERMEN_SYSTEEM, user: `${b.kop}\n${b.samenvatting}` })
               .catch(() => "");
-            zoekterm = String(antw).replace(/[^A-Za-z ]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 60) || undefined;
+            zoektermen = schoneZoektermen(haalJson<unknown>(antw) ?? []);
           }
-          const r = await beeldResultaat({ kop: b.kop, samenvatting: b.samenvatting, categorie: b.categorie, zoekterm }, generator);
+          const r = await beeldResultaat({ kop: b.kop, samenvatting: b.samenvatting, categorie: b.categorie, zoektermen, client: o.client }, generator);
           if (r) (await o.opslag.zetBeeld(b.id, r.url, r.credit ?? null), (aangevuld += 1));
         }
         aantallen.beeldAangevuld = aangevuld;

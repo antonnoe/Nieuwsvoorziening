@@ -1,6 +1,7 @@
 // Synthese per onderwerp: eigen Nederlandse tekst uit de koppen en omschrijvingen
 // van de bronnen. De bronnen zijn voor het model geanonimiseerd (Bron 1, 2, 3),
 // zodat een krantennaam niet in de tekst kan sluipen. Geen volledige artikelen.
+import { schoneZoektermen } from "./beeld";
 import { haalJson, type ModelClient } from "./ai";
 import { modelSynthese } from "./config";
 import { CATEGORIEEN, type Categorie, type Cluster, type Synthese } from "./types";
@@ -16,9 +17,9 @@ Regels:
 6. Categorie: precies één van: ${CATEGORIEEN.join(", ")}.
 7. relevantie: geheel getal 0 tot 100 voor Nederlanders en Belgen die in Frankrijk wonen of er reizen (regels, geld, verkeer, weer, bijzonderheden). Zuiver Frans partijnieuws, lokale politieke of gerechtelijke affaires rond personen, schandalen en sport zonder gevolgen voor de lezer scoren onder de 40. Hoog scoort alleen wat de lezer in zijn dagelijks leven, portemonnee, reis of woonplaats merkt.
 
-8. beeldZoekterm: 2 tot 4 Engelse woorden om een passende sfeerfoto te zoeken, over de plek of situatie (bijvoorbeeld "flooded village france", "paris metro construction"), nooit een persoon of een naam.
+8. beeldZoektermen: een lijst van 3 Engelse zoektermen van 2 tot 4 woorden om een foto te zoeken die zichtbaar bij het onderwerp past, van specifiek naar algemeen. Zoek het onderwerp zelf, letterlijk en concreet, niet de streek of een beroemde plek: bij overstromingen "flooded street" en dan "heavy rain river", bij een vliegtuigfabriek "airplane factory", bij brandstofprijzen "fuel pump prices", bij een staking "empty train station". Nooit een persoon, naam, politicus of herkenbaar gebouw van een andere plaats.
 
-Antwoord uitsluitend met JSON: {"publiceren":true,"kop":"","samenvatting":"","tekst":"","categorie":"","relevantie":0,"beeldZoekterm":""}`;
+Antwoord uitsluitend met JSON: {"publiceren":true,"kop":"","samenvatting":"","tekst":"","categorie":"","relevantie":0,"beeldZoektermen":["","",""]}`;
 
 export function bouwInvoer(c: Cluster): string {
   return c.items
@@ -37,8 +38,8 @@ export function leesSynthese(ruw: string): Synthese | null {
   if (!kop || !tekst) return null;
   const categorie = (CATEGORIEEN as readonly string[]).includes(cat) ? cat : "algemeen";
   const relevantie = Math.max(0, Math.min(100, Math.round(Number(j.relevantie))));
-  const beeldZoekterm = String(j.beeldZoekterm || "").replace(/[^A-Za-z ]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 60);
-  return { kop, samenvatting, tekst, categorie, relevantie: Number.isFinite(relevantie) ? relevantie : 0, beeldZoekterm };
+  const beeldZoektermen = schoneZoektermen(Array.isArray(j.beeldZoektermen) ? j.beeldZoektermen : [j.beeldZoekterm]);
+  return { kop, samenvatting, tekst, categorie, relevantie: Number.isFinite(relevantie) ? relevantie : 0, beeldZoekterm: beeldZoektermen[0] || "", beeldZoektermen };
 }
 
 export async function synthetiseer(c: Cluster, client: ModelClient): Promise<Synthese | null> {

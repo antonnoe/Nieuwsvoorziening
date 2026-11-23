@@ -67,6 +67,8 @@ export interface Synthese {
   relevantie: number; // 0..100, oordeel van het model voor de lezer
   /** Engelse zoekterm voor een foto (2 tot 4 woorden, een plek of situatie, geen personen). */
   beeldZoekterm?: string;
+  /** Tot 3 Engelse zoektermen van specifiek naar algemeen. */
+  beeldZoektermen?: string[];
 }
 
 export interface PeilParameter {
