@@ -50,7 +50,7 @@ export type LezerszinUitslag = { zin: string; reden?: undefined } | { zin: null;
 export async function maakLezerszin(naam: string, omschrijving: string, client: ModelClient, datum?: string | null): Promise<LezerszinUitslag> {
   let antw: string;
   try {
-    antw = await client.tekst({ model: modelSynthese(), system: SYSTEEM_LEZERSZIN, maxTokens: 200, user: `Onderwerp: ${naam}${datum ? `\nDatum van de aankondiging: ${datum}` : ""}\nNotitie: ${omschrijving}` });
+    antw = await client.tekst({ model: modelSynthese(), system: SYSTEEM_LEZERSZIN, maxTokens: 1024, user: `Onderwerp: ${naam}${datum ? `\nDatum van de aankondiging: ${datum}` : ""}\nNotitie: ${omschrijving}` });
   } catch (e) {
     return { zin: null, reden: `modelfout: ${(e instanceof Error ? e.message : String(e)).slice(0, 80)}` };
   }
