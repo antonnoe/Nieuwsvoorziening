@@ -1,5 +1,6 @@
 import { jsonAntwoord, leesOpslag, opties } from "@/lib/motor/api";
 import { laadBronnen, modelGoedkoop, modelSynthese } from "@/lib/motor/config";
+import { controleerUnsplash } from "@/lib/motor/unsplash";
 
 export const dynamic = "force-dynamic";
 export const OPTIONS = (req: Request) => opties(req);
@@ -12,6 +13,7 @@ export async function GET(req: Request) {
     modellen: { synthese: modelSynthese(), goedkoop: modelGoedkoop() },
     beeldGenerator: Boolean(String(process.env.BEELD_GENERATOR || "").trim()),
     opslag: Boolean(opslag),
+    unsplash: await controleerUnsplash(),
   };
   if (!opslag) return jsonAntwoord(req, { ...basis, fout: "Opslag niet geconfigureerd." }, 503);
   try {
