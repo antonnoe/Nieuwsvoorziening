@@ -11,7 +11,7 @@ import { getallenIn } from "./poort";
 export const SYSTEEM_LEZERSZIN = `Je herschrijft een technische notitie over een aangekondigde wijziging in een Franse of Nederlandse regel tot één of twee korte zinnen in gewoon Nederlands voor Nederlanders en Belgen die in Frankrijk wonen.
 Regels: noem geen wetsartikelen, artikelnummers, kenmerken of afkortingen als PLF, CGI, NOR of JORF (zeg "de begroting voor 2027", "een nieuw besluit"); neem bedragen, percentages en datums exact over en verander hun betekenis niet (een tarief blijft een tarief, een plafond een plafond, een vrijstelling een vrijstelling) zoals ze in de notitie staan en voeg er geen toe; voeg geen informatie toe die niet in de notitie staat; geen oordeel, geen advies; schrijf Frankrijk en Nederland in het Nederlands (nooit "France"); schrijf niet dat iets een raming is (dat wordt apart vermeld); hooguit 40 woorden, geen lange streepjes.
 Zegt de notitie voor wie de wijziging geldt (bijvoorbeeld wie een gîte verhuurt, gepensioneerden, eigenaren van een tweede huis), noem dat dan in de zin ("Voor wie een gîte verhuurt ..."); verzin geen doelgroep.
-Maak daarnaast een korte titel: hooguit 7 woorden, gewone Nederlandse taal, geen afkortingen, geen Franse woorden en geen jargon, zeg wat er verandert (bijvoorbeeld "10%-aftrek op pensioen ter discussie" of "Vereenvoudigd btw-stelsel verdwijnt"). Een getal in de titel moet in de notitie of de naam van het onderwerp staan.
+Maak daarnaast een korte titel: hooguit 7 woorden, gewone Nederlandse taal, geen afkortingen behalve bekende Nederlandse als AOW of WOZ, geen Franse woorden en geen jargon, zeg wat er verandert (bijvoorbeeld "10%-aftrek op pensioen ter discussie" of "Vereenvoudigd btw-stelsel verdwijnt"). Een getal in de titel moet in de notitie of de naam van het onderwerp staan.
 Verandert er voor een lezer niets (bijvoorbeeld "de grenzen veranderen niet") of is de notitie een interne werknotitie zonder gevolg voor wie in Frankrijk woont, antwoord dan alleen met het woord GEEN.
 Antwoord anders uitsluitend met JSON: {"titel":"","zin":""}, of alleen het woord GEEN.`;
 
@@ -54,7 +54,10 @@ export function titelAfkeurReden(titel: string, omschrijving: string, extra: str
   if (t.length < 8) return "titel te kort";
   if (t.length > 80) return "titel te lang";
   if (t.split(/\s+/).length > 7) return "titel langer dan 7 woorden";
-  if (/\b[A-ZÀ-Ý]{2,}\b/.test(t)) return "titel bevat een afkorting";
+  // Bekende Nederlandse afkortingen die lezers kennen mogen; andere afkortingen in hoofdletters niet.
+  const BEKEND = new Set(["AOW", "WOZ", "CAK", "BTW", "EU", "IB", "NL", "AOW-uitkering"]);
+  const afk = (t.match(/\b[A-ZÀ-Ý]{2,}\b/g) || []).filter((x) => !BEKEND.has(x));
+  if (afk.length) return "titel bevat een afkorting";
   if (FRANSE_WOORDEN.test(t)) return "titel bevat een Frans woord";
   if (/[()]|\bFrance\b/.test(t)) return "titel bevat haakjes of France";
   const toegestaan = toegestaneGetallen(omschrijving, extra);
@@ -68,7 +71,7 @@ export type LezerszinUitslag = { zin: string; titel?: string; reden?: undefined 
 export async function maakLezerszin(naam: string, omschrijving: string, client: ModelClient, datum?: string | null): Promise<LezerszinUitslag> {
   let antw: string;
   try {
-    antw = await client.tekst({ model: modelSynthese(), system: SYSTEEM_LEZERSZIN, maxTokens: 1024, user: `Onderwerp: ${naam}${datum ? `\nDatum van de aankondiging: ${datum}` : ""}\nNotitie: ${omschrijving}` });
+    antw = await client.tekst({ model: modelSynthese(), system: SYSTEEM_LEZERSZIN, maxTokens: 4000, user: `Onderwerp: ${naam}${datum ? `\nDatum van de aankondiging: ${datum}` : ""}\nNotitie: ${omschrijving}` });
   } catch (e) {
     return { zin: null, reden: `modelfout: ${(e instanceof Error ? e.message : String(e)).slice(0, 80)}` };
   }
