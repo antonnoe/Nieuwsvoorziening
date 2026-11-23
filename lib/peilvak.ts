@@ -22,7 +22,9 @@ export function netjes(omschrijving: string, max = 240): { tekst: string; voorlo
   t = t.replace(/\s*\(raming\)\s*/gi, " ").trim();
   if (t.length > max) {
     const knip = t.slice(0, max);
-    const punt = Math.max(knip.lastIndexOf(". "), knip.lastIndexOf("; "));
+    // Zinsgrens: ". " of "; " gevolgd door een hoofdletter of cijfer, niet na een afkorting als "art." of "nr.".
+    let punt = -1;
+    for (const m of knip.matchAll(/(?<!\b(?:art|nr|n°|al|lid|blz|o\.a|bijv|resp))[.;] (?=[A-ZÀ-Ý0-9])/g)) punt = m.index!;
     t = (punt > 80 ? knip.slice(0, punt) : knip.slice(0, knip.lastIndexOf(" "))).replace(/[;,:]$/, "") + (punt > 80 ? "." : " …");
   }
   if (t && !/[.!?…]$/.test(t)) t += ".";
@@ -41,7 +43,17 @@ export function kiesAankondigingen(parameters: Ruw[], vandaag: string, max = 4):
     })
     .filter((a) => a.omschrijving && (a.datum === null || a.datum >= vandaag))
     .sort((a, b) => (a.datum && b.datum ? a.datum.localeCompare(b.datum) : a.datum ? -1 : b.datum ? 1 : a.naam.localeCompare(b.naam)));
-  return { lijst: lijst.slice(0, max), totaal: alle.length };
+  // Variatie: niet twee keer hetzelfde onderwerp (zelfde tool) achter elkaar in het vak.
+  const gekozen: Aankondiging[] = [];
+  const gezien = new Set<string>();
+  for (const a of lijst) {
+    const sleutel = a.tools.length ? a.tools.map((t) => t.naam).sort().join("|") : `id:${a.id}`;
+    if (gezien.has(sleutel)) continue;
+    gezien.add(sleutel);
+    gekozen.push(a);
+    if (gekozen.length === max) break;
+  }
+  return { lijst: gekozen, totaal: alle.length };
 }
 
 export async function laadAankondigingen(max = 4): Promise<{ lijst: Aankondiging[]; totaal: number }> {
