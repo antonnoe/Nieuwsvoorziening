@@ -16,7 +16,9 @@ Regels:
 6. Categorie: precies één van: ${CATEGORIEEN.join(", ")}.
 7. relevantie: geheel getal 0 tot 100 voor Nederlanders en Belgen die in Frankrijk wonen of er reizen (regels, geld, verkeer, weer, bijzonderheden). Zuiver Frans partijnieuws, lokale politieke of gerechtelijke affaires rond personen, schandalen en sport zonder gevolgen voor de lezer scoren onder de 40. Hoog scoort alleen wat de lezer in zijn dagelijks leven, portemonnee, reis of woonplaats merkt.
 
-Antwoord uitsluitend met JSON: {"publiceren":true,"kop":"","samenvatting":"","tekst":"","categorie":"","relevantie":0}`;
+8. beeldZoekterm: 2 tot 4 Engelse woorden om een passende sfeerfoto te zoeken, over de plek of situatie (bijvoorbeeld "flooded village france", "paris metro construction"), nooit een persoon of een naam.
+
+Antwoord uitsluitend met JSON: {"publiceren":true,"kop":"","samenvatting":"","tekst":"","categorie":"","relevantie":0,"beeldZoekterm":""}`;
 
 export function bouwInvoer(c: Cluster): string {
   return c.items
@@ -35,7 +37,8 @@ export function leesSynthese(ruw: string): Synthese | null {
   if (!kop || !tekst) return null;
   const categorie = (CATEGORIEEN as readonly string[]).includes(cat) ? cat : "algemeen";
   const relevantie = Math.max(0, Math.min(100, Math.round(Number(j.relevantie))));
-  return { kop, samenvatting, tekst, categorie, relevantie: Number.isFinite(relevantie) ? relevantie : 0 };
+  const beeldZoekterm = String(j.beeldZoekterm || "").replace(/[^A-Za-z ]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 60);
+  return { kop, samenvatting, tekst, categorie, relevantie: Number.isFinite(relevantie) ? relevantie : 0, beeldZoekterm };
 }
 
 export async function synthetiseer(c: Cluster, client: ModelClient): Promise<Synthese | null> {

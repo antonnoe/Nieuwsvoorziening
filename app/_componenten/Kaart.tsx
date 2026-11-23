@@ -7,7 +7,13 @@ export function Beeld({ b, klasse = "" }: { b: OpgeslagenBericht; klasse?: strin
   return (
     <div className={`beeld ${klasse}`.trim()}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      {url && <img src={url} alt={b.kop} loading="lazy" />}
+      {url && <img src={url} alt="" loading="lazy" />}
+      {url && b.beeldCredit && (
+        <small className="credit">
+          Foto: <a href={veiligeUrl(b.beeldCredit.makerUrl) || undefined} rel="noopener">{b.beeldCredit.maker}</a> via{" "}
+          <a href={veiligeUrl(b.beeldCredit.bronUrl) || undefined} rel="noopener">{b.beeldCredit.bron}</a>
+        </small>
+      )}
     </div>
   );
 }

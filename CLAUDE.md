@@ -7,11 +7,11 @@ De nieuwsmotor van Nieuwsvoorziening, de toekomstige enige nieuwsmotor van Commu
 
 ## Opbouw
 - `lib/motor/`: de motor (alle logica)
-  - `feeds.ts` (RSS/Atom lezen, oogst), `artikel.ts` (artikeltekst als bronmateriaal, letterlijk-check), `zeef.ts` (sport, faits divers, buitenland, Frankrijk-filter), `cluster.ts` (heuristiek + goedkoop model), `synthese.ts` (Nederlandse tekst per onderwerp), `poort.ts` (kwaliteitspoort), `score.ts`, `peil.ts` (PEIL-koppeling), `beeld.ts` (pluggable generator, standaard uit), `opslag.ts` (Supabase via REST, plus geheugenopslag voor tests en droge runs), `motor.ts` (de run), `api.ts`, `rss.ts`, `cron-auth.ts`, `config.ts`, `tijd.ts`
+  - `feeds.ts` (RSS/Atom lezen, oogst), `artikel.ts` (artikeltekst als bronmateriaal, letterlijk-check), `zeef.ts` (sport, faits divers, buitenland, Frankrijk-filter), `cluster.ts` (heuristiek + goedkoop model), `synthese.ts` (Nederlandse tekst per onderwerp), `poort.ts` (kwaliteitspoort), `score.ts`, `peil.ts` (PEIL-koppeling), `beeld.ts` (generator-interface), `beeld-unsplash.ts` (Unsplash), `opslag.ts` (Supabase via REST, plus geheugenopslag voor tests en droge runs), `motor.ts` (de run), `api.ts`, `rss.ts`, `cron-auth.ts`, `config.ts`, `tijd.ts`
 - `app/api/`: `nieuws`, `nieuws/[id]`, `tellingen`, `rss`, `status` (openbaar, alleen lezen, CORS), `cron/oogst` (achter Bearer CRON_SECRET)
 - `app/`: publieke pagina's: `page.tsx` (voorpagina, filters `?categorie=` `?peil=1` `?pagina=`), `bericht/[id]/page.tsx`, `werkwijze/page.tsx`, `sitemap.ts`, `robots.ts`, `layout.tsx` (netwerkbalk, kop, voet), `_componenten/` (Kaart, PeilRegel); `huisstijl.css` (letterlijke kopie van docs/huisstijl/huisstijl.css, nooit eigen kleuren, letters of afrondingen toevoegen), `site.css` (alleen wat huisstijl.css niet dekt, met de variabelen daaruit); `lib/site.ts` (leeshulpjes, datums, tellers); `lib/netwerkbalk.ts` (enige bron van de netwerkbalk en de Nieuwsbrief-URL); `_componenten/` ook Kop en Netwerkbalk
 - `data/bronnen.json`: bronnenlijst (status ACTIVE of CONCEPT), samengesteld uit nlfr-menu en france-newsdesk; `data/config.json`: drempels
-- `supabase/migrations/`: tabellen `nv_berichten`, `nv_bron_items`, `nv_bronnen_per_bericht`, `nv_peil_signalen`, `nv_oogst_runs`
+- `supabase/migrations/`: tabellen (`nv_berichten` met `beeld_credit` sinds 23-11-2026), `nv_bron_items`, `nv_bronnen_per_bericht`, `nv_peil_signalen`, `nv_oogst_runs`
 - `test/`: tests; `scripts/droge-run.ts`: droge run (`npm run droog`)
 - `vercel.json`: cron 6 keer per dag op `/api/cron/oogst` (03, 07, 11, 15, 19 en 23 uur UTC, besluit 23-11-2026)
 
@@ -33,7 +33,7 @@ Next.js (app router) + TypeScript op Vercel. Tests `npm test` (tsx, node --test)
 - Kwaliteitspoort vóór publicatie (`poort.ts`, getest): geen meta-taal over de invoer, geen krantennamen buiten het bronnenblok, geen lege of te korte tekst, geen links, geen bedrag dat niet in een bron staat.
 - Automatisch publiceren boven de drempel (data/config.json, `publiceerDrempel`) én met een relevantie van minstens `minRelevantie` (50), zonder menselijke klik. Lokale politieke of gerechtelijke affaires rond personen scoren laag (besluit 23-11-2026). Richtgetal 10 tot 20 berichten per dag; harde bovengrens `maxBerichtenPerDag`.
 - PEIL wordt nooit aangepast. Een mogelijk gewijzigde waarde wordt een signaal in `nv_peil_signalen` met status `gesignaleerd`. Lezers zien alleen "wordt nagelopen", niet de toelichting.
-- Beeld: alleen het veld `beeld_url` en een generator-interface, standaard uit. Er is geen beeldbron gekozen; dat is een openstaand besluit.
+- Beeld: Unsplash is de standaardbron (besluit 23-11-2026, `beeld-unsplash.ts`), actief zodra `UNSPLASH_ACCESS_KEY` bestaat; `BEELD_GENERATOR=uit` zet het uit. Regels van Unsplash: hotlinken (urls.regular), download-eindpunt aanroepen bij gebruik, fotograaf en Unsplash met link vermelden (`beeld_credit`, getoond onder elk beeld). Zoekterm komt uit de synthese (Engels, plek of situatie, nooit een persoon); terugval per categorie. Berichten zonder beeld krijgen er bij de volgende oogst alsnog een (hooguit 6 per run). AI-illustraties zijn een mogelijke tweede generator (sleutel nodig), altijd met vermelding "AI-illustratie".
 - Elke externe stap (bron, Anthropic, Supabase, PEIL) faalt netjes zonder de rest te breken. Ruwe items ouder dan 30 dagen worden opgeruimd.
 - In `news_items` (bestaande tabel) wordt nooit geschreven of gewijzigd.
 - Schrijfstijl: gewoon Nederlands, komma's in plaats van lange streepjes.

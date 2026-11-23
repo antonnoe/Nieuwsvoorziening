@@ -52,12 +52,21 @@ export interface Cluster {
   items: BronItem[];
 }
 
+export interface BeeldCredit {
+  bron: string;
+  maker: string;
+  makerUrl: string;
+  bronUrl: string;
+}
+
 export interface Synthese {
   kop: string;
   samenvatting: string;
   tekst: string;
   categorie: Categorie;
   relevantie: number; // 0..100, oordeel van het model voor de lezer
+  /** Engelse zoekterm voor een foto (2 tot 4 woorden, een plek of situatie, geen personen). */
+  beeldZoekterm?: string;
 }
 
 export interface PeilParameter {
@@ -89,6 +98,7 @@ export interface Bericht {
   status: "gepubliceerd" | "geblokkeerd" | "concept";
   blokkadeRedenen: string[];
   beeldUrl: string | null;
+  beeldCredit?: BeeldCredit | null;
   peil: PeilKoppeling;
   bronnen: BerichtBron[];
   gepubliceerdOp: string;

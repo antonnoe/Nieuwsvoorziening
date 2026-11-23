@@ -5,7 +5,8 @@ import type { ModelClient } from "./ai";
 import { laadConfig, actieveBronnen, modelSynthese, type MotorConfig } from "./config";
 import { aantalBronnen, clusterItems } from "./cluster";
 import { oogstBronnen, type OogstBronResultaat } from "./feeds";
-import { beeldVoor, type BeeldGenerator, actieveGenerator } from "./beeld";
+import { beeldResultaat, type BeeldGenerator, actieveGenerator } from "./beeld";
+import "./beeld-unsplash";
 import type { Opslag, RunRecord, PeilSignaalIn } from "./opslag";
 import { laadPeil, peilKoppeling } from "./peil";
 import { kwaliteitsPoort } from "./poort";
@@ -175,10 +176,12 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
           koppeling = p.koppeling;
           if (p.fout) noteer({ stap: "peil_oordeel", ok: false, fout: p.fout });
         }
-        const beeldUrl = status === "gepubliceerd" ? await beeldVoor({ kop: s.kop, samenvatting: s.samenvatting, categorie: s.categorie }, generator) : null;
+        const beeld = status === "gepubliceerd" ? await beeldResultaat({ kop: s.kop, samenvatting: s.samenvatting, categorie: s.categorie, zoekterm: s.beeldZoekterm }, generator) : null;
+        const beeldUrl = beeld?.url ?? null;
+        const beeldCredit = beeld?.credit ?? null;
         const bericht: Bericht = {
           kop: s.kop, samenvatting: s.samenvatting, tekst: s.tekst, categorie: s.categorie, score, regime, status,
-          blokkadeRedenen: uitslag.redenen, beeldUrl, peil: koppeling, bronnen, gepubliceerdOp: new Date(nu).toISOString(),
+          blokkadeRedenen: uitslag.redenen, beeldUrl, beeldCredit, peil: koppeling, bronnen, gepubliceerdOp: new Date(nu).toISOString(),
           sleutel: hashId(c.items.map((i) => i.url).sort().join("|")),
         };
         const id = await o.opslag.slaBerichtOp(bericht);
@@ -199,6 +202,24 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
     noteer({ stap: "synthese", ok: true, aantal: berichten.length, detail: { gepubliceerd, geblokkeerd, concept, mislukt } });
   } else {
     noteer({ stap: "synthese", ok: true, aantal: 0, detail: { reden: "geen kandidaten" } });
+  }
+
+  // 6b. Beeld aanvullen: gepubliceerde berichten zonder beeld krijgen er alsnog een (hooguit 6 per run).
+  {
+    const generator = o.generator === undefined ? actieveGenerator() : o.generator;
+    if (generator) {
+      try {
+        let aangevuld = 0;
+        for (const b of await o.opslag.zonderBeeld(6)) {
+          const r = await beeldResultaat({ kop: b.kop, samenvatting: b.samenvatting, categorie: b.categorie }, generator);
+          if (r) (await o.opslag.zetBeeld(b.id, r.url, r.credit ?? null), (aangevuld += 1));
+        }
+        aantallen.beeldAangevuld = aangevuld;
+        noteer({ stap: "beeld_aanvullen", ok: true, aantal: aangevuld });
+      } catch (e) {
+        noteer({ stap: "beeld_aanvullen", ok: false, fout: fout(e) });
+      }
+    }
   }
 
   // 7. Opruimen: ruwe items ouder dan 30 dagen

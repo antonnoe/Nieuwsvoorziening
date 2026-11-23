@@ -54,6 +54,7 @@ export function publiekBericht(b: OpgeslagenBericht, metTekst: boolean, wordtNag
     categorie: b.categorie,
     gepubliceerdOp: b.gepubliceerdOp,
     beeldUrl: b.beeldUrl,
+    beeldCredit: b.beeldCredit ?? null,
     bronnen: b.bronnen,
     peil: {
       raakt: b.peil.raakt.map((p) => ({ ...p, wordtNagelopen: wordtNagelopen.includes(p.id) || b.peil.mogelijkGewijzigd.some((g) => g.id === p.id) })),

@@ -1,7 +1,7 @@
 // Opslag: Supabase via de REST-interface (geen extra afhankelijkheid), met een
 // geheugenvariant voor tests en droge runs. Elke methode gooit bij een storing;
 // de motor vangt dat per stap op.
-import type { Bericht, BronItem, PeilKoppeling } from "./types";
+import type { BeeldCredit, Bericht, BronItem, PeilKoppeling } from "./types";
 import { dagStart } from "./tijd";
 
 export interface RunRecord {
@@ -38,6 +38,9 @@ export interface Opslag {
   slaRunOp(r: RunRecord): Promise<void>;
   laatsteRun(): Promise<RunRecord | null>;
   opruimen(olderThanIso: string): Promise<number>;
+  /** Gepubliceerde berichten zonder beeld (nieuwste eerst), om alsnog een beeld te geven. */
+  zonderBeeld(limiet: number): Promise<OpgeslagenBericht[]>;
+  zetBeeld(id: string, url: string, credit: BeeldCredit | null): Promise<void>;
   // lezen voor de API
   berichten(opt: { categorie?: string; limiet: number; offset?: number; peil?: boolean }): Promise<OpgeslagenBericht[]>;
   bericht(id: string): Promise<(OpgeslagenBericht & { signalen: { parameterId: string; status: string }[] }) | null>;
@@ -93,6 +96,13 @@ export class GeheugenOpslag implements Opslag {
     let n = 0;
     for (const [u, i] of this.items) if ((i.opgehaaldOp || "") < oud) (this.items.delete(u), (n += 1));
     return n;
+  }
+  async zonderBeeld(limiet: number) {
+    return this.berichtenLijst.filter((b) => b.status === "gepubliceerd" && !b.beeldUrl).sort((a, b) => b.gepubliceerdOp.localeCompare(a.gepubliceerdOp)).slice(0, limiet);
+  }
+  async zetBeeld(id: string, url: string, credit: BeeldCredit | null) {
+    const b = this.berichtenLijst.find((x) => x.id === id);
+    if (b) ((b.beeldUrl = url), (b.beeldCredit = credit));
   }
   async berichten({ categorie, limiet, offset = 0, peil }: { categorie?: string; limiet: number; offset?: number; peil?: boolean }) {
     return this.berichtenLijst
@@ -194,7 +204,7 @@ export class SupabaseOpslag implements Opslag {
       method: "POST", prefer: "resolution=merge-duplicates,return=representation",
       body: JSON.stringify({
         sleutel: b.sleutel, kop: b.kop, samenvatting: b.samenvatting, tekst: b.tekst, categorie: b.categorie, score: b.score, regime: b.regime,
-        status: b.status, blokkade_redenen: b.blokkadeRedenen, beeld_url: b.beeldUrl, peil_raakt: b.peil.raakt, peil_mogelijk_gewijzigd: b.peil.mogelijkGewijzigd,
+        status: b.status, blokkade_redenen: b.blokkadeRedenen, beeld_url: b.beeldUrl, beeld_credit: b.beeldCredit ?? null, peil_raakt: b.peil.raakt, peil_mogelijk_gewijzigd: b.peil.mogelijkGewijzigd,
         model: process.env.NIEUWS_MODEL_SYNTHESE || null, gepubliceerd_op: b.gepubliceerdOp,
       }),
     });
@@ -233,6 +243,14 @@ export class SupabaseOpslag implements Opslag {
     // Oude oogstruns (ouder dan 30 dagen) gaan mee.
     await this.vraag(`nv_oogst_runs?gestart_op=lt.${encodeURIComponent(oud)}`, { method: "DELETE", prefer: "return=minimal" });
     return ((await r.json()) as Rij[]).length;
+  }
+  async zonderBeeld(limiet: number) {
+    const rijen = await this.lees(`nv_berichten?status=eq.gepubliceerd&beeld_url=is.null&order=gepubliceerd_op.desc&limit=${limiet}&select=*,nv_bronnen_per_bericht(*)`);
+    return rijen.map(naarBericht);
+  }
+  async zetBeeld(id: string, url: string, credit: BeeldCredit | null) {
+    if (!/^[0-9a-f-]{36}$/i.test(id)) return;
+    await this.vraag(`nv_berichten?id=eq.${id}`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ beeld_url: url, beeld_credit: credit }) });
   }
   async berichten({ categorie, limiet, offset = 0, peil }: { categorie?: string; limiet: number; offset?: number; peil?: boolean }) {
     const filter = (categorie ? `&categorie=eq.${encodeURIComponent(categorie)}` : "") + (peil ? `&peil_raakt=neq.${encodeURIComponent("[]")}` : "");
@@ -279,7 +297,7 @@ function naarBericht(r: Rij): OpgeslagenBericht {
   return {
     id: String(r.id), kop: String(r.kop), samenvatting: String(r.samenvatting || ""), tekst: String(r.tekst || ""), categorie: r.categorie as OpgeslagenBericht["categorie"],
     score: Number(r.score), regime: r.regime as OpgeslagenBericht["regime"], status: r.status as OpgeslagenBericht["status"],
-    blokkadeRedenen: (r.blokkade_redenen as string[]) || [], beeldUrl: (r.beeld_url as string) || null, peil, bronnen, gepubliceerdOp: String(r.gepubliceerd_op),
+    blokkadeRedenen: (r.blokkade_redenen as string[]) || [], beeldUrl: (r.beeld_url as string) || null, beeldCredit: (r.beeld_credit as OpgeslagenBericht["beeldCredit"]) || null, peil, bronnen, gepubliceerdOp: String(r.gepubliceerd_op),
   };
 }
 
