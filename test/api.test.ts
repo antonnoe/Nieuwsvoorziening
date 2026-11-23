@@ -87,3 +87,17 @@ test("migratie: alleen nv_-tabellen, raakt news_items niet, RLS aan", () => {
   assert.ok(!/news_items/.test(sql.replace(/--.*$/gm, "")));
   for (const c of CATEGORIEEN) assert.ok(sql.includes(`'${c}'`), c);
 });
+
+test("berichten: peil-filter in geheugen en in het Supabase-verzoek", async () => {
+  const { GeheugenOpslag } = await import("../lib/motor/opslag");
+  const g = new GeheugenOpslag();
+  const basis = { kop: "k", samenvatting: "s", tekst: "t", categorie: "algemeen" as const, score: 70, regime: "pers" as const, status: "gepubliceerd" as const, blokkadeRedenen: [], beeldUrl: null, bronnen: [], gepubliceerdOp: new Date().toISOString(), sleutel: "x" };
+  await g.slaBerichtOp({ ...basis, sleutel: "a", peil: { raakt: [], mogelijkGewijzigd: [] } });
+  await g.slaBerichtOp({ ...basis, sleutel: "b", peil: { raakt: [{ id: "p", naam: "P" }], mogelijkGewijzigd: [] } });
+  assert.equal((await g.berichten({ limiet: 10 })).length, 2);
+  assert.equal((await g.berichten({ limiet: 10, peil: true })).length, 1);
+  const urls: string[] = [];
+  const o = new SupabaseOpslag("https://p.supabase.co", "k", (async (u: string) => { urls.push(String(u)); return new Response("[]"); }) as unknown as typeof fetch);
+  await o.berichten({ limiet: 5, peil: true });
+  assert.ok(urls[0].includes("peil_raakt=neq.%5B%5D"));
+});

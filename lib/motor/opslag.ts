@@ -39,7 +39,7 @@ export interface Opslag {
   laatsteRun(): Promise<RunRecord | null>;
   opruimen(olderThanIso: string): Promise<number>;
   // lezen voor de API
-  berichten(opt: { categorie?: string; limiet: number; offset?: number }): Promise<OpgeslagenBericht[]>;
+  berichten(opt: { categorie?: string; limiet: number; offset?: number; peil?: boolean }): Promise<OpgeslagenBericht[]>;
   bericht(id: string): Promise<(OpgeslagenBericht & { signalen: { parameterId: string; status: string }[] }) | null>;
   tellingenSinds(sindsIso: string): Promise<Record<string, number>>;
   aantallen(): Promise<{ berichtenTotaal: number; gepubliceerdVandaag: number; openItems: number; signalenGesignaleerd: number }>;
@@ -94,9 +94,9 @@ export class GeheugenOpslag implements Opslag {
     for (const [u, i] of this.items) if ((i.opgehaaldOp || "") < oud) (this.items.delete(u), (n += 1));
     return n;
   }
-  async berichten({ categorie, limiet, offset = 0 }: { categorie?: string; limiet: number; offset?: number }) {
+  async berichten({ categorie, limiet, offset = 0, peil }: { categorie?: string; limiet: number; offset?: number; peil?: boolean }) {
     return this.berichtenLijst
-      .filter((b) => b.status === "gepubliceerd" && (!categorie || b.categorie === categorie))
+      .filter((b) => b.status === "gepubliceerd" && (!categorie || b.categorie === categorie) && (!peil || b.peil.raakt.length > 0))
       .sort((a, b) => b.gepubliceerdOp.localeCompare(a.gepubliceerdOp))
       .slice(offset, offset + limiet);
   }
@@ -234,8 +234,8 @@ export class SupabaseOpslag implements Opslag {
     await this.vraag(`nv_oogst_runs?gestart_op=lt.${encodeURIComponent(oud)}`, { method: "DELETE", prefer: "return=minimal" });
     return ((await r.json()) as Rij[]).length;
   }
-  async berichten({ categorie, limiet, offset = 0 }: { categorie?: string; limiet: number; offset?: number }) {
-    const filter = categorie ? `&categorie=eq.${encodeURIComponent(categorie)}` : "";
+  async berichten({ categorie, limiet, offset = 0, peil }: { categorie?: string; limiet: number; offset?: number; peil?: boolean }) {
+    const filter = (categorie ? `&categorie=eq.${encodeURIComponent(categorie)}` : "") + (peil ? `&peil_raakt=neq.${encodeURIComponent("[]")}` : "");
     const rijen = await this.lees(`nv_berichten?status=eq.gepubliceerd${filter}&order=gepubliceerd_op.desc&limit=${limiet}&offset=${offset}&select=*,nv_bronnen_per_bericht(*)`);
     return rijen.map(naarBericht);
   }

@@ -20,6 +20,13 @@
 - RSS-links wijzen naar `NIEUWS_BASIS_URL/bericht/<id>` (standaard https://nieuws.infofrankrijk.com); die pagina's maakt de andere sessie. De GUID is het bericht-id.
 - "Vandaag" in `/api/tellingen` is de kalenderdag in Europe/Amsterdam.
 
+## Publieke pagina's (bouwer, 23 november 2026)
+- Ontwerp volgens de goedgekeurde schets; geen sitenaam (besluit opdrachtgever), alleen klein label "Nieuws uit Frankrijk" links in de kop.
+- Eén toevoeging aan de motor: `berichten({ peil })` in beide opslagvarianten (filter "Raakt uw portemonnee"), met test.
+- Pagina 1 toont 1 uitgelicht + 12 kaarten; "Meer berichten" is een gewone link `?pagina=2` met 12 per pagina. Gefilterde en gepagineerde weergaven zijn noindex.
+- Statusregel: bijgewerkt = tijd van de laatste run, berichten vandaag = telling uit opslag, bronnen = `bronnenOk` van de laatste run als die vandaag begon. Zonder data blijft de teller weg.
+- Lege staat: "Het eerste nieuws verschijnt na de eerste oogst."
+
 ## Takenlijst
 | Taak | Status |
 |---|---|
@@ -32,7 +39,9 @@
 | CONCEPT-bronnen (o.a. buitenlandse pers, RFI, RTBF, RTL) feeds controleren en activeren | open |
 | Beeldbron kiezen en generator aansluiten | open besluit |
 | Dubbele onderwerpen over talen heen | open |
-| Publieke pagina's, opmaak | andere sessie (Fable) |
+| Publieke pagina's (voorpagina, bericht, werkwijze, sitemap, robots) | gebouwd 23-11-2026, getest tegen een nep-Supabase lokaal; nog niet live gezien met echte data |
+| Domein nieuws.infofrankrijk.com aan Vercel koppelen, NIEUWS_BASIS_URL zetten | open (regisseur) |
+| Links netwerkbalk en knop Nieuwsbrief controleren (adressen zijn aannames) | open |
 | Drempel en maxima ijken na enkele dagen | open |
 
 ## Voor de regisseur

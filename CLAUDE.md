@@ -3,12 +3,13 @@
 Repo: nieuwsvoorziening
 
 ## Wat dit is
-De nieuwsmotor van Nieuwsvoorziening, de toekomstige enige nieuwsmotor van Communities Abroad: Nederlandstalig nieuws over Frankrijk voor Nederlanders en Belgen. Alleen de motor en een openbare data-API. Publieke pagina's en opmaak komen uit een andere sessie (Fable); `app/page.tsx` is een kale placeholder.
+De nieuwsmotor van Nieuwsvoorziening, de toekomstige enige nieuwsmotor van Communities Abroad: Nederlandstalig nieuws over Frankrijk voor Nederlanders en Belgen. De motor, een openbare data-API en de publieke pagina's van nieuws.infofrankrijk.com (server-side gerenderd, lezen direct uit de opslag).
 
 ## Opbouw
 - `lib/motor/`: de motor (alle logica)
   - `feeds.ts` (RSS/Atom lezen, oogst), `zeef.ts` (sport, faits divers, buitenland, Frankrijk-filter), `cluster.ts` (heuristiek + goedkoop model), `synthese.ts` (Nederlandse tekst per onderwerp), `poort.ts` (kwaliteitspoort), `score.ts`, `peil.ts` (PEIL-koppeling), `beeld.ts` (pluggable generator, standaard uit), `opslag.ts` (Supabase via REST, plus geheugenopslag voor tests en droge runs), `motor.ts` (de run), `api.ts`, `rss.ts`, `cron-auth.ts`, `config.ts`, `tijd.ts`
 - `app/api/`: `nieuws`, `nieuws/[id]`, `tellingen`, `rss`, `status` (openbaar, alleen lezen, CORS), `cron/oogst` (achter Bearer CRON_SECRET)
+- `app/`: publieke pagina's: `page.tsx` (voorpagina, filters `?categorie=` `?peil=1` `?pagina=`), `bericht/[id]/page.tsx`, `werkwijze/page.tsx`, `sitemap.ts`, `robots.ts`, `layout.tsx` (netwerkbalk, kop, voet), `_componenten/` (Kaart, PeilRegel); `huisstijl.css` (ALLE kleuren en lettertypen als CSS-variabelen, enige plek voor de definitieve huisstijl), `site.css` (opmaak); `lib/site.ts` (leeshulpjes, datums, tellers)
 - `data/bronnen.json`: bronnenlijst (status ACTIVE of CONCEPT), samengesteld uit nlfr-menu en france-newsdesk; `data/config.json`: drempels
 - `supabase/migrations/`: tabellen `nv_berichten`, `nv_bron_items`, `nv_bronnen_per_bericht`, `nv_peil_signalen`, `nv_oogst_runs`
 - `test/`: tests; `scripts/droge-run.ts`: droge run (`npm run droog`)
@@ -36,6 +37,8 @@ Next.js (app router) + TypeScript op Vercel. Tests `npm test` (tsx, node --test)
 - Elke externe stap (bron, Anthropic, Supabase, PEIL) faalt netjes zonder de rest te breken. Ruwe items ouder dan 30 dagen worden opgeruimd.
 - In `news_items` (bestaande tabel) wordt nooit geschreven of gewijzigd.
 - Schrijfstijl: gewoon Nederlands, komma's in plaats van lange streepjes.
+
+- Publieke pagina's: geen eigen sitenaam of merk; tellers in de statusregel komen uit de opslag en worden weggelaten als er geen data is; krantennamen alleen in het bronnenblok; zonder `beeld_url` een rustig beeldvlak zonder tekst. Lettertypen Source Serif 4 en Inter (Google Fonts) zijn een benadering van de schets.
 
 ## Harde grenzen
 nlfr-menu, france-newsdesk, verenigingen-kalender en Café Claude worden nooit gewijzigd, alleen gelezen. Geen sleutels kopiëren, geen waarden van omgevingsvariabelen in code. Migraties worden niet door de bouwer toegepast; dat doet de regisseur.
