@@ -17,8 +17,8 @@ const NETWERK = [
   { naam: "Nieuws", href: "/", actief: true },
   { naam: "Nederlanders.fr", href: "https://www.nederlanders.fr" },
   { naam: "Infopoche", href: "https://infopoche.fr" },
-  { naam: "Dossier Frankrijk", href: "https://www.dossierfrankrijk.com" },
-  { naam: "Café Claude", href: "https://cafeclaude.com" },
+  { naam: "Dossier Frankrijk", href: "https://dossierfrankrijk.nl" },
+  { naam: "Café Claude", href: "https://www.cafeclaude.fr" },
   { naam: "Nedergids", href: "https://nedergids.nl" },
 ];
 
@@ -53,7 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <nav className="kop-acties" aria-label="Hulpmiddelen">
               <a href="https://communitiesabroad.com/peil">PEIL</a>
               <a href="https://www.nederlanders.fr">Forum</a>
-              <a className="knop-bordeaux" href="https://www.nederlanders.fr/page/nieuwsbrief">Nieuwsbrief</a>
+              <a className="knop-bordeaux" href="https://laposta.nl/f/ssysinmqgflb">Nieuwsbrief</a>
             </nav>
           </div>
         </header>
