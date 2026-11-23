@@ -4,7 +4,7 @@ import { draaiOogst } from "@/lib/motor/motor";
 import { GeheugenOpslag, maakOpslag } from "@/lib/motor/opslag";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 300;
+export const maxDuration = 800;
 
 async function uitvoeren(req: Request) {
   if (!cronToegestaan(req)) return Response.json({ fout: "Niet toegestaan." }, { status: 401 });

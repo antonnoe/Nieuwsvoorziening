@@ -77,8 +77,13 @@ const VENSTER_HERSCHRIJVEN_UREN = 48;
 
 const fout = (e: unknown) => (e instanceof Error ? e.message : String(e)).slice(0, 200);
 
+/** Tijdsbudget van een run: de functie mag 800 s duren; na dit budget slaan de optionele stappen (6a, 6b, 6c) over, zodat de run altijd wordt opgeslagen. */
+export const RUN_BUDGET_MS = 480_000;
+
 export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
   const nu = o.nu ?? Date.now();
+  const startTijd = Date.now();
+  const tijdOver = () => Date.now() - startTijd < RUN_BUDGET_MS;
   const cfg = o.config ?? laadConfig();
   const stappen: StapResultaat[] = [];
   const aantallen: Record<string, number> = {};
@@ -248,6 +253,7 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
       const lijst = await o.opslag.teHerschrijven(new Date(nu - VENSTER_HERSCHRIJVEN_UREN * 3600_000).toISOString(), REGELVERSIE, MAX_HERSCHRIJVEN_PER_RUN);
       let herschreven = 0, naarConcept = 0, mislukt = 0;
       for (const b of lijst) {
+        if (!tijdOver()) break;
         try {
           const c = clusterUitBericht(b);
           if (!c.items.length) { mislukt += 1; continue; }
@@ -289,6 +295,7 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
       try {
         let aangevuld = 0;
         for (const b of await o.opslag.zonderBeeld(10)) {
+          if (!tijdOver()) break;
           let zoektermen: string[] | undefined;
           if (o.client) {
             const antw = await o.client
@@ -317,6 +324,7 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
       let gemaakt = 0, geen = 0, afgekeurd = 0, pogingen = 0;
       const redenen: string[] = [];
       for (const p of parameters) {
+        if (!tijdOver()) break;
         const om = p.aangekondigd?.omschrijving;
         if (!om) continue;
         const h = hashOmschrijving(om);
