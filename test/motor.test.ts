@@ -71,6 +71,12 @@ test("score onder de drempel wordt concept, niet gepubliceerd", async () => {
   assert.equal(r.berichten[0].status, "concept");
 });
 
+test("te lage relevantie wordt concept, ook bij een hoge totaalscore (besluit 23-11-2026)", async () => {
+  const opslag = new GeheugenOpslag();
+  const r = await draaiOogst({ opslag, client: klein([synthese({ relevantie: 30 })]), nu, config: { ...cfg, publiceerDrempel: 0, minRelevantie: 50 }, bronnen, fetchFn, peil: [], generator: null });
+  assert.equal(r.berichten[0].status, "concept");
+});
+
 test("zonder model: geen synthese, wel oogst en clustering; zonder bron-fouten breekt niets", async () => {
   const opslag = new GeheugenOpslag();
   const r = await draaiOogst({ opslag, client: null, nu, config: cfg, bronnen, fetchFn, peil: [], generator: null });

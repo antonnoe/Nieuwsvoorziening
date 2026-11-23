@@ -28,10 +28,10 @@ Next.js (app router) + TypeScript op Vercel. Tests `npm test` (tsx, node --test)
 ## Regels en besluiten
 - Bronnen: alleen status ACTIVE wordt opgehaald; een nieuwe bron begint als CONCEPT tot de feed is gecontroleerd. Geen sport tenzij praktische gevolgen; ontdubbelen op url.
 - Een bericht heeft minimaal 2 onafhankelijke bronnen (liefst 3); een overheidsbron (.gouv, regime overheid) mag 1 bron zijn.
-- Eigen Nederlandse tekst, kop en samenvatting; categorie precies één van: algemeen, politiek, economie en ondernemen, reizen en verkeer, natuur en rampen, toerisme en evenementen, merkwaardig. Bronnenblok met per bron naam, originele kop, datum, url. In kop en tekst nooit een krantennaam of perslink; geen persfoto's. Het model krijgt de bronnen geanonimiseerd (Bron 1, 2, 3).
+- Eigen Nederlandse tekst, kop en samenvatting; categorie precies één van: algemeen, politiek, economie en ondernemen, reizen en verkeer, natuur en rampen, toerisme en evenementen, merkwaardig. Bronnenblok met per bron naam, originele kop, datum, url. In kop en tekst nooit een krantennaam of perslink, ook niet als het medium zelf onderwerp is (dan omschrijven, besluit 23-11-2026); geen persfoto's. Het model krijgt de bronnen geanonimiseerd (Bron 1, 2, 3).
 - De motor gebruikt alleen kop en omschrijving uit de feed; er wordt geen volledige artikeltekst overgenomen.
 - Kwaliteitspoort vóór publicatie (`poort.ts`, getest): geen meta-taal over de invoer, geen krantennamen buiten het bronnenblok, geen lege of te korte tekst, geen links, geen bedrag dat niet in een bron staat.
-- Automatisch publiceren boven de drempel (data/config.json, `publiceerDrempel`), zonder menselijke klik. Richtgetal 10 tot 20 berichten per dag; harde bovengrens `maxBerichtenPerDag`.
+- Automatisch publiceren boven de drempel (data/config.json, `publiceerDrempel`) én met een relevantie van minstens `minRelevantie` (50), zonder menselijke klik. Lokale politieke of gerechtelijke affaires rond personen scoren laag (besluit 23-11-2026). Richtgetal 10 tot 20 berichten per dag; harde bovengrens `maxBerichtenPerDag`.
 - PEIL wordt nooit aangepast. Een mogelijk gewijzigde waarde wordt een signaal in `nv_peil_signalen` met status `gesignaleerd`. Lezers zien alleen "wordt nagelopen", niet de toelichting.
 - Beeld: alleen het veld `beeld_url` en een generator-interface, standaard uit. Er is geen beeldbron gekozen; dat is een openstaand besluit.
 - Elke externe stap (bron, Anthropic, Supabase, PEIL) faalt netjes zonder de rest te breken. Ruwe items ouder dan 30 dagen worden opgeruimd.

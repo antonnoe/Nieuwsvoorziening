@@ -166,7 +166,7 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
         const bronnen = [...new Map(c.items.map((i) => [i.url, i])).values()]
           .sort((a, b) => a.gepubliceerdOp.localeCompare(b.gepubliceerdOp))
           .map((i) => ({ naam: i.bronNaam, origineleKop: i.titel, datum: i.gepubliceerdOp, url: i.url }));
-        const status: Bericht["status"] = !uitslag.ok ? "geblokkeerd" : score >= cfg.publiceerDrempel ? "gepubliceerd" : "concept";
+        const status: Bericht["status"] = !uitslag.ok ? "geblokkeerd" : score >= cfg.publiceerDrempel && s.relevantie >= cfg.minRelevantie ? "gepubliceerd" : "concept";
         let koppeling = { raakt: [], mogelijkGewijzigd: [] } as Bericht["peil"];
         if (status === "gepubliceerd" && peil.length) {
           const p = await peilKoppeling({ kop: s.kop, tekst: s.tekst }, c.items.map((i) => `${i.titel} ${i.samenvatting}`).join("\n"), peil, o.client, cfg.peilKandidatenPerBericht);

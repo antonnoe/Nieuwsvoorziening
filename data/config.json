@@ -1,6 +1,7 @@
 {
   "_uitleg": "Instelbare drempels van de nieuwsmotor. Wijzigen hier, niet in de code.",
   "publiceerDrempel": 55,
+  "minRelevantie": 50,
   "venstersUren": 36,
   "minBronnenPers": 2,
   "voorkeurBronnenPers": 3,

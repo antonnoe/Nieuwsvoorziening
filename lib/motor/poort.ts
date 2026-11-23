@@ -18,6 +18,8 @@ export const PERSNAMEN_EXTRA = [
   "volkskrant", "trouw", "de telegraaf", "telegraaf", "ad.nl", "het parool", "rtl nieuws", "vrt", "vrt nws", "de standaard", "het laatste nieuws",
   "het nieuwsblad", "gazet van antwerpen", "rtbf", "bbc", "the guardian", "guardian", "deutsche welle", "public senat", "economie matin", "head patrimoine",
   "anp", "belga", "bnr", "de morgen", "l'express", "le point", "l'obs", "mediapart", "politico",
+  "france televisions", "france 2", "france 3", "france 5", "radio france", "france inter", "la tribune", "arte", "m6", "canal+", "lci", "marianne",
+  "valeurs actuelles", "le journal du dimanche", "jdd", "challenges", "l'equipe", "le canard enchaine", "nice-matin", "nice matin", "var-matin", "le progres", "le dauphine libere", "l'est republicain", "le telegramme", "la provence", "la montagne", "courrier international",
 ];
 
 function woordRegex(naam: string): RegExp {

@@ -4,6 +4,7 @@ import type { Bron } from "./types";
 
 export interface MotorConfig {
   publiceerDrempel: number;
+  minRelevantie: number;
   venstersUren: number;
   minBronnenPers: number;
   voorkeurBronnenPers: number;
@@ -22,6 +23,7 @@ export interface MotorConfig {
 
 const STANDAARD: MotorConfig = {
   publiceerDrempel: 55,
+  minRelevantie: 50,
   venstersUren: 36,
   minBronnenPers: 2,
   voorkeurBronnenPers: 3,

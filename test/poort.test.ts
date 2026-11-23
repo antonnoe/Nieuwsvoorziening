@@ -67,3 +67,9 @@ test("bedragen worden genormaliseerd tussen Nederlandse en Franse notatie", () =
   const c: Cluster = { sleutel: "x", items: [item({ titel: "Aide de 1 200 euros", samenvatting: "" })] };
   assert.equal(kwaliteitsPoort({ ...goed, tekst: goedeTekst.replace("1,85 euro", "1.200 euro") }, c, cfg).redenen.some((r) => r.startsWith("bedrag")), true); // 1,85 elders in samenvatting niet in bron
 });
+
+test("blokkeert ook media die zelf onderwerp zijn (besluit 23-11-2026)", () => {
+  const u = kwaliteitsPoort({ ...goed, tekst: `${goedeTekst} Ook France Télévisions en La Tribune moeten voorkomen.` }, cluster, cfg);
+  assert.ok(u.redenen.some((r) => r.includes("france televisions")), u.redenen.join(";"));
+  assert.ok(u.redenen.some((r) => r.includes("la tribune")), u.redenen.join(";"));
+});
