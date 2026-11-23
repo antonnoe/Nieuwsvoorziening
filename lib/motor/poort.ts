@@ -1,5 +1,6 @@
 // Kwaliteitspoort vóór publicatie. Geeft alle redenen terug, niet alleen de eerste.
 import { normaliseer } from "./tekst";
+import { letterlijkeReeksen } from "./artikel";
 import type { Cluster, Synthese } from "./types";
 import type { MotorConfig } from "./config";
 
@@ -92,11 +93,18 @@ export function kwaliteitsPoort(s: Synthese, c: Cluster | null, cfg: Pick<MotorC
   if (/https?:\/\/|www\.|\b[a-z0-9-]+\.(?:fr|nl|be|com|org|info|eu)\b/i.test(`${kop} ${samenvatting} ${tekst}`)) redenen.push("link of domeinnaam in tekst");
 
   // Verzonnen bedragen: elk bedrag in de tekst moet in een bron voorkomen.
-  const bronTekst = c ? c.items.map((i) => `${i.titel} ${i.samenvatting}`).join(" ") : "";
+  const bronTekst = c ? c.items.map((i) => `${i.titel} ${i.samenvatting} ${i.artikelTekst || ""}`).join(" ") : "";
   const bronGetallen = getallenIn(bronTekst);
   const bron = new Set(bronGetallen);
   for (const b of bedragenIn(`${kop} ${samenvatting} ${tekst}`)) {
     if (!bron.has(b)) redenen.push(`bedrag niet in bron: ${b}`);
+  }
+
+  // Niets letterlijk overnemen: geen reeks van 10 woorden uit een artikeltekst.
+  if (c) {
+    const artikelen = c.items.map((i) => i.artikelTekst || "").join("\n");
+    const reeksen = artikelen ? letterlijkeReeksen(`${samenvatting} ${tekst}`, artikelen, 10) : [];
+    if (reeksen.length) redenen.push(`letterlijk overgenomen uit een bron: "${reeksen[0]}"`);
   }
   return { ok: redenen.length === 0, redenen: [...new Set(redenen)] };
 }

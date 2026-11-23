@@ -11,6 +11,7 @@ import { laadPeil, peilKoppeling } from "./peil";
 import { kwaliteitsPoort } from "./poort";
 import { berekenScore, clusterRegime } from "./score";
 import { synthetiseer, SYSTEEM_SYNTHESE, bouwInvoer, leesSynthese } from "./synthese";
+import { verrijkMetArtikelen } from "./artikel";
 import { overlap, hashId } from "./tekst";
 import { dagStart } from "./tijd";
 import type { Bericht, Bron, Cluster, PeilParameter, StapResultaat, Synthese } from "./types";
@@ -138,9 +139,10 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
       }
     }
     const generator = o.generator === undefined ? actieveGenerator() : o.generator;
-    let gepubliceerd = 0, geblokkeerd = 0, concept = 0, mislukt = 0, signalenAantal = 0;
+    let gepubliceerd = 0, geblokkeerd = 0, concept = 0, mislukt = 0, signalenAantal = 0, artikelen = 0;
     for (const c of kandidaten) {
       try {
+        artikelen += await verrijkMetArtikelen(c, o.fetchFn ?? fetch).catch(() => 0);
         let s: Synthese | null = await synthetiseer(c, o.client);
         if (!s) {
           await o.opslag.markeerVerwerkt(c.items.map((i) => i.url), null, "te_weinig_inhoud");
@@ -151,7 +153,7 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
           // Eén herkansing met de redenen erbij.
           try {
             const antw = await o.client.tekst({
-              model: modelSynthese(), system: SYSTEEM_SYNTHESE, maxTokens: 1400,
+              model: modelSynthese(), system: SYSTEEM_SYNTHESE, maxTokens: 2200,
               user: `${bouwInvoer(c)}\n\nJe vorige versie werd afgekeurd om deze redenen: ${uitslag.redenen.join("; ")}. Schrijf opnieuw en vermijd precies deze fouten.`,
             });
             const s2 = leesSynthese(antw);
@@ -193,7 +195,7 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
         noteer({ stap: "synthese_cluster", ok: false, fout: fout(e) });
       }
     }
-    Object.assign(aantallen, { gepubliceerd, geblokkeerd, concept, syntheseMislukt: mislukt, peilSignalen: signalenAantal });
+    Object.assign(aantallen, { gepubliceerd, geblokkeerd, concept, syntheseMislukt: mislukt, peilSignalen: signalenAantal, artikelenGelezen: artikelen });
     noteer({ stap: "synthese", ok: true, aantal: berichten.length, detail: { gepubliceerd, geblokkeerd, concept, mislukt } });
   } else {
     noteer({ stap: "synthese", ok: true, aantal: 0, detail: { reden: "geen kandidaten" } });

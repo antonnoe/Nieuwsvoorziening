@@ -43,6 +43,8 @@ export interface BronItem {
   gepubliceerdOp: string; // ISO
   opgehaaldOp?: string;
   prioriteit?: number;
+  /** Alleen in het geheugen tijdens de synthese; wordt nooit opgeslagen. */
+  artikelTekst?: string;
 }
 
 export interface Cluster {

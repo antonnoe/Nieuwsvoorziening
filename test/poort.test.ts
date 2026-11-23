@@ -73,3 +73,10 @@ test("blokkeert ook media die zelf onderwerp zijn (besluit 23-11-2026)", () => {
   assert.ok(u.redenen.some((r) => r.includes("france televisions")), u.redenen.join(";"));
   assert.ok(u.redenen.some((r) => r.includes("la tribune")), u.redenen.join(";"));
 });
+
+test("blokkeert letterlijk overgenomen tekst uit een artikel", () => {
+  const zin = "de prefectuur heeft alle wegen in het noorden van het departement afgesloten tot zaterdag";
+  const c2 = { ...cluster, items: cluster.items.map((i: any, k: number) => (k === 0 ? { ...i, artikelTekst: `Eerder vandaag meldde men dat ${zin}.` } : i)) };
+  const u = kwaliteitsPoort({ ...goed, tekst: `${goedeTekst} Ook ${zin}.` }, c2 as any, cfg);
+  assert.ok(u.redenen.some((r) => r.includes("letterlijk")), u.redenen.join(";"));
+});
