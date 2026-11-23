@@ -79,7 +79,7 @@ export interface PeilParameter {
   verificatiedatum?: string;
   bron_url?: string;
   tools?: { naam?: string; url?: string }[];
-  aangekondigd?: { omschrijving?: string } | null;
+  aangekondigd?: { datum?: string | null; omschrijving?: string } | null;
 }
 
 export interface PeilKoppeling {

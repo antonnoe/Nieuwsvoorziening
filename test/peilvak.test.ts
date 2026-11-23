@@ -27,3 +27,21 @@ test("PEIL-vak: hooguit één aankondiging per tool en geen knip na een afkortin
   assert.doesNotMatch(tekst, /art\.$/);
   assert.doesNotMatch(tekst, /art\. Nog/);
 });
+
+import { zinIsVeilig, hashOmschrijving } from "../lib/motor/lezerszin";
+
+test("leesbare zin: alleen getallen uit de PEIL-omschrijving", () => {
+  const om = "PLF 2027 art. 2 verhoogt de bovengrens van de tweede schijf van 29.579 naar 30.200 euro (inkomsten 2026)";
+  assert.ok(zinIsVeilig("De begroting voor 2027 verhoogt de grens van de tweede schijf van 29.579 naar 30.200 euro.", om));
+  assert.ok(!zinIsVeilig("De grens gaat naar 31.000 euro.", om));
+  assert.ok(!zinIsVeilig("", om));
+});
+
+test("PEIL-vak gebruikt de leesbare zin alleen als die bij de huidige omschrijving hoort", () => {
+  const p = { id: "x", naam: "X", aangekondigd: { datum: "2027-01-01", omschrijving: "PLF 2027 art. 2 technisch (raming)" } };
+  const goed = new Map([["x", { hash: hashOmschrijving(p.aangekondigd.omschrijving), zin: "De begroting voor 2027 verandert dit" }]]);
+  assert.equal(kiesAankondigingen([p], "2026-11-23", 4, goed).lijst[0].omschrijving, "De begroting voor 2027 verandert dit.");
+  assert.equal(kiesAankondigingen([p], "2026-11-23", 4, goed).lijst[0].voorlopig, true);
+  const oud = new Map([["x", { hash: "anders", zin: "Oude zin" }]]);
+  assert.match(kiesAankondigingen([p], "2026-11-23", 4, oud).lijst[0].omschrijving, /PLF 2027/);
+});

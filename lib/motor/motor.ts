@@ -13,6 +13,7 @@ import { kwaliteitsPoort } from "./poort";
 import { berekenScore, clusterRegime } from "./score";
 import { synthetiseer, SYSTEEM_SYNTHESE, bouwInvoer, leesSynthese } from "./synthese";
 import { verrijkMetArtikelen } from "./artikel";
+import { hashOmschrijving, maakLezerszin } from "./lezerszin";
 import { overlap, hashId } from "./tekst";
 import { dagStart } from "./tijd";
 import type { Bericht, Bron, Cluster, PeilParameter, StapResultaat, Synthese } from "./types";
@@ -219,6 +220,29 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
       } catch (e) {
         noteer({ stap: "beeld_aanvullen", ok: false, fout: fout(e) });
       }
+    }
+  }
+
+  // 6c. Leesbare zinnen voor de aangekondigde PEIL-wijzigingen (hooguit 20 nieuwe of gewijzigde per run).
+  if (o.client) {
+    try {
+      const parameters = o.peil ?? (await laadPeil(cfg.peilCacheMinuten, o.fetchFn));
+      const bestaand = await o.opslag.lezerszinnen();
+      let gemaakt = 0, afgekeurd = 0;
+      for (const p of parameters) {
+        const om = p.aangekondigd?.omschrijving;
+        if (!om) continue;
+        const h = hashOmschrijving(om);
+        if (bestaand.get(p.id)?.hash === h) continue;
+        if (gemaakt + afgekeurd >= 20) break;
+        const zin = await maakLezerszin(p.naam, om, o.client).catch(() => null);
+        if (zin) (await o.opslag.zetLezerszin(p.id, h, zin), (gemaakt += 1));
+        else afgekeurd += 1;
+      }
+      aantallen.lezerszinnen = gemaakt;
+      noteer({ stap: "peil_lezerszinnen", ok: true, aantal: gemaakt, detail: { afgekeurd } });
+    } catch (e) {
+      noteer({ stap: "peil_lezerszinnen", ok: false, fout: fout(e) });
     }
   }
 

@@ -1,6 +1,8 @@
 // Vak "Wat verandert er voor u": aangekondigde wijzigingen uit PEIL (besluit
 // 23-11-2026). Alleen lezen uit de openbare PEIL-export; faalt stil (geen vak).
 import { veiligeUrl } from "./site";
+import { leesOpslag } from "./motor/api";
+import { hashOmschrijving } from "./motor/lezerszin";
 
 const EXPORT = process.env.PEIL_URL || "https://communitiesabroad.com/manifest/peil-zoek.json";
 
@@ -32,11 +34,14 @@ export function netjes(omschrijving: string, max = 240): { tekst: string; voorlo
 }
 
 /** Kiest de eerstvolgende aankondigingen: met datum vanaf vandaag oplopend, daarna die zonder datum. */
-export function kiesAankondigingen(parameters: Ruw[], vandaag: string, max = 4): { lijst: Aankondiging[]; totaal: number } {
+export function kiesAankondigingen(parameters: Ruw[], vandaag: string, max = 4, zinnen: Map<string, { hash: string; zin: string }> = new Map()): { lijst: Aankondiging[]; totaal: number } {
   const alle = parameters.filter((p) => p && p.id && p.naam && p.aangekondigd && p.aangekondigd.omschrijving);
   const lijst = alle
     .map((p) => {
-      const { tekst, voorlopig } = netjes(p.aangekondigd!.omschrijving!);
+      const om = p.aangekondigd!.omschrijving!;
+      const { tekst: ruw, voorlopig } = netjes(om);
+      const z = zinnen.get(String(p.id));
+      const tekst = z && z.hash === hashOmschrijving(om) ? netjes(z.zin, 400).tekst : ruw;
       const datum = /^\d{4}-\d{2}-\d{2}$/.test(String(p.aangekondigd!.datum || "")) ? String(p.aangekondigd!.datum) : null;
       const tools = (p.tools || []).filter((t) => t && t.naam).map((t) => ({ naam: String(t.naam), url: t.url ? veiligeUrl(t.url) : null }));
       return { id: String(p.id), naam: String(p.naam), datum, omschrijving: tekst, voorlopig, tools };
@@ -62,7 +67,8 @@ export async function laadAankondigingen(max = 4): Promise<{ lijst: Aankondiging
     if (!r.ok) return { lijst: [], totaal: 0 };
     const d = (await r.json()) as { parameters?: Ruw[] };
     const vandaag = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Amsterdam" });
-    return kiesAankondigingen(Array.isArray(d.parameters) ? d.parameters : [], vandaag, max);
+    const zinnen = await leesOpslag()?.lezerszinnen().catch(() => undefined);
+    return kiesAankondigingen(Array.isArray(d.parameters) ? d.parameters : [], vandaag, max, zinnen);
   } catch {
     return { lijst: [], totaal: 0 };
   }

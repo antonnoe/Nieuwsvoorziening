@@ -41,6 +41,9 @@ export interface Opslag {
   /** Gepubliceerde berichten zonder beeld (nieuwste eerst), om alsnog een beeld te geven. */
   zonderBeeld(limiet: number): Promise<OpgeslagenBericht[]>;
   zetBeeld(id: string, url: string, credit: BeeldCredit | null): Promise<void>;
+  /** Leesbare zinnen per PEIL-parameter (met de hash van de omschrijving waaruit ze zijn gemaakt). */
+  lezerszinnen(): Promise<Map<string, { hash: string; zin: string }>>;
+  zetLezerszin(parameterId: string, hash: string, zin: string): Promise<void>;
   // lezen voor de API
   berichten(opt: { categorie?: string; limiet: number; offset?: number; peil?: boolean }): Promise<OpgeslagenBericht[]>;
   bericht(id: string): Promise<(OpgeslagenBericht & { signalen: { parameterId: string; status: string }[] }) | null>;
@@ -99,6 +102,13 @@ export class GeheugenOpslag implements Opslag {
   }
   async zonderBeeld(limiet: number) {
     return this.berichtenLijst.filter((b) => b.status === "gepubliceerd" && !b.beeldUrl).sort((a, b) => b.gepubliceerdOp.localeCompare(a.gepubliceerdOp)).slice(0, limiet);
+  }
+  zinnen = new Map<string, { hash: string; zin: string }>();
+  async lezerszinnen() {
+    return new Map(this.zinnen);
+  }
+  async zetLezerszin(id: string, hash: string, zin: string) {
+    this.zinnen.set(id, { hash, zin });
   }
   async zetBeeld(id: string, url: string, credit: BeeldCredit | null) {
     const b = this.berichtenLijst.find((x) => x.id === id);
@@ -247,6 +257,16 @@ export class SupabaseOpslag implements Opslag {
   async zonderBeeld(limiet: number) {
     const rijen = await this.lees(`nv_berichten?status=eq.gepubliceerd&beeld_url=is.null&order=gepubliceerd_op.desc&limit=${limiet}&select=*,nv_bronnen_per_bericht(*)`);
     return rijen.map(naarBericht);
+  }
+  async lezerszinnen() {
+    const rijen = await this.lees("nv_peil_lezerszin?select=parameter_id,bron_hash,zin&limit=2000");
+    return new Map(rijen.map((r) => [String(r.parameter_id), { hash: String(r.bron_hash), zin: String(r.zin) }]));
+  }
+  async zetLezerszin(id: string, hash: string, zin: string) {
+    await this.vraag("nv_peil_lezerszin?on_conflict=parameter_id", {
+      method: "POST", prefer: "resolution=merge-duplicates,return=minimal",
+      body: JSON.stringify({ parameter_id: id, bron_hash: hash, zin, model: process.env.NIEUWS_MODEL_GOEDKOOP || null, aangemaakt_op: new Date().toISOString() }),
+    });
   }
   async zetBeeld(id: string, url: string, credit: BeeldCredit | null) {
     if (!/^[0-9a-f-]{36}$/i.test(id)) return;
