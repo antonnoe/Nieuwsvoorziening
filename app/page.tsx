@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Kaart from "./_componenten/Kaart";
 import Kop from "./_componenten/Kop";
+import PeilVak from "./_componenten/PeilVak";
+import { laadAankondigingen } from "@/lib/peilvak";
 import { CATEGORIEEN } from "@/lib/motor/types";
 import { CATEGORIE_KNOP, CATEGORIE_VOL, categorieSlug, datumMetDag, laadStatus, laadVoorpagina, slugNaarCategorie } from "@/lib/site";
 
@@ -37,7 +39,8 @@ export default async function Voorpagina({ searchParams }: { searchParams: SP })
   const categorie = slugNaarCategorie(sp.categorie);
   const peil = sp.peil === "1";
   const pagina = Math.max(1, Math.min(200, Number(sp.pagina) || 1));
-  const [data, status] = await Promise.all([laadVoorpagina({ categorie, peil, pagina }), laadStatus()]);
+  const toonPeilVak = pagina === 1 && !categorie;
+  const [data, status, aankondigingen] = await Promise.all([laadVoorpagina({ categorie, peil, pagina }), laadStatus(), toonPeilVak ? laadAankondigingen(4) : Promise.resolve({ lijst: [], totaal: 0 })]);
   const filterActief = Boolean(categorie || peil);
   const leeg = !data.uitgelicht && data.kaarten.length === 0;
   const catSlug = categorie ? categorieSlug(categorie) : undefined;
@@ -67,6 +70,8 @@ export default async function Voorpagina({ searchParams }: { searchParams: SP })
           ))}
           <a className="pil geld" href={peil ? "/" : href({ peil: true })} aria-pressed={peil}>€ Raakt uw portemonnee</a>
         </nav>
+
+        <PeilVak lijst={aankondigingen.lijst} totaal={aankondigingen.totaal} />
 
         {leeg ? (
           <div className="leeg" role="status">

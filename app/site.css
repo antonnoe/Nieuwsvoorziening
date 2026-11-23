@@ -35,3 +35,17 @@ a:focus-visible { outline: 3px solid var(--maroon); outline-offset: 2px; border-
 /* er is geen bijschrift: de ruimte die de schets daar geeft komt onder het beeld */
 .art .groot { margin-bottom: 30px; }
 @media (max-width: 720px) { .art .groot { margin-bottom: 22px; } }
+
+/* vak "Wat verandert er voor u" (aangekondigde wijzigingen uit PEIL) */
+.peilvak { background: var(--groenzacht); border: 1px solid var(--lijn); border-left: 4px solid var(--groen); border-radius: 8px; padding: 20px 22px; margin: 20px 0 28px; }
+.peilvak .peilkop { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; margin-bottom: 10px; }
+.peilvak h2 { font-size: 22px; margin: 0; }
+.peilvak .peilkop span { color: var(--grijs); font-size: 14px; }
+.peilvak a { color: var(--groen); font-weight: 700; }
+.peilvak ol { list-style: none; margin: 0 0 14px; padding: 0; }
+.peilvak li { display: grid; grid-template-columns: 110px 1fr; gap: 12px; padding: 12px 0; border-top: 1px solid var(--lijn); }
+.peilvak time { font-weight: 700; color: var(--groen); font-size: 14px; }
+.peilvak b { display: block; }
+.peilvak p { margin: 2px 0; font-size: 15px; }
+.peilvak small { color: var(--grijs); }
+@media (max-width: 600px) { .peilvak li { grid-template-columns: 1fr; gap: 2px; } }
