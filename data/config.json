@@ -1,0 +1,19 @@
+{
+  "_uitleg": "Instelbare drempels van de nieuwsmotor. Wijzigen hier, niet in de code.",
+  "publiceerDrempel": 55,
+  "venstersUren": 36,
+  "minBronnenPers": 2,
+  "voorkeurBronnenPers": 3,
+  "minBronnenOverheid": 1,
+  "maxItemsPerBron": 25,
+  "maxSynthesesPerRun": 6,
+  "maxBerichtenPerDag": 20,
+  "richtgetalPerDag": "10 tot 20",
+  "maxClusterItems": 150,
+  "ruweItemsBewaarDagen": 30,
+  "peilCacheMinuten": 360,
+  "peilKandidatenPerBericht": 6,
+  "minTekstTekens": 280,
+  "minKopTekens": 15,
+  "minSamenvattingTekens": 40
+}
