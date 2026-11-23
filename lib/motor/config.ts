@@ -23,7 +23,7 @@ export interface MotorConfig {
 
 const STANDAARD: MotorConfig = {
   publiceerDrempel: 55,
-  minRelevantie: 50,
+  minRelevantie: 60,
   venstersUren: 36,
   minBronnenPers: 2,
   voorkeurBronnenPers: 3,

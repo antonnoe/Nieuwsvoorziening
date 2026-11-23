@@ -17,7 +17,19 @@ export type BeeldInvoer = Pick<Bericht, "kop" | "samenvatting" | "categorie"> & 
   zoekterm?: string;
   /** Goedkoop model voor de pasvorm-keuze. Zonder client geen Unsplash-zoekfoto, alleen de terugval. */
   client?: ModelClient | null;
+  /** Al gebruikte foto's (zie `fotoSleutel`); een foto uit deze set wordt nooit nog eens gekozen. De generator voegt de gekozen foto zelf toe. */
+  vermijd?: Set<string>;
 };
+
+/** Sleutel van een foto-url: host en pad (het foto-id zit in het pad), zonder queryparameters, zodat een lichtere of oudere url van dezelfde foto herkend wordt. */
+export function fotoSleutel(u: string): string {
+  try {
+    const x = new URL(u);
+    return `${x.host}${x.pathname}`;
+  } catch {
+    return String(u || "").split("?")[0];
+  }
+}
 
 export interface BeeldGenerator {
   naam: string;

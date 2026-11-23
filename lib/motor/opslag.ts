@@ -41,6 +41,8 @@ export interface Opslag {
   /** Gepubliceerde berichten zonder beeld (nieuwste eerst), om alsnog een beeld te geven. */
   zonderBeeld(limiet: number): Promise<OpgeslagenBericht[]>;
   zetBeeld(id: string, url: string, credit: BeeldCredit | null): Promise<void>;
+  /** beeld_url's van de nieuwste gepubliceerde berichten (nieuwste eerst), zodat geen foto twee keer wordt gebruikt. */
+  recenteBeeldUrls(limiet: number): Promise<string[]>;
   /** Leesbare zinnen per PEIL-parameter (met de hash van de omschrijving waaruit ze zijn gemaakt). */
   lezerszinnen(): Promise<Map<string, { hash: string; zin: string }>>;
   zetLezerszin(parameterId: string, hash: string, zin: string): Promise<void>;
@@ -48,7 +50,7 @@ export interface Opslag {
   berichten(opt: { categorie?: string; limiet: number; offset?: number; peil?: boolean }): Promise<OpgeslagenBericht[]>;
   bericht(id: string): Promise<(OpgeslagenBericht & { signalen: { parameterId: string; status: string }[] }) | null>;
   tellingenSinds(sindsIso: string): Promise<Record<string, number>>;
-  aantallen(): Promise<{ berichtenTotaal: number; gepubliceerdVandaag: number; openItems: number; signalenGesignaleerd: number }>;
+  aantallen(): Promise<{ berichtenTotaal: number; gepubliceerdTotaal: number; gepubliceerdVandaag: number; openItems: number; signalenGesignaleerd: number }>;
 }
 
 // ---- Geheugen -----------------------------------------------------------------
@@ -103,6 +105,9 @@ export class GeheugenOpslag implements Opslag {
   async zonderBeeld(limiet: number) {
     return this.berichtenLijst.filter((b) => b.status === "gepubliceerd" && !b.beeldUrl).sort((a, b) => b.gepubliceerdOp.localeCompare(a.gepubliceerdOp)).slice(0, limiet);
   }
+  async recenteBeeldUrls(limiet: number) {
+    return this.berichtenLijst.filter((b) => b.status === "gepubliceerd" && b.beeldUrl).sort((a, b) => b.gepubliceerdOp.localeCompare(a.gepubliceerdOp)).slice(0, limiet).map((b) => b.beeldUrl!);
+  }
   zinnen = new Map<string, { hash: string; zin: string }>();
   async lezerszinnen() {
     return new Map(this.zinnen);
@@ -116,7 +121,7 @@ export class GeheugenOpslag implements Opslag {
   }
   async berichten({ categorie, limiet, offset = 0, peil }: { categorie?: string; limiet: number; offset?: number; peil?: boolean }) {
     return this.berichtenLijst
-      .filter((b) => b.status === "gepubliceerd" && (!categorie || b.categorie === categorie) && (!peil || b.peil.raakt.length > 0))
+      .filter((b) => b.status === "gepubliceerd" && (!categorie || b.categorie === categorie) && (!peil || b.peil.raakt.length > 0 || b.portemonnee === true))
       .sort((a, b) => b.gepubliceerdOp.localeCompare(a.gepubliceerdOp))
       .slice(offset, offset + limiet);
   }
@@ -132,6 +137,7 @@ export class GeheugenOpslag implements Opslag {
   async aantallen() {
     return {
       berichtenTotaal: this.berichtenLijst.length,
+      gepubliceerdTotaal: this.berichtenLijst.filter((b) => b.status === "gepubliceerd").length,
       gepubliceerdVandaag: await this.telGepubliceerdSinds(dagStart()),
       openItems: [...this.items.values()].filter((i) => !i.verwerkt).length,
       signalenGesignaleerd: this.signalen.length,
@@ -214,7 +220,7 @@ export class SupabaseOpslag implements Opslag {
       method: "POST", prefer: "resolution=merge-duplicates,return=representation",
       body: JSON.stringify({
         sleutel: b.sleutel, kop: b.kop, samenvatting: b.samenvatting, tekst: b.tekst, categorie: b.categorie, score: b.score, regime: b.regime,
-        status: b.status, blokkade_redenen: b.blokkadeRedenen, beeld_url: b.beeldUrl, beeld_credit: b.beeldCredit ?? null, peil_raakt: b.peil.raakt, peil_mogelijk_gewijzigd: b.peil.mogelijkGewijzigd,
+        status: b.status, blokkade_redenen: b.blokkadeRedenen, beeld_url: b.beeldUrl, beeld_credit: b.beeldCredit ?? null, portemonnee: b.portemonnee === true, peil_raakt: b.peil.raakt, peil_mogelijk_gewijzigd: b.peil.mogelijkGewijzigd,
         model: process.env.NIEUWS_MODEL_SYNTHESE || null, gepubliceerd_op: b.gepubliceerdOp,
       }),
     });
@@ -258,6 +264,10 @@ export class SupabaseOpslag implements Opslag {
     const rijen = await this.lees(`nv_berichten?status=eq.gepubliceerd&beeld_url=is.null&order=gepubliceerd_op.desc&limit=${limiet}&select=*,nv_bronnen_per_bericht(*)`);
     return rijen.map(naarBericht);
   }
+  async recenteBeeldUrls(limiet: number) {
+    const rijen = await this.lees(`nv_berichten?status=eq.gepubliceerd&beeld_url=not.is.null&order=gepubliceerd_op.desc&limit=${limiet}&select=beeld_url`);
+    return rijen.map((r) => String(r.beeld_url));
+  }
   async lezerszinnen() {
     const rijen = await this.lees("nv_peil_lezerszin?select=parameter_id,bron_hash,zin&limit=2000");
     return new Map(rijen.map((r) => [String(r.parameter_id), { hash: String(r.bron_hash), zin: String(r.zin) }]));
@@ -273,7 +283,7 @@ export class SupabaseOpslag implements Opslag {
     await this.vraag(`nv_berichten?id=eq.${id}`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ beeld_url: url, beeld_credit: credit }) });
   }
   async berichten({ categorie, limiet, offset = 0, peil }: { categorie?: string; limiet: number; offset?: number; peil?: boolean }) {
-    const filter = (categorie ? `&categorie=eq.${encodeURIComponent(categorie)}` : "") + (peil ? `&peil_raakt=neq.${encodeURIComponent("[]")}` : "");
+    const filter = (categorie ? `&categorie=eq.${encodeURIComponent(categorie)}` : "") + (peil ? `&or=${encodeURIComponent("(peil_raakt.neq.[],portemonnee.eq.true)")}` : "");
     const rijen = await this.lees(`nv_berichten?status=eq.gepubliceerd${filter}&order=gepubliceerd_op.desc&limit=${limiet}&offset=${offset}&select=*,nv_bronnen_per_bericht(*)`);
     return rijen.map(naarBericht);
   }
@@ -291,13 +301,14 @@ export class SupabaseOpslag implements Opslag {
     return t;
   }
   async aantallen() {
-    const [berichtenTotaal, gepubliceerdVandaag, openItems, signalenGesignaleerd] = await Promise.all([
+    const [berichtenTotaal, gepubliceerdTotaal, gepubliceerdVandaag, openItems, signalenGesignaleerd] = await Promise.all([
       this.tel("nv_berichten?select=id"),
+      this.tel("nv_berichten?status=eq.gepubliceerd&select=id"),
       this.telGepubliceerdSinds(dagStart()),
       this.tel("nv_bron_items?verwerkt_op=is.null&select=id"),
       this.tel("nv_peil_signalen?status=eq.gesignaleerd&select=id"),
     ]);
-    return { berichtenTotaal, gepubliceerdVandaag, openItems, signalenGesignaleerd };
+    return { berichtenTotaal, gepubliceerdTotaal, gepubliceerdVandaag, openItems, signalenGesignaleerd };
   }
 }
 
@@ -317,7 +328,7 @@ function naarBericht(r: Rij): OpgeslagenBericht {
   return {
     id: String(r.id), kop: String(r.kop), samenvatting: String(r.samenvatting || ""), tekst: String(r.tekst || ""), categorie: r.categorie as OpgeslagenBericht["categorie"],
     score: Number(r.score), regime: r.regime as OpgeslagenBericht["regime"], status: r.status as OpgeslagenBericht["status"],
-    blokkadeRedenen: (r.blokkade_redenen as string[]) || [], beeldUrl: (r.beeld_url as string) || null, beeldCredit: (r.beeld_credit as OpgeslagenBericht["beeldCredit"]) || null, peil, bronnen, gepubliceerdOp: String(r.gepubliceerd_op),
+    blokkadeRedenen: (r.blokkade_redenen as string[]) || [], beeldUrl: (r.beeld_url as string) || null, beeldCredit: (r.beeld_credit as OpgeslagenBericht["beeldCredit"]) || null, portemonnee: r.portemonnee === true, peil, bronnen, gepubliceerdOp: String(r.gepubliceerd_op),
   };
 }
 

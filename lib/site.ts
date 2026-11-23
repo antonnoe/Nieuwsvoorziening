@@ -1,5 +1,6 @@
 // Hulpjes voor de publieke pagina's: lezen uit de opslag (server-side), opmaak van datums, categorielabels.
 import { leesOpslag } from "./motor/api";
+import type { Opslag } from "./motor/opslag";
 import { dagStart } from "./motor/tijd";
 import { CATEGORIEEN, type Categorie } from "./motor/types";
 import type { OpgeslagenBericht } from "./motor/opslag";
@@ -56,8 +57,8 @@ export interface Voorpagina {
   fout: boolean;
 }
 /** Pagina 1: 1 uitgelicht + 12 kaarten; daarna 12 kaarten per pagina. */
-export async function laadVoorpagina(opt: { categorie?: Categorie; peil?: boolean; pagina: number }): Promise<Voorpagina> {
-  const opslag = leesOpslag();
+export async function laadVoorpagina(opt: { categorie?: Categorie; peil?: boolean; pagina: number; opslag?: Opslag | null }): Promise<Voorpagina> {
+  const opslag = opt.opslag === undefined ? leesOpslag() : opt.opslag;
   if (!opslag) return { uitgelicht: null, kaarten: [], meer: false, fout: true };
   const eerste = opt.pagina <= 1;
   const offset = eerste ? 0 : 1 + PAGINA_GROOTTE * (opt.pagina - 1);
@@ -113,15 +114,41 @@ export function veiligeUrl(u: string): string | null {
   }
 }
 
-/** Drie verwante berichten voor "Verder lezen": eerst dezelfde categorie, daarna de nieuwste. */
-export async function laadVerwant(b: { id: string; categorie: Categorie }): Promise<OpgeslagenBericht[]> {
-  const opslag = leesOpslag();
+/**
+ * Categorieën met minstens één gepubliceerd bericht in de laatste 30 dagen, of null als de telling mislukt
+ * (dan toont de pagina alle knoppen).
+ */
+export async function laadActieveCategorieen(opslagIn?: Opslag | null, nu = Date.now()): Promise<Set<string> | null> {
+  const opslag = opslagIn === undefined ? leesOpslag() : opslagIn;
+  if (!opslag) return null;
+  try {
+    const t = await opslag.tellingenSinds(new Date(nu - 30 * 86400_000).toISOString());
+    return new Set(Object.entries(t).filter(([, n]) => n > 0).map(([c]) => c));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Drie verwante berichten voor "Verder lezen", nooit het bericht zelf: eerst dezelfde categorie, dan berichten die
+ * dezelfde PEIL-parameter raken, en bij te weinig de nieuwste andere berichten.
+ */
+export async function laadVerwant(b: { id: string; categorie: Categorie; peil?: { raakt: { id: string }[] } }, opslagIn?: Opslag | null): Promise<OpgeslagenBericht[]> {
+  const opslag = opslagIn === undefined ? leesOpslag() : opslagIn;
   if (!opslag) return [];
   try {
-    const zelfde = (await opslag.berichten({ categorie: b.categorie, limiet: 4 })).filter((x) => x.id !== b.id);
-    if (zelfde.length >= 3) return zelfde.slice(0, 3);
-    const rest = (await opslag.berichten({ limiet: 6 })).filter((x) => x.id !== b.id && !zelfde.some((z) => z.id === x.id));
-    return [...zelfde, ...rest].slice(0, 3);
+    const uit: OpgeslagenBericht[] = [];
+    const voeg = (lijst: OpgeslagenBericht[]) => {
+      for (const x of lijst) if (uit.length < 3 && x.id !== b.id && !uit.some((u) => u.id === x.id)) uit.push(x);
+    };
+    voeg(await opslag.berichten({ categorie: b.categorie, limiet: 6 }));
+    const ids = new Set((b.peil?.raakt || []).map((p) => p.id));
+    if (uit.length < 3 && ids.size) {
+      const metPeil = await opslag.berichten({ peil: true, limiet: 30 });
+      voeg(metPeil.filter((x) => x.peil.raakt.some((p) => ids.has(p.id))));
+    }
+    if (uit.length < 3) voeg(await opslag.berichten({ limiet: 8 }));
+    return uit;
   } catch {
     return [];
   }

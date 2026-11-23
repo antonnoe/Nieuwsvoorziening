@@ -29,7 +29,7 @@ test("pasvorm boven de drempel: de gekozen zoekfoto, met download-melding en bro
   const { f, log } = nepUnsplash({ zoek: [[mk("a1", "a flooded street"), mk("a2", "a lighthouse")]] });
   const g = maakUnsplashGenerator(f, () => "test");
   const r = await beeldResultaat({ ...invoer, zoektermen: ["flooded street", "heavy rain river"], client: modelMet('{"keuze":1,"cijfer":8}') }, g);
-  assert.equal(r?.url, "https://images.unsplash.com/a1");
+  assert.equal(r?.url, "https://images.unsplash.com/a1?w=1200&q=75");
   assert.equal(r?.credit?.maker, "Marie Dupont");
   assert.match(String(r?.credit?.makerUrl), /utm_source=nieuwsvoorziening/);
   assert.ok(log.some((u) => u.includes("query=flooded+street")));
@@ -43,8 +43,8 @@ test("pasvorm onder de drempel: alle termen geprobeerd, dan vaste terugval (geen
   const r = await beeldResultaat({ ...invoer, zoektermen: ["flooded street", "heavy rain river", "wet road"], client: modelMet('{"keuze":1,"cijfer":3}') }, g);
   const ids = TERUGVAL["natuur en rampen"].map((t) => t.id);
   assert.ok(r, "er is een terugval");
-  assert.ok(ids.some((id) => r!.url.endsWith(id)), "terugvalfoto uit het vaste bestand");
-  assert.ok(!r!.url.endsWith("x1"));
+  assert.ok(ids.some((id) => r!.url.split("?")[0].endsWith(id)), "terugvalfoto uit het vaste bestand");
+  assert.ok(!r!.url.split("?")[0].endsWith("x1"));
   assert.equal(log.filter((u) => u.includes("/search/photos")).length, 3);
   assert.ok(log.some((u) => /\/photos\/[^/]+$/.test(u)), "terugvalfoto via GET /photos/:id");
   assert.ok(log.some((u) => u.endsWith("/download")), "download-melding bij de terugval");
@@ -53,13 +53,13 @@ test("pasvorm onder de drempel: alle termen geprobeerd, dan vaste terugval (geen
 test("zonder model geen oordeel: terugval in plaats van een gok", async () => {
   const { f } = nepUnsplash({ zoek: [[mk("x1", "flooded street")]] });
   const r = await beeldResultaat({ ...invoer, zoektermen: ["flooded street"], client: null }, maakUnsplashGenerator(f, () => "test"));
-  assert.ok(r && !r.url.endsWith("x1"));
+  assert.ok(r && !r.url.split("?")[0].endsWith("x1"));
 });
 
 test("onleesbaar modelantwoord telt als 'past niet'", async () => {
   const { f } = nepUnsplash({ zoek: [[mk("x1", "flooded street")]] });
   const r = await beeldResultaat({ ...invoer, zoektermen: ["flooded street"], client: modelMet("geen idee") }, maakUnsplashGenerator(f, () => "test"));
-  assert.ok(r && !r.url.endsWith("x1"));
+  assert.ok(r && !r.url.split("?")[0].endsWith("x1"));
 });
 
 test("geen sleutel: geen beeld en geen enkele aanvraag", async () => {
@@ -110,4 +110,24 @@ test("terugvalbestand: elke categorie heeft foto's, ids uniek per categorie", ()
     assert.ok(l.length >= 2, c);
     assert.equal(new Set(l.map((t) => t.id)).size, l.length);
   }
+});
+
+test("lichte url: breedte 1200 en kwaliteit 75, bestaande parameters worden vervangen", async () => {
+  const { lichteUrl } = await import("../lib/motor/beeld-unsplash");
+  const u = new URL(lichteUrl("https://images.unsplash.com/photo-1?ixid=abc&q=80&w=1080"));
+  assert.equal(u.searchParams.get("w"), "1200");
+  assert.equal(u.searchParams.get("q"), "75");
+  assert.equal(u.searchParams.getAll("w").length, 1);
+  assert.equal(u.searchParams.get("ixid"), "abc");
+});
+
+test("nooit dezelfde foto twee keer: een al gebruikte foto wordt overgeslagen, ook de terugval, en de gekozen foto komt in de set", async () => {
+  const { fotoSleutel } = await import("../lib/motor/beeld");
+  const { f } = nepUnsplash({ zoek: [[mk("a1", "a flooded street"), mk("a2", "a flooded road")]] });
+  const vermijd = new Set<string>([fotoSleutel("https://images.unsplash.com/a1?w=800&q=60")]);
+  const r = await beeldResultaat({ ...invoer, zoektermen: ["flooded street"], client: modelMet('{"keuze":1,"cijfer":9}'), vermijd }, maakUnsplashGenerator(f, () => "test"));
+  assert.ok(r && r.url.split("?")[0].endsWith("a2"), "a1 is al gebruikt, dus a2");
+  assert.ok(vermijd.has(fotoSleutel(r!.url)));
+  const tweede = await beeldResultaat({ ...invoer, zoektermen: ["flooded street"], client: modelMet('{"keuze":1,"cijfer":9}'), vermijd }, maakUnsplashGenerator(nepUnsplash({ zoek: [[mk("a1", "x"), mk("a2", "y")]] }).f, () => "test"));
+  assert.ok(!tweede || !/\/a[12]$/.test(tweede.url.split("?")[0]), "geen van beide foto's nog eens");
 });

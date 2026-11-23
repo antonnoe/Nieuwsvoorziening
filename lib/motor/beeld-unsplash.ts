@@ -9,7 +9,7 @@
 // gebruik, fotograaf en Unsplash met link vermelden. De sleutel verlaat de server nooit.
 // Limiet (demomodus 50 per uur): per run hooguit MAX_AANVRAGEN_PER_RUN aanvragen
 // (zoeken, foto ophalen, download-melding); bij 403 of 429 stopt de run met Unsplash.
-import { registreerGenerator, noemtPersoon, schoneZoektermen, type BeeldGenerator, type BeeldInvoer } from "./beeld";
+import { registreerGenerator, noemtPersoon, fotoSleutel, schoneZoektermen, type BeeldGenerator, type BeeldInvoer } from "./beeld";
 import { TERUGVAL } from "./beeld-terugval";
 import { haalJson } from "./ai";
 import { modelGoedkoop } from "./config";
@@ -30,6 +30,18 @@ type Foto = {
 };
 
 class LimietBereikt extends Error {}
+
+/** Lichtere versie van de foto: breedte 1200 en kwaliteit 75 (bestaande parameters worden vervangen, niet verdubbeld). */
+export function lichteUrl(u: string): string {
+  try {
+    const x = new URL(u);
+    x.searchParams.set("w", "1200");
+    x.searchParams.set("q", "75");
+    return x.toString();
+  } catch {
+    return u;
+  }
+}
 
 const SYSTEEM_PASVORM = `Je kiest een nieuwsfoto. Je krijgt een nieuwsbericht (kop en samenvatting) en genummerde foto's met een korte beschrijving. Geef de foto die zichtbaar bij het onderwerp past en een cijfer 0 tot 10 voor de pasvorm.
 Wees streng: 8 tot 10 = toont het onderwerp zelf (bij een overstroming een onder water staande straat); 6 tot 7 = past duidelijk bij het soort situatie of de plek; 0 tot 5 = andere plek, ander onderwerp, herkenbaar oriëntatiepunt van een andere streek, sfeerbeeld zonder verband, of een persoon. Twijfel je, geef dan een laag cijfer: liever geen foto dan een misleidende.
@@ -102,7 +114,14 @@ export function maakUnsplashGenerator(fetchFn: typeof fetch = fetch, sleutel = (
       makerUrl: `${foto.user?.links?.html || "https://unsplash.com"}?${UTM}`,
       bronUrl: `https://unsplash.com/?${UTM}`,
     };
-    return { url: String(foto.urls!.regular), credit };
+    return { url: lichteUrl(String(foto.urls!.regular)), credit };
+  }
+
+  const gebruikt = (b: BeeldInvoer, f: Foto) => Boolean(b.vermijd?.has(fotoSleutel(String(f.urls?.regular || ""))));
+  async function gekozen(b: BeeldInvoer, f: Foto) {
+    const r = await gebruik(f);
+    b.vermijd?.add(fotoSleutel(r.url));
+    return r;
   }
 
   return {
@@ -118,9 +137,9 @@ export function maakUnsplashGenerator(fetchFn: typeof fetch = fetch, sleutel = (
       try {
         const termen = schoneZoektermen([...(b.zoektermen || []), ...(b.zoekterm ? [b.zoekterm] : [])]).slice(0, MAX_ZOEKTERMEN);
         for (const term of termen) {
-          const kandidaten = await zoek(term);
+          const kandidaten = (await zoek(term)).filter((f) => !gebruikt(b, f));
           const keuze = await beoordeel(b, kandidaten);
-          if (keuze && keuze.cijfer >= PASVORM_DREMPEL) return await gebruik(keuze.foto);
+          if (keuze && keuze.cijfer >= PASVORM_DREMPEL) return await gekozen(b, keuze.foto);
         }
         // Niets past: vaste, neutrale terugval per categorie (afwisselend op de kop).
         const lijst = TERUGVAL[b.categorie] || TERUGVAL.algemeen;
@@ -128,7 +147,7 @@ export function maakUnsplashGenerator(fetchFn: typeof fetch = fetch, sleutel = (
         for (const ch of b.kop) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
         for (let i = 0; i < lijst.length; i++) {
           const foto = await haalFoto(lijst[(h + i) % lijst.length].id);
-          if (foto) return await gebruik(foto);
+          if (foto && !gebruikt(b, foto)) return await gekozen(b, foto);
         }
         return null;
       } catch (e) {

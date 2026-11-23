@@ -30,7 +30,7 @@ export default async function BerichtPagina({ params }: { params: P }) {
   const b = await laadBericht(id);
   if (!b) notFound();
   const alinea = b.tekst.split(/\n{2,}|\n/).map((x) => x.trim()).filter(Boolean);
-  const verwant = await laadVerwant(b);
+  const verwant = await laadVerwant({ id: b.id, categorie: b.categorie, peil: b.peil });
   const melding = `mailto:info@nederlanders.fr?subject=${encodeURIComponent(`Fout in bericht: ${b.kop}`)}`;
   const delen = `mailto:?subject=${encodeURIComponent(b.kop)}&body=${encodeURIComponent(`${BASIS_URL}/bericht/${b.id}`)}`;
   return (

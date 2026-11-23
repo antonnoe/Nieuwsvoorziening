@@ -30,7 +30,7 @@ export default function PeilVak({ lijst, totaal }: { lijst: Aankondiging[]; tota
               )}
               {a.tools.length > 0 && (
                 <small>
-                  Rekent mee in:{" "}
+                  Reken het uit met:{" "}
                   {a.tools.map((t, i) => (
                     <span key={t.naam}>{i > 0 && ", "}{t.url ? <a href={t.url}>{t.naam}</a> : t.naam}</span>
                   ))}

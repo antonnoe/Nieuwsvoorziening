@@ -8,7 +8,7 @@ import type { MotorConfig } from "./config";
 export const META_ZINNEN = [
   "ik kreeg", "de tekst die ik", "beschikbare tekst", "is afgekapt", "het bericht noemt", "ik heb alleen", "geen details over",
   "de aangeleverde", "aangeleverde bron", "de bronnen die ik", "ik heb geen", "ik kan niet", "als ai", "als taalmodel",
-  "in de bron staat niet", "niet vermeld in de bron", "de koppen die", "bron 1", "bron 2", "bron 3", "publiceren=",
+  "in de bron staat niet", "volgens de bronnen", "volgens de bron", "niet vermeld in de bron", "de koppen die", "bron 1", "bron 2", "bron 3", "publiceren=",
 ];
 
 /** Namen van kranten, omroepen en persbureaus die nooit in kop of tekst horen. */
@@ -85,6 +85,9 @@ export function kwaliteitsPoort(s: Synthese, c: Cluster | null, cfg: Pick<MotorC
   if (kop.trim().length < cfg.minKopTekens) redenen.push("kop te kort of leeg");
   if (samenvatting.trim().length < cfg.minSamenvattingTekens) redenen.push("samenvatting te kort of leeg");
   if (tekst.trim().length < cfg.minTekstTekens) redenen.push("tekst te kort of leeg");
+
+  const woorden = tekst.split(/\s+/).filter(Boolean).length;
+  if (woorden > 120 && tekst.split(/\n\s*\n/).filter((a) => a.trim()).length < 2) redenen.push("tekst van meer dan 120 woorden heeft minstens twee alinea's (lege regel ertussen)");
 
   const alles = normaliseer(`${kop}\n${samenvatting}\n${tekst}`);
   for (const z of META_ZINNEN) if (alles.includes(normaliseer(z))) redenen.push(`model praat over invoer: "${z}"`);

@@ -2,7 +2,7 @@
 // 23-11-2026). Alleen lezen uit de openbare PEIL-export; faalt stil (geen vak).
 import { veiligeUrl } from "./site";
 import { leesOpslag } from "./motor/api";
-import { hashOmschrijving } from "./motor/lezerszin";
+import { GEEN_ZIN, hashOmschrijving } from "./motor/lezerszin";
 
 const EXPORT = process.env.PEIL_URL || "https://communitiesabroad.com/manifest/peil-zoek.json";
 
@@ -48,15 +48,17 @@ export function netjes(omschrijving: string, max = 240): { tekst: string; voorlo
 export function kiesAankondigingen(parameters: Ruw[], vandaag: string, max = 4, zinnen: Map<string, { hash: string; zin: string }> = new Map(), nieuws: NieuwsPerParameter = new Map()): { lijst: Aankondiging[]; totaal: number } {
   const alle = parameters.filter((p) => p && p.id && p.naam && p.aangekondigd && p.aangekondigd.omschrijving);
   const lijst = alle
-    .map((p) => {
+    .flatMap((p): Aankondiging[] => {
       const om = p.aangekondigd!.omschrijving!;
-      const { tekst: ruw, voorlopig } = netjes(om);
+      const { voorlopig } = netjes(om);
+      // Alleen een geldige leesbare zin die bij de huidige omschrijving hoort; nooit de ruwe PEIL-tekst, nooit "GEEN".
       const z = zinnen.get(String(p.id));
-      const tekst = z && z.hash === hashOmschrijving(om) ? netjes(z.zin, 400).tekst : ruw;
+      if (!z || z.hash !== hashOmschrijving(om) || !z.zin || z.zin.trim().toUpperCase() === GEEN_ZIN) return [];
+      const tekst = netjes(z.zin, 400).tekst;
       const datum = /^\d{4}-\d{2}-\d{2}$/.test(String(p.aangekondigd!.datum || "")) ? String(p.aangekondigd!.datum) : null;
       const tools = (p.tools || []).filter((t) => t && t.naam).map((t) => ({ naam: String(t.naam), url: t.url ? veiligeUrl(t.url) : null }));
       const inDiscussie = datum === null && DISCUSSIE.test(om);
-      return { id: String(p.id), naam: String(p.naam), datum, omschrijving: tekst, voorlopig: voorlopig || inDiscussie, tools, nieuws: (nieuws.get(String(p.id)) || []).slice(0, 2), inDiscussie };
+      return [{ id: String(p.id), naam: String(p.naam), datum, omschrijving: tekst, voorlopig: voorlopig || inDiscussie, tools, nieuws: (nieuws.get(String(p.id)) || []).slice(0, 2), inDiscussie }];
     })
     .filter((a) => a.omschrijving && (a.datum === null || a.datum >= vandaag));
   const rang = (a: Aankondiging) => (a.nieuws.length ? 0 : a.inDiscussie ? 1 : a.datum ? 2 : 3);

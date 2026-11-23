@@ -65,6 +65,8 @@ export interface Synthese {
   tekst: string;
   categorie: Categorie;
   relevantie: number; // 0..100, oordeel van het model voor de lezer
+  /** Concreet financieel gevolg voor de lezer (prijzen, belasting, uitkering, premies, kosten). */
+  portemonnee?: boolean;
   /** Engelse zoekterm voor een foto (2 tot 4 woorden, een plek of situatie, geen personen). */
   beeldZoekterm?: string;
   /** Tot 3 Engelse zoektermen van specifiek naar algemeen. */
@@ -102,6 +104,8 @@ export interface Bericht {
   beeldUrl: string | null;
   beeldCredit?: BeeldCredit | null;
   peil: PeilKoppeling;
+  /** Raakt de portemonnee van de lezer (filter "€ Raakt uw portemonnee", naast de PEIL-koppeling). */
+  portemonnee?: boolean;
   bronnen: BerichtBron[];
   gepubliceerdOp: string;
   sleutel: string;

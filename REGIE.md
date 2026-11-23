@@ -31,7 +31,7 @@
 - app/huisstijl.css is letterlijk docs/huisstijl/huisstijl.css; site.css bevat alleen aanvullingen met die variabelen. Inter is weg.
 - Klassen volgens de schetsen (.net, .kop, .keuken, .pil, .hoofd, .raster, .kaart, .peil, .voet, .meer, .art, .zij, .paneel, .verder). Netwerkbalk uit lib/netwerkbalk.ts.
 - Artikelpagina: Open keuken toont Geplaatst, Gecontroleerd (ja, want elk gepubliceerd bericht passeerde de poort) en Correcties (link). Bijgewerkt en Kort ontbreken: geen gegevens. Beeldbijschrift ontbreekt om dezelfde reden.
-- Verder lezen: drie berichten uit dezelfde categorie, aangevuld met de nieuwste.
+- Verder lezen: drie berichten uit dezelfde categorie, dan met dezelfde PEIL-parameter (herstelronde 1), dan de nieuwste.
 - Werkwijze en 404 gebruiken dezelfde kop en kolom.
 
 ## Takenlijst
@@ -56,3 +56,6 @@
 2. Vercel-project aanmaken op deze repo; variabelen zetten: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ANTHROPIC_API_KEY, CRON_SECRET (optioneel de overige uit `.env.example`).
 3. Cron in `vercel.json` draait 6 keer per dag op `/api/cron/oogst` (elke 4 uur, besluit 23-11-2026); Vercel stuurt het Bearer-geheim zelf mee zodra CRON_SECRET bestaat.
 4. Eerste run controleren via `/api/status`, daarna drempel en bronnen bijstellen.
+
+## Herstelronde 1 (bouwer, 23 november 2026)
+Punten A tot H van de keurders hersteld; zie CLAUDE.md voor de regels. Migratie `20261123180000_nv_portemonnee.sql` (alleen `add column if not exists`, kolom al aangemaakt door de regisseur). Getest met nagebootste modelantwoorden en een nep-Supabase; niets met echte sleutels.

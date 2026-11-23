@@ -99,5 +99,8 @@ test("berichten: peil-filter in geheugen en in het Supabase-verzoek", async () =
   const urls: string[] = [];
   const o = new SupabaseOpslag("https://p.supabase.co", "k", (async (u: string) => { urls.push(String(u)); return new Response("[]"); }) as unknown as typeof fetch);
   await o.berichten({ limiet: 5, peil: true });
-  assert.ok(urls[0].includes("peil_raakt=neq.%5B%5D"));
+  assert.ok(urls[0].includes("or=") && decodeURIComponent(urls[0]).includes("peil_raakt.neq.[],portemonnee.eq.true"));
+  // portemonnee-berichten tonen ook zonder PEIL-koppeling
+  await g.slaBerichtOp({ ...basis, sleutel: "c", portemonnee: true, peil: { raakt: [], mogelijkGewijzigd: [] } });
+  assert.equal((await g.berichten({ limiet: 10, peil: true })).length, 2);
 });

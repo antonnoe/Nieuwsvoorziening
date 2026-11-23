@@ -4,7 +4,7 @@ import Kop from "./_componenten/Kop";
 import PeilVak from "./_componenten/PeilVak";
 import { laadAankondigingen } from "@/lib/peilvak";
 import { CATEGORIEEN } from "@/lib/motor/types";
-import { CATEGORIE_KNOP, CATEGORIE_VOL, categorieSlug, datumMetDag, laadStatus, laadVoorpagina, slugNaarCategorie } from "@/lib/site";
+import { CATEGORIE_KNOP, CATEGORIE_VOL, categorieSlug, datumMetDag, laadActieveCategorieen, laadStatus, laadVoorpagina, slugNaarCategorie } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +40,7 @@ export default async function Voorpagina({ searchParams }: { searchParams: SP })
   const peil = sp.peil === "1";
   const pagina = Math.max(1, Math.min(200, Number(sp.pagina) || 1));
   const toonPeilVak = pagina === 1 && !categorie;
-  const [data, status, aankondigingen] = await Promise.all([laadVoorpagina({ categorie, peil, pagina }), laadStatus(), toonPeilVak ? laadAankondigingen(4) : Promise.resolve({ lijst: [], totaal: 0 })]);
+  const [data, status, actief, aankondigingen] = await Promise.all([laadVoorpagina({ categorie, peil, pagina }), laadStatus(), laadActieveCategorieen(), toonPeilVak ? laadAankondigingen(4) : Promise.resolve({ lijst: [], totaal: 0 })]);
   const filterActief = Boolean(categorie || peil);
   const leeg = !data.uitgelicht && data.kaarten.length === 0;
   const catSlug = categorie ? categorieSlug(categorie) : undefined;
@@ -63,7 +63,7 @@ export default async function Voorpagina({ searchParams }: { searchParams: SP })
       <main id="inhoud" className="wrap">
         <nav className="rubrieken" aria-label="Categorieën">
           <a className={`pil${!filterActief ? " aan" : ""}`} href="/" aria-current={!filterActief ? "page" : undefined}>Laatste nieuws</a>
-          {CATEGORIEEN.map((c) => (
+          {CATEGORIEEN.filter((c) => !actief || actief.has(c) || categorie === c).map((c) => (
             <a key={c} className={`pil${categorie === c ? " aan" : ""}`} href={href({ categorie: categorieSlug(c) })} aria-current={categorie === c ? "page" : undefined}>
               {CATEGORIE_KNOP[c]}
             </a>

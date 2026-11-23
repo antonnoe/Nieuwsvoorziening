@@ -5,7 +5,7 @@ import { haalJson, type ModelClient } from "./ai";
 import { laadConfig, actieveBronnen, modelSynthese, type MotorConfig } from "./config";
 import { aantalBronnen, clusterItems } from "./cluster";
 import { oogstBronnen, type OogstBronResultaat } from "./feeds";
-import { schoneZoektermen, beeldResultaat, type BeeldGenerator, actieveGenerator } from "./beeld";
+import { schoneZoektermen, beeldResultaat, fotoSleutel, type BeeldGenerator, actieveGenerator } from "./beeld";
 import "./beeld-unsplash";
 import type { Opslag, RunRecord, PeilSignaalIn } from "./opslag";
 import { laadPeil, peilKoppeling } from "./peil";
@@ -14,7 +14,10 @@ import { berekenScore, clusterRegime } from "./score";
 import { synthetiseer, SYSTEEM_SYNTHESE, bouwInvoer, leesSynthese } from "./synthese";
 import { verrijkMetArtikelen } from "./artikel";
 import { modelGoedkoop } from "./config";
-import { hashOmschrijving, maakLezerszin } from "./lezerszin";
+import { GEEN_ZIN, hashOmschrijving, maakLezerszin } from "./lezerszin";
+
+export const MAX_LEZERSZINNEN_PER_RUN = 60;
+export const MAX_LEZERSZIN_POGINGEN = 120;
 import { overlap, hashId } from "./tekst";
 import { dagStart } from "./tijd";
 import type { Bericht, Bron, Cluster, PeilParameter, StapResultaat, Synthese } from "./types";
@@ -133,6 +136,13 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
   // 6. Synthese, poort, score, PEIL, beeld, opslag
   const beeldGen = o.generator === undefined ? actieveGenerator() : o.generator;
   beeldGen?.startRun?.(); // Unsplash-aanvraagbudget per run
+  // Nooit dezelfde foto bij twee berichten: de foto's van de laatste 60 berichten worden vermeden, ook binnen deze run.
+  const vermijd = new Set<string>();
+  try {
+    for (const u of await o.opslag.recenteBeeldUrls(60)) vermijd.add(fotoSleutel(u));
+  } catch (e) {
+    noteer({ stap: "beeld_vermijden", ok: false, fout: fout(e) });
+  }
   if (!o.client) {
     noteer({ stap: "synthese", ok: true, aantal: 0, detail: { overgeslagen: "geen ANTHROPIC_API_KEY (synthese ongetest in deze run)" } });
   } else if (kandidaten.length) {
@@ -182,12 +192,12 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
           koppeling = p.koppeling;
           if (p.fout) noteer({ stap: "peil_oordeel", ok: false, fout: p.fout });
         }
-        const beeld = status === "gepubliceerd" ? await beeldResultaat({ kop: s.kop, samenvatting: s.samenvatting, categorie: s.categorie, zoektermen: s.beeldZoektermen, zoekterm: s.beeldZoekterm, client: o.client }, generator) : null;
+        const beeld = status === "gepubliceerd" ? await beeldResultaat({ kop: s.kop, samenvatting: s.samenvatting, categorie: s.categorie, zoektermen: s.beeldZoektermen, zoekterm: s.beeldZoekterm, client: o.client, vermijd }, generator) : null;
         const beeldUrl = beeld?.url ?? null;
         const beeldCredit = beeld?.credit ?? null;
         const bericht: Bericht = {
           kop: s.kop, samenvatting: s.samenvatting, tekst: s.tekst, categorie: s.categorie, score, regime, status,
-          blokkadeRedenen: uitslag.redenen, beeldUrl, beeldCredit, peil: koppeling, bronnen, gepubliceerdOp: new Date(nu).toISOString(),
+          blokkadeRedenen: uitslag.redenen, portemonnee: s.portemonnee === true, beeldUrl, beeldCredit, peil: koppeling, bronnen, gepubliceerdOp: new Date(nu).toISOString(),
           sleutel: hashId(c.items.map((i) => i.url).sort().join("|")),
         };
         const id = await o.opslag.slaBerichtOp(bericht);
@@ -225,7 +235,7 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
               .catch(() => "");
             zoektermen = schoneZoektermen(haalJson<unknown>(antw) ?? []);
           }
-          const r = await beeldResultaat({ kop: b.kop, samenvatting: b.samenvatting, categorie: b.categorie, zoektermen, client: o.client }, generator);
+          const r = await beeldResultaat({ kop: b.kop, samenvatting: b.samenvatting, categorie: b.categorie, zoektermen, client: o.client, vermijd }, generator);
           if (r) (await o.opslag.zetBeeld(b.id, r.url, r.credit ?? null), (aangevuld += 1));
         }
         aantallen.beeldAangevuld = aangevuld;
@@ -236,24 +246,34 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
     }
   }
 
-  // 6c. Leesbare zinnen voor de aangekondigde PEIL-wijzigingen (hooguit 20 nieuwe of gewijzigde per run).
+  // 6c. Leesbare zinnen voor de aangekondigde PEIL-wijzigingen. Plafond: 60 gelukte zinnen per run (een zin of GEEN);
+  // een modelfout of afkeuring telt daar niet voor mee (anders blokkeren steeds dezelfde mislukkingen het werk), maar er is
+  // wel een harde bovengrens van 120 modelaanroepen per run. Redenen van afkeuring komen in de stapdetails (zonder sleutelwaarden).
   if (o.client) {
     try {
       const parameters = o.peil ?? (await laadPeil(cfg.peilCacheMinuten, o.fetchFn));
       const bestaand = await o.opslag.lezerszinnen();
-      let gemaakt = 0, afgekeurd = 0;
+      let gemaakt = 0, geen = 0, afgekeurd = 0, pogingen = 0;
+      const redenen: string[] = [];
       for (const p of parameters) {
         const om = p.aangekondigd?.omschrijving;
         if (!om) continue;
         const h = hashOmschrijving(om);
         if (bestaand.get(p.id)?.hash === h) continue;
-        if (gemaakt + afgekeurd >= 20) break;
-        const zin = await maakLezerszin(p.naam, om, o.client).catch(() => null);
-        if (zin) (await o.opslag.zetLezerszin(p.id, h, zin), (gemaakt += 1));
-        else afgekeurd += 1;
+        if (gemaakt + geen >= MAX_LEZERSZINNEN_PER_RUN || pogingen >= MAX_LEZERSZIN_POGINGEN) break;
+        pogingen += 1;
+        const u = await maakLezerszin(p.naam, om, o.client, p.aangekondigd?.datum ?? null);
+        if (u.zin === null) {
+          afgekeurd += 1;
+          if (redenen.length < 30) redenen.push(`${p.id}: ${u.reden}`);
+          continue;
+        }
+        await o.opslag.zetLezerszin(p.id, h, u.zin);
+        if (u.zin === GEEN_ZIN) geen += 1;
+        else gemaakt += 1;
       }
       aantallen.lezerszinnen = gemaakt;
-      noteer({ stap: "peil_lezerszinnen", ok: true, aantal: gemaakt, detail: { afgekeurd } });
+      noteer({ stap: "peil_lezerszinnen", ok: true, aantal: gemaakt, detail: { geenGevolg: geen, afgekeurd, pogingen, redenen } });
     } catch (e) {
       noteer({ stap: "peil_lezerszinnen", ok: false, fout: fout(e) });
     }
