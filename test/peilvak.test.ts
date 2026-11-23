@@ -45,3 +45,20 @@ test("PEIL-vak gebruikt de leesbare zin alleen als die bij de huidige omschrijvi
   const oud = new Map([["x", { hash: "anders", zin: "Oude zin" }]]);
   assert.match(kiesAankondigingen([p], "2026-11-23", 4, oud).lijst[0].omschrijving, /PLF 2027/);
 });
+
+test("PEIL-vak: eerst wijzigingen met nieuws, dan hooguit twee in discussie (zoals de 10%-aftrek), dan op datum", () => {
+  const p = (id: string, datum: string | null, om: string) => ({ id, naam: id, tools: [{ naam: `T${id}` }], aangekondigd: { datum, omschrijving: om } });
+  const params = [
+    p("datum1", "2027-01-01", "Gewone wijziging."),
+    p("pensioen10", null, "Politieke discussie, nog geen besluit over de aftrek van 10 procent."),
+    p("nieuws", "2027-06-01", "Wijziging met nieuws."),
+    p("d2", null, "Wetsvoorstel ingediend."),
+  ];
+  const nieuws = new Map([["nieuws", [{ id: "b1", kop: "Kop" }]]]);
+  const { lijst } = kiesAankondigingen(params, "2026-11-23", 4, new Map(), nieuws);
+  assert.equal(lijst[0].id, "nieuws");
+  assert.equal(lijst[0].nieuws[0].id, "b1");
+  assert.ok(lijst.some((a) => a.id === "pensioen10"));
+  assert.equal(lijst.filter((a) => a.inDiscussie).length, 2);
+  assert.equal(lijst[3].id, "datum1");
+});

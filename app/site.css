@@ -47,5 +47,6 @@ a:focus-visible { outline: 3px solid var(--maroon); outline-offset: 2px; border-
 .peilvak time { font-weight: 700; color: var(--groen); font-size: 14px; }
 .peilvak b { display: block; }
 .peilvak p { margin: 2px 0; font-size: 15px; }
-.peilvak small { color: var(--grijs); }
+.peilvak small { color: var(--grijs); display: block; }
+.peilvak small.nieuws a { color: var(--maroon); }
 @media (max-width: 600px) { .peilvak li { grid-template-columns: 1fr; gap: 2px; } }

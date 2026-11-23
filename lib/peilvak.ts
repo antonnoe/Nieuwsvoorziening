@@ -13,7 +13,14 @@ export interface Aankondiging {
   omschrijving: string;
   voorlopig: boolean;
   tools: { naam: string; url: string | null }[];
+  /** Gepubliceerde nieuwsberichten die deze parameter raken (nieuwste eerst, hooguit 2). */
+  nieuws: { id: string; kop: string }[];
+  /** Nog in politieke discussie, zonder datum. */
+  inDiscussie: boolean;
 }
+
+export type NieuwsPerParameter = Map<string, { id: string; kop: string }[]>;
+const DISCUSSIE = /discussie|voorstel|nog geen besluit|wetsvoorstel|amendement/i;
 
 type Ruw = { id?: string; naam?: string; tools?: { naam?: string; url?: string }[]; aangekondigd?: { datum?: string | null; omschrijving?: string } | null };
 
@@ -33,8 +40,12 @@ export function netjes(omschrijving: string, max = 240): { tekst: string; voorlo
   return { tekst: t ? t[0].toUpperCase() + t.slice(1) : t, voorlopig };
 }
 
-/** Kiest de eerstvolgende aankondigingen: met datum vanaf vandaag oplopend, daarna die zonder datum. */
-export function kiesAankondigingen(parameters: Ruw[], vandaag: string, max = 4, zinnen: Map<string, { hash: string; zin: string }> = new Map()): { lijst: Aankondiging[]; totaal: number } {
+/**
+ * Volgorde in het vak (besluit 23-11-2026): eerst wijzigingen waarover nieuws is verschenen, dan hooguit twee
+ * die nog in politieke discussie zijn (zonder datum, zoals de 10%-aftrek op pensioenen), dan de eerstvolgende
+ * met een datum. Per tool hooguit één regel.
+ */
+export function kiesAankondigingen(parameters: Ruw[], vandaag: string, max = 4, zinnen: Map<string, { hash: string; zin: string }> = new Map(), nieuws: NieuwsPerParameter = new Map()): { lijst: Aankondiging[]; totaal: number } {
   const alle = parameters.filter((p) => p && p.id && p.naam && p.aangekondigd && p.aangekondigd.omschrijving);
   const lijst = alle
     .map((p) => {
@@ -44,16 +55,20 @@ export function kiesAankondigingen(parameters: Ruw[], vandaag: string, max = 4, 
       const tekst = z && z.hash === hashOmschrijving(om) ? netjes(z.zin, 400).tekst : ruw;
       const datum = /^\d{4}-\d{2}-\d{2}$/.test(String(p.aangekondigd!.datum || "")) ? String(p.aangekondigd!.datum) : null;
       const tools = (p.tools || []).filter((t) => t && t.naam).map((t) => ({ naam: String(t.naam), url: t.url ? veiligeUrl(t.url) : null }));
-      return { id: String(p.id), naam: String(p.naam), datum, omschrijving: tekst, voorlopig, tools };
+      const inDiscussie = datum === null && DISCUSSIE.test(om);
+      return { id: String(p.id), naam: String(p.naam), datum, omschrijving: tekst, voorlopig: voorlopig || inDiscussie, tools, nieuws: (nieuws.get(String(p.id)) || []).slice(0, 2), inDiscussie };
     })
-    .filter((a) => a.omschrijving && (a.datum === null || a.datum >= vandaag))
-    .sort((a, b) => (a.datum && b.datum ? a.datum.localeCompare(b.datum) : a.datum ? -1 : b.datum ? 1 : a.naam.localeCompare(b.naam)));
+    .filter((a) => a.omschrijving && (a.datum === null || a.datum >= vandaag));
+  const rang = (a: Aankondiging) => (a.nieuws.length ? 0 : a.inDiscussie ? 1 : a.datum ? 2 : 3);
+  lijst.sort((a, b) => rang(a) - rang(b) || (a.datum && b.datum ? a.datum.localeCompare(b.datum) : 0) || a.naam.localeCompare(b.naam));
+  let discussie = 0;
   // Variatie: niet twee keer hetzelfde onderwerp (zelfde tool) achter elkaar in het vak.
   const gekozen: Aankondiging[] = [];
   const gezien = new Set<string>();
   for (const a of lijst) {
     const sleutel = a.tools.length ? a.tools.map((t) => t.naam).sort().join("|") : `id:${a.id}`;
     if (gezien.has(sleutel)) continue;
+    if (a.inDiscussie && !a.nieuws.length && ++discussie > 2) continue;
     gezien.add(sleutel);
     gekozen.push(a);
     if (gekozen.length === max) break;
@@ -67,8 +82,14 @@ export async function laadAankondigingen(max = 4): Promise<{ lijst: Aankondiging
     if (!r.ok) return { lijst: [], totaal: 0 };
     const d = (await r.json()) as { parameters?: Ruw[] };
     const vandaag = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Amsterdam" });
-    const zinnen = await leesOpslag()?.lezerszinnen().catch(() => undefined);
-    return kiesAankondigingen(Array.isArray(d.parameters) ? d.parameters : [], vandaag, max, zinnen);
+    const opslag = leesOpslag();
+    const [zinnen, berichten] = await Promise.all([
+      opslag?.lezerszinnen().catch(() => undefined),
+      opslag?.berichten({ limiet: 60, peil: true }).catch(() => []) ?? Promise.resolve([]),
+    ]);
+    const nieuws: NieuwsPerParameter = new Map();
+    for (const b of berichten || []) for (const r of b.peil?.raakt || []) nieuws.set(r.id, [...(nieuws.get(r.id) || []), { id: b.id, kop: b.kop }]);
+    return kiesAankondigingen(Array.isArray(d.parameters) ? d.parameters : [], vandaag, max, zinnen, nieuws);
   } catch {
     return { lijst: [], totaal: 0 };
   }
