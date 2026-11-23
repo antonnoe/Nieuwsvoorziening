@@ -112,3 +112,17 @@ export function veiligeUrl(u: string): string | null {
     return null;
   }
 }
+
+/** Drie verwante berichten voor "Verder lezen": eerst dezelfde categorie, daarna de nieuwste. */
+export async function laadVerwant(b: { id: string; categorie: Categorie }): Promise<OpgeslagenBericht[]> {
+  const opslag = leesOpslag();
+  if (!opslag) return [];
+  try {
+    const zelfde = (await opslag.berichten({ categorie: b.categorie, limiet: 4 })).filter((x) => x.id !== b.id);
+    if (zelfde.length >= 3) return zelfde.slice(0, 3);
+    const rest = (await opslag.berichten({ limiet: 6 })).filter((x) => x.id !== b.id && !zelfde.some((z) => z.id === x.id));
+    return [...zelfde, ...rest].slice(0, 3);
+  } catch {
+    return [];
+  }
+}

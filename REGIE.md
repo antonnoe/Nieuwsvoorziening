@@ -21,11 +21,18 @@
 - "Vandaag" in `/api/tellingen` is de kalenderdag in Europe/Amsterdam.
 
 ## Publieke pagina's (bouwer, 23 november 2026)
-- Ontwerp volgens de goedgekeurde schets; geen sitenaam (besluit opdrachtgever), alleen klein label "Nieuws uit Frankrijk" links in de kop.
+- Ontwerp volgens de goedgekeurde schets en huisstijl (docs/huisstijl, 23-11-2026); geen sitenaam en geen ondertitel (besluit opdrachtgever, gaat vóór de richtlijn), de kop toont alleen het woord Nieuws in serif.
 - Eén toevoeging aan de motor: `berichten({ peil })` in beide opslagvarianten (filter "Raakt uw portemonnee"), met test.
 - Pagina 1 toont 1 uitgelicht + 12 kaarten; "Meer berichten" is een gewone link `?pagina=2` met 12 per pagina. Gefilterde en gepagineerde weergaven zijn noindex.
 - Statusregel: bijgewerkt = tijd van de laatste run, berichten vandaag = telling uit opslag, bronnen = `bronnenOk` van de laatste run als die vandaag begon. Zonder data blijft de teller weg.
 - Lege staat: "Het eerste nieuws verschijnt na de eerste oogst."
+
+## Huisstijl (bouwer, 23 november 2026)
+- app/huisstijl.css is letterlijk docs/huisstijl/huisstijl.css; site.css bevat alleen aanvullingen met die variabelen. Inter is weg.
+- Klassen volgens de schetsen (.net, .kop, .keuken, .pil, .hoofd, .raster, .kaart, .peil, .voet, .meer, .art, .zij, .paneel, .verder). Netwerkbalk uit lib/netwerkbalk.ts.
+- Artikelpagina: Open keuken toont Geplaatst, Gecontroleerd (ja, want elk gepubliceerd bericht passeerde de poort) en Correcties (link). Bijgewerkt en Kort ontbreken: geen gegevens. Beeldbijschrift ontbreekt om dezelfde reden.
+- Verder lezen: drie berichten uit dezelfde categorie, aangevuld met de nieuwste.
+- Werkwijze en 404 gebruiken dezelfde kop en kolom.
 
 ## Takenlijst
 | Taak | Status |
@@ -41,7 +48,7 @@
 | Dubbele onderwerpen over talen heen | open |
 | Publieke pagina's (voorpagina, bericht, werkwijze, sitemap, robots) | gebouwd 23-11-2026, getest tegen een nep-Supabase lokaal; nog niet live gezien met echte data |
 | Domein nieuws.infofrankrijk.com aan Vercel koppelen, NIEUWS_BASIS_URL zetten | open (regisseur) |
-| Links netwerkbalk en knop Nieuwsbrief controleren (adressen zijn aannames) | open |
+| Links netwerkbalk en knop Nieuwsbrief | adressen gecontroleerd door opdrachtgever 23-11-2026 |
 | Drempel en maxima ijken na enkele dagen | open |
 
 ## Voor de regisseur

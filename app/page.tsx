@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Kaart from "./_componenten/Kaart";
+import Kop from "./_componenten/Kop";
 import { CATEGORIEEN } from "@/lib/motor/types";
 import { CATEGORIE_KNOP, CATEGORIE_VOL, categorieSlug, datumMetDag, laadStatus, laadVoorpagina, slugNaarCategorie } from "@/lib/site";
 
@@ -43,34 +44,28 @@ export default async function Voorpagina({ searchParams }: { searchParams: SP })
 
   return (
     <>
-      <div className="statusbalk">
-        <div className="binnen statusrij">
-          <ul className="statuslijst">
-            {status.bijgewerkt && (
-              <li><span className="stip" aria-hidden="true" /><strong>Bijgewerkt</strong> {datumMetDag(status.bijgewerkt)}</li>
-            )}
-            {status.vandaag !== undefined && <li><strong>{status.vandaag}</strong> {status.vandaag === 1 ? "bericht" : "berichten"} vandaag</li>}
-            {status.bronnen !== undefined && <li><strong>{status.bronnen}</strong> {status.bronnen === 1 ? "bron" : "bronnen"} geraadpleegd</li>}
-            <li>Elk bericht gecontroleerd vóór plaatsing</li>
-          </ul>
-          <a className="statuslink" href="/werkwijze">Zo werken wij</a>
+      <Kop />
+      <div className="keuken">
+        <div className="wrap">
+          {status.bijgewerkt && (
+            <span><span className="stip" aria-hidden="true" /><b>Bijgewerkt</b> {datumMetDag(status.bijgewerkt)}</span>
+          )}
+          {status.vandaag !== undefined && <span><b>{status.vandaag}</b> {status.vandaag === 1 ? "bericht" : "berichten"} vandaag</span>}
+          {status.bronnen !== undefined && <span><b>{status.bronnen}</b> {status.bronnen === 1 ? "bron" : "bronnen"} geraadpleegd</span>}
+          <span>Elk bericht gecontroleerd vóór plaatsing</span>
+          <a href="/werkwijze">Zo werken wij</a>
         </div>
       </div>
 
-      <main id="inhoud" className="binnen hoofd">
-        <h1 className="sr-only">Nieuws uit Frankrijk</h1>
-        <nav className="filters" aria-label="Categorieën">
-          <ul>
-            <li><a className={`knop-filter${!filterActief ? " actief" : ""}`} href="/" aria-current={!filterActief ? "page" : undefined}>Laatste nieuws</a></li>
-            {CATEGORIEEN.map((c) => (
-              <li key={c}>
-                <a className={`knop-filter${categorie === c ? " actief" : ""}`} href={href({ categorie: categorieSlug(c) })} aria-current={categorie === c ? "page" : undefined}>
-                  {CATEGORIE_KNOP[c]}
-                </a>
-              </li>
-            ))}
-          </ul>
-          <a className={`knop-portemonnee${peil ? " actief" : ""}`} href={peil ? "/" : href({ peil: true })} aria-pressed={peil}>€ Raakt uw portemonnee</a>
+      <main id="inhoud" className="wrap">
+        <nav className="rubrieken" aria-label="Categorieën">
+          <a className={`pil${!filterActief ? " aan" : ""}`} href="/" aria-current={!filterActief ? "page" : undefined}>Laatste nieuws</a>
+          {CATEGORIEEN.map((c) => (
+            <a key={c} className={`pil${categorie === c ? " aan" : ""}`} href={href({ categorie: categorieSlug(c) })} aria-current={categorie === c ? "page" : undefined}>
+              {CATEGORIE_KNOP[c]}
+            </a>
+          ))}
+          <a className="pil geld" href={peil ? "/" : href({ peil: true })} aria-pressed={peil}>€ Raakt uw portemonnee</a>
         </nav>
 
         {leeg ? (
@@ -90,8 +85,8 @@ export default async function Voorpagina({ searchParams }: { searchParams: SP })
               </div>
             )}
             <div className="meer">
-              {pagina > 1 && <a className="knop-omlijnd" href={href({ categorie: catSlug, peil, pagina: pagina - 1 })}>Vorige berichten</a>}
-              {data.meer && <a className="knop-omlijnd" href={href({ categorie: catSlug, peil, pagina: pagina + 1 })}>Meer berichten</a>}
+              {pagina > 1 && <a href={href({ categorie: catSlug, peil, pagina: pagina - 1 })}>Vorige berichten</a>}
+              {data.meer && <a href={href({ categorie: catSlug, peil, pagina: pagina + 1 })}>Meer berichten</a>}
             </div>
           </>
         )}

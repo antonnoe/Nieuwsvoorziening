@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Schets voorpagina nieuwshub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&display=swap" rel="stylesheet">
+<style>
+:root{--maroon:#800000;--wit:#faf7f4;--inkt:#1f1a18;--lijn:#e7dfd8;--groen:#2f6b3a;--grijs:#6f6660;--kaart:#ffffff;--groenzacht:#edf3ee;--beeld:#efe8e1}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--wit);color:var(--inkt);font-family:Manrope,system-ui,sans-serif;font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+.serif{font-family:"Source Serif 4",Georgia,serif}
+.wrap{max-width:1240px;margin:0 auto;padding:0 40px}
+
+/* netwerkbalk */
+.net{background:var(--maroon);color:#fff;font-size:13px}
+.net .wrap{display:flex;justify-content:space-between;align-items:center;height:38px}
+.net nav{display:flex;gap:26px;align-items:center}
+.net a{opacity:.78}
+.net a.hier{opacity:1;font-weight:700;border-bottom:2px solid #fff;padding:8px 0 6px}
+.net .ca{opacity:.78}
+
+/* kop */
+.kop{background:var(--kaart);border-bottom:1px solid var(--lijn)}
+.kop .wrap{display:flex;justify-content:space-between;align-items:flex-end;padding-top:34px;padding-bottom:30px}
+.kop h1{font-family:"Source Serif 4",Georgia,serif;font-weight:700;font-size:44px;line-height:1.1;letter-spacing:-.01em}
+.kop h1 span{color:var(--maroon)}
+.kop p{color:var(--grijs);margin-top:8px;font-size:15px}
+.kop .links{display:flex;align-items:center;gap:28px;font-weight:600;font-size:15px}
+.knop{background:var(--maroon);color:#fff;border-radius:999px;padding:11px 22px;font-weight:700}
+
+/* open keuken */
+.keuken{border-bottom:1px solid var(--lijn);font-size:13.5px;color:var(--grijs)}
+.keuken .wrap{display:flex;gap:34px;align-items:center;height:46px}
+.keuken b{color:var(--inkt);font-weight:700}
+.stip{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--groen);margin-right:8px;vertical-align:1px}
+.keuken a{margin-left:auto;color:var(--maroon);font-weight:700}
+
+/* rubrieken */
+.rubrieken{display:flex;flex-wrap:wrap;gap:10px;padding:30px 0 34px}
+.pil{border:1px solid var(--lijn);background:var(--kaart);border-radius:999px;padding:9px 18px;font-weight:600;font-size:14.5px}
+.pil.aan{background:var(--inkt);border-color:var(--inkt);color:#fff}
+.pil.geld{background:var(--groenzacht);border-color:#cfe0d2;color:var(--groen);margin-left:auto}
+
+/* gemeenschappelijk */
+.rubriek{font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--maroon)}
+.meta{font-size:13.5px;color:var(--grijs)}
+.beeld{background:linear-gradient(135deg,#efe8e1,#e6dcd2);display:flex;align-items:center;justify-content:center;color:#a2968c;font-size:13px}
+.peil{background:var(--groenzacht);color:var(--groen);border-radius:12px;padding:10px 14px;font-size:13.5px;font-weight:600;line-height:1.45;display:flex;gap:10px}
+.peil i{font-style:normal;font-weight:700;border:1.5px solid var(--groen);border-radius:50%;width:20px;height:20px;flex:none;display:flex;align-items:center;justify-content:center;font-size:12px;margin-top:1px}
+.voet{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--lijn);padding-top:14px;margin-top:auto;font-size:13.5px}
+.voet .bron{color:var(--maroon);font-weight:700}
+.voet .ok{color:var(--grijs)}
+.voet .ok:before{content:"✓ ";color:var(--groen);font-weight:700}
+
+/* hoofdbericht */
+.hoofd{display:grid;grid-template-columns:1.15fr 1fr;background:var(--kaart);border:1px solid var(--lijn);border-radius:20px;overflow:hidden;margin-bottom:28px}
+.hoofd .beeld{min-height:400px}
+.hoofd .tekst{padding:40px 44px;display:flex;flex-direction:column;gap:14px}
+.hoofd h2{font-family:"Source Serif 4",Georgia,serif;font-weight:600;font-size:36px;line-height:1.18;letter-spacing:-.01em}
+.hoofd .intro{font-size:17px;color:#3b3430}
+
+/* kaarten */
+.raster{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+.kaart{background:var(--kaart);border:1px solid var(--lijn);border-radius:18px;overflow:hidden;display:flex;flex-direction:column}
+.kaart .beeld{height:190px}
+.kaart .tekst{padding:22px 24px 20px;display:flex;flex-direction:column;gap:10px;flex:1}
+.kaart h3{font-family:"Source Serif 4",Georgia,serif;font-weight:600;font-size:22px;line-height:1.25}
+.kaart p{font-size:15px;color:#3b3430}
+
+.meer{text-align:center;padding:40px 0 56px}
+.meer a{display:inline-block;border:1.5px solid var(--maroon);color:var(--maroon);border-radius:999px;padding:11px 26px;font-weight:700}
+footer{border-top:1px solid var(--lijn);background:var(--kaart);font-size:13.5px;color:var(--grijs)}
+footer .wrap{display:flex;justify-content:space-between;padding-top:22px;padding-bottom:22px}
+
+@media (max-width:720px){
+.wrap{padding:0 18px}
+.net .wrap{height:40px}
+.net nav{gap:20px;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
+.net .ca{display:none}
+.kop .wrap{flex-direction:column;align-items:flex-start;gap:16px;padding-top:22px;padding-bottom:20px}
+.kop h1{font-size:30px}
+.kop p{font-size:14px;margin-top:4px}
+.kop .links{gap:22px;font-size:14.5px;width:100%}
+.kop .links .knop{margin-left:auto;padding:9px 18px}
+.kop.klein .wrap{flex-direction:row;align-items:center;padding-top:14px;padding-bottom:14px}
+.kop.klein h1{font-size:21px}
+.kop.klein .links{width:auto}
+.kop.klein .links a:not(.knop){display:none}
+.keuken .wrap{height:44px;gap:0}
+.keuken .wrap span:not(:first-child),.keuken a{display:none}
+.keuken .wrap span{white-space:nowrap}
+.rubrieken{flex-wrap:nowrap;overflow-x:auto;padding:18px 18px 20px;margin:0 -18px;scrollbar-width:none}
+.pil{white-space:nowrap;flex:none}
+.pil.aan{order:0}.pil.geld{order:1;margin-left:0}.pil{order:2}
+.hoofd{grid-template-columns:1fr;margin-bottom:18px;border-radius:18px}
+.hoofd .beeld{min-height:200px}
+.hoofd .tekst{padding:20px 20px 18px;gap:10px}
+.hoofd h2{font-size:26px}
+.hoofd .intro{font-size:15.5px}
+.raster{grid-template-columns:1fr;gap:18px}
+.kaart .beeld{height:170px}
+.kaart .tekst{padding:18px 20px}
+.kaart h3{font-size:21px}
+.meer{padding:28px 0 40px}
+footer .wrap{flex-direction:column;gap:6px}
+.kruimel{padding-top:18px}
+.art{grid-template-columns:1fr;gap:28px;padding:12px 0 36px}
+.art h2.titel{font-size:31px;margin:8px 0 12px}
+.art .intro{font-size:19px;margin:14px 0 20px}
+.art .groot{height:220px;border-radius:16px}
+.art .bijschrift{margin-bottom:22px}
+.art .tekst p{font-size:17px}
+.art .tekst h3{font-size:23px}
+.zij{position:static}
+.verder{padding:28px 0 40px}
+.verder h4{font-size:23px}
+}
+</style>
+</head>
+<body>
+
+<div class="net"><div class="wrap">
+  <nav><a>Infofrankrijk</a><a class="hier">Nieuws</a><a>Nederlanders.fr</a><a>Infopoche</a><a>Dossier Frankrijk</a><a>Café Claude</a><a>Nedergids</a></nav>
+  <span class="ca">Communities Abroad</span>
+</div></div>
+
+<header class="kop"><div class="wrap">
+  <div>
+    <h1>[Naam nieuwssite]<span>.</span></h1>
+    <p>Frankrijk vandaag, voor Nederlanders en Belgen</p>
+  </div>
+  <div class="links"><a>PEIL</a><a>Forum</a><a class="knop">Nieuwsbrief</a></div>
+</div></header>
+
+<div class="keuken"><div class="wrap">
+  <span><span class="stip"></span><b>Bijgewerkt</b> maandag 23 november, 13.02 uur</span>
+  <span><b>12</b> berichten vandaag</span>
+  <span><b>41</b> bronnen geraadpleegd</span>
+  <span>Elk bericht gecontroleerd vóór plaatsing</span>
+  <a>Zo werken wij</a>
+</div></div>
+
+<main class="wrap">
+
+  <div class="rubrieken">
+    <a class="pil aan">Laatste nieuws</a><a class="pil">Algemeen</a><a class="pil">Politiek</a><a class="pil">Economie en ondernemen</a><a class="pil">Reizen en verkeer</a><a class="pil">Natuur en rampen</a><a class="pil">Toerisme</a><a class="pil">Merkwaardig</a>
+    <a class="pil geld">€ Raakt uw portemonnee</a>
+  </div>
+
+  <article class="hoofd">
+    <div class="beeld">[eigen beeld per bericht]</div>
+    <div class="tekst">
+      <span class="rubriek">Geld en belasting</span>
+      <h2>Senaat wil 10%-aftrek op pensioen schrappen</h2>
+      <span class="meta">17 november · 3 min leestijd</span>
+      <p class="intro">De begroting 2027 verlaagt het plafond van de aftrek; de meerderheid in de Senaat wil verder gaan en de aftrek helemaal afschaffen. Er is nog geen besluit.</p>
+      <div class="peil"><i>€</i><span>Raakt PEIL: aftrek op pensioen, rekent mee in Financieel Kompas</span></div>
+      <div class="voet"><span class="bron">3 bronnen</span><span class="ok">Gecontroleerd 17 november</span></div>
+    </div>
+  </article>
+
+  <div class="raster">
+    <article class="kaart"><div class="beeld">[eigen beeld per bericht]</div><div class="tekst">
+      <span class="rubriek">Politiek</span>
+      <h3>Macron overweegt budgettaire gouden regel in grondwet</h3>
+      <span class="meta">22 november · 3 min leestijd</span>
+      <p>De president zou het Congres bijeen willen roepen om een rem op overheidstekorten in de grondwet op te nemen, mogelijk in januari 2027.</p>
+      <div class="voet"><span class="bron">5 bronnen</span><span class="ok">Gecontroleerd</span></div>
+    </div></article>
+
+    <article class="kaart"><div class="beeld">[eigen beeld per bericht]</div><div class="tekst">
+      <span class="rubriek">Natuur en rampen</span>
+      <h3>Overstromingen in Pas-de-Calais houden aan</h3>
+      <span class="meta">21 november · 2 min leestijd</span>
+      <p>De rivier de Canche bereikte haar hoogste stand; het noodplan blijft van kracht.</p>
+      <div class="voet"><span class="bron">3 bronnen</span><span class="ok">Gecontroleerd</span></div>
+    </div></article>
+
+    <article class="kaart"><div class="beeld">[eigen beeld per bericht]</div><div class="tekst">
+      <span class="rubriek">Reizen en verkeer</span>
+      <h3>[Titel van een bericht over reizen, twee regels lang]</h3>
+      <span class="meta">21 november · 2 min leestijd</span>
+      <p>[Samenvatting in twee of drie regels, zodat de lezer weet of het bericht voor hem telt.]</p>
+      <div class="voet"><span class="bron">2 bronnen</span><span class="ok">Gecontroleerd</span></div>
+    </div></article>
+
+    <article class="kaart"><div class="beeld">[eigen beeld per bericht]</div><div class="tekst">
+      <span class="rubriek">Economie en ondernemen</span>
+      <h3>[Titel van een bericht dat de portemonnee raakt]</h3>
+      <span class="meta">20 november · 4 min leestijd</span>
+      <p>[Samenvatting in twee of drie regels.]</p>
+      <div class="peil"><i>€</i><span>Raakt PEIL: [parameter], rekent mee in [tool]</span></div>
+      <div class="voet"><span class="bron">4 bronnen</span><span class="ok">Gecontroleerd</span></div>
+    </div></article>
+
+    <article class="kaart"><div class="beeld">[eigen beeld per bericht]</div><div class="tekst">
+      <span class="rubriek">Toerisme</span>
+      <h3>[Titel van een bericht over toerisme]</h3>
+      <span class="meta">20 november · 2 min leestijd</span>
+      <p>[Samenvatting in twee of drie regels.]</p>
+      <div class="voet"><span class="bron">2 bronnen</span><span class="ok">Gecontroleerd</span></div>
+    </div></article>
+
+    <article class="kaart"><div class="beeld">[eigen beeld per bericht]</div><div class="tekst">
+      <span class="rubriek">Merkwaardig</span>
+      <h3>[Titel van een opvallend bericht]</h3>
+      <span class="meta">19 november · 1 min leestijd</span>
+      <p>[Samenvatting in twee of drie regels.]</p>
+      <div class="voet"><span class="bron">1 bron</span><span class="ok">Gecontroleerd</span></div>
+    </div></article>
+  </div>
+
+  <div class="meer"><a>Meer berichten</a></div>
+</main>
+
+<footer><div class="wrap"><span>Een uitgave van Communities Abroad</span><span>Bronnen en werkwijze · Correcties · Contact</span></div></footer>
+
+</body>
+</html>
