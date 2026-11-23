@@ -13,6 +13,7 @@ import { kwaliteitsPoort } from "./poort";
 import { berekenScore, clusterRegime } from "./score";
 import { synthetiseer, SYSTEEM_SYNTHESE, bouwInvoer, leesSynthese } from "./synthese";
 import { verrijkMetArtikelen } from "./artikel";
+import { modelGoedkoop } from "./config";
 import { hashOmschrijving, maakLezerszin } from "./lezerszin";
 import { overlap, hashId } from "./tekst";
 import { dagStart } from "./tijd";
@@ -212,7 +213,14 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
       try {
         let aangevuld = 0;
         for (const b of await o.opslag.zonderBeeld(6)) {
-          const r = await beeldResultaat({ kop: b.kop, samenvatting: b.samenvatting, categorie: b.categorie }, generator);
+          let zoekterm: string | undefined;
+          if (o.client) {
+            const antw = await o.client
+              .tekst({ model: modelGoedkoop(), maxTokens: 30, system: "Geef 2 tot 4 Engelse woorden om een passende sfeerfoto te zoeken voor dit nieuwsbericht: de plek of situatie, nooit een persoon of naam. Alleen de woorden.", user: `${b.kop}\n${b.samenvatting}` })
+              .catch(() => "");
+            zoekterm = String(antw).replace(/[^A-Za-z ]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 60) || undefined;
+          }
+          const r = await beeldResultaat({ kop: b.kop, samenvatting: b.samenvatting, categorie: b.categorie, zoekterm }, generator);
           if (r) (await o.opslag.zetBeeld(b.id, r.url, r.credit ?? null), (aangevuld += 1));
         }
         aantallen.beeldAangevuld = aangevuld;
