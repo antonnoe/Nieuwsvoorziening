@@ -13,7 +13,7 @@ De nieuwsmotor van Nieuwsvoorziening, de toekomstige enige nieuwsmotor van Commu
 - `data/bronnen.json`: bronnenlijst (status ACTIVE of CONCEPT), samengesteld uit nlfr-menu en france-newsdesk; `data/config.json`: drempels
 - `supabase/migrations/`: tabellen `nv_berichten`, `nv_bron_items`, `nv_bronnen_per_bericht`, `nv_peil_signalen`, `nv_oogst_runs`
 - `test/`: tests; `scripts/droge-run.ts`: droge run (`npm run droog`)
-- `vercel.json`: cron elk uur op `/api/cron/oogst`
+- `vercel.json`: cron 6 keer per dag op `/api/cron/oogst` (03, 07, 11, 15, 19 en 23 uur UTC, besluit 23-11-2026)
 
 ## Techniek
 Next.js (app router) + TypeScript op Vercel. Tests `npm test` (tsx, node --test), `npm run typecheck`, `npm run build`. Enige runtime-afhankelijkheid naast Next en React: `@anthropic-ai/sdk`. Supabase wordt via de REST-interface aangesproken (geen client-bibliotheek).

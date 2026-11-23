@@ -54,5 +54,5 @@
 ## Voor de regisseur
 1. Migratie toepassen op het Supabase-project communities-tools.
 2. Vercel-project aanmaken op deze repo; variabelen zetten: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ANTHROPIC_API_KEY, CRON_SECRET (optioneel de overige uit `.env.example`).
-3. Cron in `vercel.json` draait elk uur op `/api/cron/oogst`; Vercel stuurt het Bearer-geheim zelf mee zodra CRON_SECRET bestaat.
+3. Cron in `vercel.json` draait 6 keer per dag op `/api/cron/oogst` (elke 4 uur, besluit 23-11-2026); Vercel stuurt het Bearer-geheim zelf mee zodra CRON_SECRET bestaat.
 4. Eerste run controleren via `/api/status`, daarna drempel en bronnen bijstellen.
