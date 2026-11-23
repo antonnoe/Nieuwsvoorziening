@@ -131,3 +131,24 @@ test("nooit dezelfde foto twee keer: een al gebruikte foto wordt overgeslagen, o
   const tweede = await beeldResultaat({ ...invoer, zoektermen: ["flooded street"], client: modelMet('{"keuze":1,"cijfer":9}'), vermijd }, maakUnsplashGenerator(nepUnsplash({ zoek: [[mk("a1", "x"), mk("a2", "y")]] }).f, () => "test"));
   assert.ok(!tweede || !/\/a[12]$/.test(tweede.url.split("?")[0]), "geen van beide foto's nog eens");
 });
+
+test("herstelronde 2: elke zoekterm krijgt France, de drempel is 7 en de pasvormopdracht keurt buitenlandse beelden af", async () => {
+  const { PASVORM_DREMPEL, metFrance } = await import("../lib/motor/beeld-unsplash");
+  assert.equal(PASVORM_DREMPEL, 7);
+  assert.equal(metFrance("flooded street"), "flooded street France");
+  assert.equal(metFrance("french village market"), "french village market");
+  assert.equal(metFrance("street in france"), "street in france");
+  const { f, log } = nepUnsplash({ zoek: [[mk("a1", "flooded street")]] });
+  const system: string[] = [];
+  const client: ModelClient = { tekst: async (a) => (system.push(a.system), '{"keuze":1,"cijfer":7}') };
+  const r = await beeldResultaat({ ...invoer, zoektermen: ["flooded street"], client }, maakUnsplashGenerator(f, () => "test"));
+  assert.ok(r, "cijfer 7 haalt de drempel");
+  assert.ok(log.some((u) => u.includes("query=flooded+street+France")), log.join(" "));
+  assert.match(system[0], /in een ander land speelt dan Frankrijk/);
+  assert.match(system[0], /belastingformulieren/);
+  assert.match(system[0], /toeristische/);
+  // 6 is onder de nieuwe drempel: terugval, geen zoekfoto
+  const g = nepUnsplash({ zoek: [[mk("x1", "street")]] });
+  const r6 = await beeldResultaat({ ...invoer, zoektermen: ["flooded street"], client: modelMet('{"keuze":1,"cijfer":6}') }, maakUnsplashGenerator(g.f, () => "test"));
+  assert.ok(r6 && !r6.url.split("?")[0].endsWith("x1"));
+});

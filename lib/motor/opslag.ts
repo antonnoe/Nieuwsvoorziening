@@ -3,6 +3,7 @@
 // de motor vangt dat per stap op.
 import type { BeeldCredit, Bericht, BronItem, PeilKoppeling } from "./types";
 import { dagStart } from "./tijd";
+import { REGELVERSIE } from "./config";
 
 export interface RunRecord {
   id?: string;
@@ -16,6 +17,17 @@ export interface RunRecord {
 
 export interface OpgeslagenBericht extends Omit<Bericht, "sleutel"> {
   id: string;
+}
+
+export interface BerichtHerschreven {
+  kop: string;
+  samenvatting: string;
+  tekst: string;
+  categorie: Bericht["categorie"];
+  portemonnee: boolean;
+  status: Bericht["status"];
+  blokkadeRedenen: string[];
+  regelversie: number;
 }
 
 export interface PeilSignaalIn {
@@ -43,9 +55,13 @@ export interface Opslag {
   zetBeeld(id: string, url: string, credit: BeeldCredit | null): Promise<void>;
   /** beeld_url's van de nieuwste gepubliceerde berichten (nieuwste eerst), zodat geen foto twee keer wordt gebruikt. */
   recenteBeeldUrls(limiet: number): Promise<string[]>;
-  /** Leesbare zinnen per PEIL-parameter (met de hash van de omschrijving waaruit ze zijn gemaakt). */
-  lezerszinnen(): Promise<Map<string, { hash: string; zin: string }>>;
-  zetLezerszin(parameterId: string, hash: string, zin: string): Promise<void>;
+  /** Gepubliceerde berichten sinds `sindsIso` met een lagere regelversie dan `versie` (nieuwste eerst), om opnieuw te schrijven. */
+  teHerschrijven(sindsIso: string, versie: number, limiet: number): Promise<OpgeslagenBericht[]>;
+  /** Werkt kop, samenvatting, tekst, categorie, portemonnee, status, blokkaderedenen en regelversie bij; id, foto en bronnen blijven. */
+  werkBerichtBij(id: string, v: BerichtHerschreven): Promise<void>;
+  /** Leesbare zinnen en korte titels per PEIL-parameter (met de hash van de omschrijving waaruit ze zijn gemaakt). */
+  lezerszinnen(): Promise<Map<string, { hash: string; zin: string; titel?: string }>>;
+  zetLezerszin(parameterId: string, hash: string, zin: string, titel?: string): Promise<void>;
   // lezen voor de API
   berichten(opt: { categorie?: string; limiet: number; offset?: number; peil?: boolean }): Promise<OpgeslagenBericht[]>;
   bericht(id: string): Promise<(OpgeslagenBericht & { signalen: { parameterId: string; status: string }[] }) | null>;
@@ -108,12 +124,22 @@ export class GeheugenOpslag implements Opslag {
   async recenteBeeldUrls(limiet: number) {
     return this.berichtenLijst.filter((b) => b.status === "gepubliceerd" && b.beeldUrl).sort((a, b) => b.gepubliceerdOp.localeCompare(a.gepubliceerdOp)).slice(0, limiet).map((b) => b.beeldUrl!);
   }
-  zinnen = new Map<string, { hash: string; zin: string }>();
+  async teHerschrijven(sinds: string, versie: number, limiet: number) {
+    return this.berichtenLijst
+      .filter((b) => b.status === "gepubliceerd" && b.gepubliceerdOp >= sinds && (b.regelversie ?? 1) < versie)
+      .sort((a, b) => b.gepubliceerdOp.localeCompare(a.gepubliceerdOp))
+      .slice(0, limiet);
+  }
+  async werkBerichtBij(id: string, v: BerichtHerschreven) {
+    const b = this.berichtenLijst.find((x) => x.id === id);
+    if (b) Object.assign(b, v);
+  }
+  zinnen = new Map<string, { hash: string; zin: string; titel?: string }>();
   async lezerszinnen() {
     return new Map(this.zinnen);
   }
-  async zetLezerszin(id: string, hash: string, zin: string) {
-    this.zinnen.set(id, { hash, zin });
+  async zetLezerszin(id: string, hash: string, zin: string, titel?: string) {
+    this.zinnen.set(id, { hash, zin, titel });
   }
   async zetBeeld(id: string, url: string, credit: BeeldCredit | null) {
     const b = this.berichtenLijst.find((x) => x.id === id);
@@ -220,7 +246,7 @@ export class SupabaseOpslag implements Opslag {
       method: "POST", prefer: "resolution=merge-duplicates,return=representation",
       body: JSON.stringify({
         sleutel: b.sleutel, kop: b.kop, samenvatting: b.samenvatting, tekst: b.tekst, categorie: b.categorie, score: b.score, regime: b.regime,
-        status: b.status, blokkade_redenen: b.blokkadeRedenen, beeld_url: b.beeldUrl, beeld_credit: b.beeldCredit ?? null, portemonnee: b.portemonnee === true, peil_raakt: b.peil.raakt, peil_mogelijk_gewijzigd: b.peil.mogelijkGewijzigd,
+        status: b.status, blokkade_redenen: b.blokkadeRedenen, beeld_url: b.beeldUrl, beeld_credit: b.beeldCredit ?? null, portemonnee: b.portemonnee === true, regelversie: b.regelversie ?? REGELVERSIE, peil_raakt: b.peil.raakt, peil_mogelijk_gewijzigd: b.peil.mogelijkGewijzigd,
         model: process.env.NIEUWS_MODEL_SYNTHESE || null, gepubliceerd_op: b.gepubliceerdOp,
       }),
     });
@@ -268,14 +294,25 @@ export class SupabaseOpslag implements Opslag {
     const rijen = await this.lees(`nv_berichten?status=eq.gepubliceerd&beeld_url=not.is.null&order=gepubliceerd_op.desc&limit=${limiet}&select=beeld_url`);
     return rijen.map((r) => String(r.beeld_url));
   }
-  async lezerszinnen() {
-    const rijen = await this.lees("nv_peil_lezerszin?select=parameter_id,bron_hash,zin&limit=2000");
-    return new Map(rijen.map((r) => [String(r.parameter_id), { hash: String(r.bron_hash), zin: String(r.zin) }]));
+  async teHerschrijven(sinds: string, versie: number, limiet: number) {
+    const rijen = await this.lees(`nv_berichten?status=eq.gepubliceerd&regelversie=lt.${versie}&gepubliceerd_op=gte.${encodeURIComponent(sinds)}&order=gepubliceerd_op.desc&limit=${limiet}&select=*,nv_bronnen_per_bericht(*)`);
+    return rijen.map(naarBericht);
   }
-  async zetLezerszin(id: string, hash: string, zin: string) {
+  async werkBerichtBij(id: string, v: BerichtHerschreven) {
+    if (!/^[0-9a-f-]{36}$/i.test(id)) return;
+    await this.vraag(`nv_berichten?id=eq.${id}`, {
+      method: "PATCH", prefer: "return=minimal",
+      body: JSON.stringify({ kop: v.kop, samenvatting: v.samenvatting, tekst: v.tekst, categorie: v.categorie, portemonnee: v.portemonnee, status: v.status, blokkade_redenen: v.blokkadeRedenen, regelversie: v.regelversie, model: process.env.NIEUWS_MODEL_SYNTHESE || null }),
+    });
+  }
+  async lezerszinnen() {
+    const rijen = await this.lees("nv_peil_lezerszin?select=parameter_id,bron_hash,zin,titel&limit=2000");
+    return new Map(rijen.map((r) => [String(r.parameter_id), { hash: String(r.bron_hash), zin: String(r.zin), titel: r.titel ? String(r.titel) : undefined }]));
+  }
+  async zetLezerszin(id: string, hash: string, zin: string, titel?: string) {
     await this.vraag("nv_peil_lezerszin?on_conflict=parameter_id", {
       method: "POST", prefer: "resolution=merge-duplicates,return=minimal",
-      body: JSON.stringify({ parameter_id: id, bron_hash: hash, zin, model: process.env.NIEUWS_MODEL_GOEDKOOP || null, aangemaakt_op: new Date().toISOString() }),
+      body: JSON.stringify({ parameter_id: id, bron_hash: hash, zin, titel: titel || null, model: process.env.NIEUWS_MODEL_GOEDKOOP || null, aangemaakt_op: new Date().toISOString() }),
     });
   }
   async zetBeeld(id: string, url: string, credit: BeeldCredit | null) {
@@ -328,7 +365,7 @@ function naarBericht(r: Rij): OpgeslagenBericht {
   return {
     id: String(r.id), kop: String(r.kop), samenvatting: String(r.samenvatting || ""), tekst: String(r.tekst || ""), categorie: r.categorie as OpgeslagenBericht["categorie"],
     score: Number(r.score), regime: r.regime as OpgeslagenBericht["regime"], status: r.status as OpgeslagenBericht["status"],
-    blokkadeRedenen: (r.blokkade_redenen as string[]) || [], beeldUrl: (r.beeld_url as string) || null, beeldCredit: (r.beeld_credit as OpgeslagenBericht["beeldCredit"]) || null, portemonnee: r.portemonnee === true, peil, bronnen, gepubliceerdOp: String(r.gepubliceerd_op),
+    blokkadeRedenen: (r.blokkade_redenen as string[]) || [], beeldUrl: (r.beeld_url as string) || null, beeldCredit: (r.beeld_credit as OpgeslagenBericht["beeldCredit"]) || null, portemonnee: r.portemonnee === true, regelversie: Number(r.regelversie ?? 1), peil, bronnen, gepubliceerdOp: String(r.gepubliceerd_op),
   };
 }
 

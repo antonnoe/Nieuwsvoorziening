@@ -76,9 +76,9 @@ test("motor: lezerszinnen, mislukkingen tellen niet mee voor het plafond en de r
     const naam = /Onderwerp: Parameter (\d+)/.exec(a.user);
     if (!naam) return "{}";
     const n = Number(naam[1]);
-    if (n < 10) return "Het tarief wordt 999 procent voor iedereen vanaf nu.";
+    if (n < 10) return JSON.stringify({ titel: "Tarief wordt hoger", zin: "Het tarief wordt 999 procent voor iedereen vanaf nu." });
     if (n === 10) return "GEEN";
-    return `Vanaf 1 januari 2027 wordt het tarief ${n + 5} procent voor iedereen.`;
+    return JSON.stringify({ titel: `Tarief wordt ${n + 5} procent`, zin: `Vanaf 1 januari 2027 wordt het tarief ${n + 5} procent voor iedereen.` });
   }]);
   const r = await draaiOogst({ opslag, client, config: cfg, bronnen: [], fetchFn, peil, generator: null });
   const stap = r.stappen.find((s) => s.stap === "peil_lezerszinnen")!;
@@ -91,6 +91,7 @@ test("motor: lezerszinnen, mislukkingen tellen niet mee voor het plafond en de r
   assert.equal((await opslag.lezerszinnen()).get("p10")!.zin, "GEEN");
   assert.equal((await opslag.lezerszinnen()).get("p0"), undefined);
   assert.equal((await opslag.lezerszinnen()).get("p20")!.hash, hashOmschrijving("Tarief wordt 25 procent"));
+  assert.equal((await opslag.lezerszinnen()).get("p20")!.titel, "Tarief wordt 25 procent");
 });
 
 function b(id: string, categorie: OpgeslagenBericht["categorie"], extra: Partial<OpgeslagenBericht> = {}): OpgeslagenBericht {

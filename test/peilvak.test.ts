@@ -5,7 +5,7 @@ import { hashOmschrijving, GEEN_ZIN } from "../lib/motor/lezerszin";
 
 /** Zinnen voor alle parameters (de ruwe PEIL-tekst wordt nooit getoond, alleen een geldige leesbare zin). */
 const zinnenVoor = (ps: { id: string; aangekondigd?: { omschrijving?: string } | null }[]) =>
-  new Map(ps.filter((p) => p.aangekondigd?.omschrijving).map((p) => [p.id, { hash: hashOmschrijving(p.aangekondigd!.omschrijving!), zin: `Leesbare zin over ${p.id}` }]));
+  new Map(ps.filter((p) => p.aangekondigd?.omschrijving).map((p) => [p.id, { hash: hashOmschrijving(p.aangekondigd!.omschrijving!), zin: `Leesbare zin over ${p.id}`, titel: `Korte titel ${p.id}` }]));
 
 test("PEIL-vak: alleen toekomstige of ongedateerde aankondigingen, oplopend, hooguit 4", () => {
   const p = (id: string, datum: string | null) => ({ id, naam: `P ${id}`, tools: [{ naam: `Tool ${id}`, url: "https://t.example" }], aangekondigd: { datum, omschrijving: `Wijziging ${id} (raming)` } });
@@ -46,12 +46,17 @@ test("leesbare zin: alleen getallen uit de PEIL-omschrijving", () => {
 
 test("PEIL-vak gebruikt de leesbare zin alleen als die bij de huidige omschrijving hoort", () => {
   const p = { id: "x", naam: "X", aangekondigd: { datum: "2027-01-01", omschrijving: "PLF 2027 art. 2 technisch (raming)" } };
-  const goed = new Map([["x", { hash: hashOmschrijving(p.aangekondigd.omschrijving), zin: "De begroting voor 2027 verandert dit" }]]);
+  const goed = new Map([["x", { hash: hashOmschrijving(p.aangekondigd.omschrijving), zin: "De begroting voor 2027 verandert dit", titel: "Begroting verandert dit" }]]);
   assert.equal(kiesAankondigingen([p], "2026-11-23", 4, goed).lijst[0].omschrijving, "De begroting voor 2027 verandert dit.");
   assert.equal(kiesAankondigingen([p], "2026-11-23", 4, goed).lijst[0].voorlopig, true);
   const oud = new Map([["x", { hash: "anders", zin: "Oude zin" }]]);
   assert.equal(kiesAankondigingen([p], "2026-11-23", 4, oud).lijst.length, 0, "nooit de ruwe PEIL-tekst");
   assert.equal(kiesAankondigingen([p], "2026-11-23", 4).lijst.length, 0, "zonder zin geen regel");
+  const zonderTitel = new Map([["x", { hash: hashOmschrijving(p.aangekondigd.omschrijving), zin: "De begroting voor 2027 verandert dit" }]]);
+  assert.equal(kiesAankondigingen([p], "2026-11-23", 4, zonderTitel).lijst.length, 0, "zonder titel geen regel (nooit de PEIL-naam met jargon)");
+  const lijstMet = kiesAankondigingen([p], "2026-11-23", 4, goed).lijst[0];
+  assert.equal(lijstMet.naam, "Begroting verandert dit");
+  assert.equal(lijstMet.peilNaam, "X");
   const geen = new Map([["x", { hash: hashOmschrijving(p.aangekondigd.omschrijving), zin: GEEN_ZIN }]]);
   assert.equal(kiesAankondigingen([p], "2026-11-23", 4, geen).lijst.length, 0, "GEEN wordt nooit getoond");
 });
@@ -86,13 +91,24 @@ test("leesbare zin: de datum van de aankondiging en de parameternaam mogen getal
 test("maakLezerszin: GEEN wordt bewaard als marker, modelfout en afkeuring geven een reden", async () => {
   const { maakLezerszin } = await import("../lib/motor/lezerszin");
   const mod = (a: string | Error) => ({ tekst: async () => { if (a instanceof Error) throw a; return a; } });
+  const js = (titel: string, zin: string) => JSON.stringify({ titel, zin });
   assert.deepEqual(await maakLezerszin("X", "De grenzen veranderen niet.", mod("GEEN")), { zin: GEEN_ZIN });
   const fout = await maakLezerszin("X", "Tarief 5 procent", mod(new Error("overbelast")));
   assert.equal(fout.zin, null);
   assert.match(String(fout.reden), /^modelfout/);
-  const af = await maakLezerszin("X", "Tarief 5 procent", mod("Het tarief wordt 9 procent voor iedereen."));
+  const af = await maakLezerszin("X", "Tarief 5 procent", mod(js("Tarief wordt hoger", "Het tarief wordt 9 procent voor iedereen.")));
   assert.equal(af.zin, null);
   assert.match(String(af.reden), /getal niet in omschrijving/);
-  const goed = await maakLezerszin("X", "Tarief 5 procent vanaf 2027-01-01", mod("Vanaf 1 januari 2027 geldt een tarief van 5 procent."), "2027-01-01");
+  const goed = await maakLezerszin("X", "Tarief 5 procent vanaf 2027-01-01", mod(js("Tarief van 5 procent", "Vanaf 1 januari 2027 geldt een tarief van 5 procent.")), "2027-01-01");
   assert.ok(goed.zin && goed.zin !== GEEN_ZIN);
+  assert.equal(goed.zin && (goed as { titel?: string }).titel, "Tarief van 5 procent");
+  assert.equal((await maakLezerszin("X", "Tarief 5 procent", mod('"GEEN"'))).zin, GEEN_ZIN);
+  assert.match(String((await maakLezerszin("X", "Tarief 5 procent", mod("Gewone zin zonder JSON hier."))).reden), /geen JSON/);
+  // titel: getallencontrole, lengte, afkortingen en Franse woorden
+  const titelFout = async (t: string) => String((await maakLezerszin("X", "Tarief 5 procent vanaf 2027-01-01", mod(js(t, "Vanaf 1 januari 2027 geldt een tarief van 5 procent.")), "2027-01-01")).reden);
+  assert.match(await titelFout("Tarief van 7 procent"), /getal in titel/);
+  assert.match(await titelFout("Dit is een veel te lange titel voor een regel"), /langer dan 7 woorden/);
+  assert.match(await titelFout("RSD-drempels veranderen"), /afkorting/);
+  assert.match(await titelFout("Abattement op pensioen"), /Frans woord/);
+  assert.match(await titelFout("10%-aftrek op pensioen"), /getal in titel/, "10 staat niet in de omschrijving");
 });

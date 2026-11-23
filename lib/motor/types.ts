@@ -109,6 +109,8 @@ export interface Bericht {
   bronnen: BerichtBron[];
   gepubliceerdOp: string;
   sleutel: string;
+  /** Versie van de schrijfregels waarmee dit bericht is gemaakt (ontbreekt = 1). */
+  regelversie?: number;
 }
 
 export interface BerichtBron {

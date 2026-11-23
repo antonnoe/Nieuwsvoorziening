@@ -16,7 +16,7 @@ import { modelGoedkoop } from "./config";
 import type { BeeldCredit } from "./types";
 
 const UTM = "utm_source=nieuwsvoorziening&utm_medium=referral";
-export const PASVORM_DREMPEL = 6;
+export const PASVORM_DREMPEL = 7;
 export const MAX_AANVRAGEN_PER_RUN = 36;
 const MAX_ZOEKTERMEN = 3;
 
@@ -43,8 +43,15 @@ export function lichteUrl(u: string): string {
   }
 }
 
-const SYSTEEM_PASVORM = `Je kiest een nieuwsfoto. Je krijgt een nieuwsbericht (kop en samenvatting) en genummerde foto's met een korte beschrijving. Geef de foto die zichtbaar bij het onderwerp past en een cijfer 0 tot 10 voor de pasvorm.
-Wees streng: 8 tot 10 = toont het onderwerp zelf (bij een overstroming een onder water staande straat); 6 tot 7 = past duidelijk bij het soort situatie of de plek; 0 tot 5 = andere plek, ander onderwerp, herkenbaar oriëntatiepunt van een andere streek, sfeerbeeld zonder verband, of een persoon. Twijfel je, geef dan een laag cijfer: liever geen foto dan een misleidende.
+/** Zoekterm met "France" erbij, tenzij die er al in staat. */
+export function metFrance(term: string): string {
+  const t = String(term || "").trim();
+  return !t || /\bfrance\b|\bfrench\b/i.test(t) ? t : `${t} France`;
+}
+
+const SYSTEEM_PASVORM = `Je kiest een nieuwsfoto voor een nieuwsdienst over Frankrijk. Je krijgt een nieuwsbericht (kop en samenvatting) en genummerde foto's met een korte beschrijving. Geef de foto die zichtbaar bij het onderwerp past en een cijfer 0 tot 10 voor de pasvorm.
+Wees streng: 8 tot 10 = toont het onderwerp zelf (bij een overstroming een onder water staande straat); 7 = past duidelijk bij het soort situatie; 0 tot 6 = andere plek, ander onderwerp, herkenbaar oriëntatiepunt van een andere streek, sfeerbeeld zonder verband, of een persoon.
+Keur af (cijfer 0 tot 3) elke foto die zichtbaar in een ander land speelt dan Frankrijk (borden of opschriften in een andere taal dan Frans of Nederlands, Amerikaanse of Aziatische straten, tankstations, auto's en gebouwen), foto's die buitenlandse documenten of teksten tonen (belastingformulieren, borden in andere talen), en toeristische of sfeerfoto's (steegjes, terrassen, dorpjes in de zon) bij een zakelijk of economisch onderwerp. Twijfel je over het land of het onderwerp, geef dan een laag cijfer: liever geen foto dan een misleidende of onjuiste.
 Antwoord uitsluitend met JSON: {"keuze":1,"cijfer":0}`;
 
 export function maakUnsplashGenerator(fetchFn: typeof fetch = fetch, sleutel = () => String(process.env.UNSPLASH_ACCESS_KEY || "").trim(), maxAanvragen = MAX_AANVRAGEN_PER_RUN): BeeldGenerator & { aanvragen(): number } {
@@ -135,7 +142,7 @@ export function maakUnsplashGenerator(fetchFn: typeof fetch = fetch, sleutel = (
     async genereer(b: BeeldInvoer) {
       if (!sleutel()) return null;
       try {
-        const termen = schoneZoektermen([...(b.zoektermen || []), ...(b.zoekterm ? [b.zoekterm] : [])]).slice(0, MAX_ZOEKTERMEN);
+        const termen = schoneZoektermen([...(b.zoektermen || []), ...(b.zoekterm ? [b.zoekterm] : [])]).slice(0, MAX_ZOEKTERMEN).map(metFrance);
         for (const term of termen) {
           const kandidaten = (await zoek(term)).filter((f) => !gebruikt(b, f));
           const keuze = await beoordeel(b, kandidaten);

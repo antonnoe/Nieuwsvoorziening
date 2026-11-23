@@ -78,7 +78,7 @@ export default async function Voorpagina({ searchParams }: { searchParams: SP })
             {data.fout || !filterActief && pagina === 1 ? (
               <p>Het eerste nieuws verschijnt na de eerste oogst.</p>
             ) : (
-              <p>Er zijn geen berichten gevonden voor deze keuze. <a href="/">Terug naar het laatste nieuws</a>.</p>
+              <p>{peil && toonPeilVak && aankondigingen.lijst.length ? "Er is nu geen nieuws dat direct uw portemonnee raakt. Hierboven ziet u wat er de komende tijd verandert." : peil && !categorie && pagina === 1 ? "Er is nu geen nieuws dat direct uw portemonnee raakt." : "Er zijn geen berichten gevonden voor deze keuze."} <a href="/">Terug naar het laatste nieuws</a>.</p>
             )}
           </div>
         ) : (

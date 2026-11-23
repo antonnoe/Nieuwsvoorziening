@@ -25,7 +25,7 @@ Antwoord uitsluitend met JSON: {"publiceren":true,"kop":"","samenvatting":"","te
 
 export function bouwInvoer(c: Cluster): string {
   return c.items
-    .map((i, n) => `Bron ${n + 1} (${i.taal}, ${i.gepubliceerdOp.slice(0, 10)})\nKop: ${i.titel}\nOmschrijving: ${i.samenvatting || "(geen)"}${i.artikelTekst ? `\nArtikeltekst:\n${i.artikelTekst}` : ""}`)
+    .map((i, n) => `Bron ${n + 1} (${[i.taal, i.gepubliceerdOp.slice(0, 10)].filter(Boolean).join(", ")})\nKop: ${i.titel}\nOmschrijving: ${i.samenvatting || "(geen)"}${i.artikelTekst ? `\nArtikeltekst:\n${i.artikelTekst}` : ""}`)
     .join("\n\n");
 }
 

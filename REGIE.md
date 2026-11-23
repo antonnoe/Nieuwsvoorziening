@@ -59,3 +59,6 @@
 
 ## Herstelronde 1 (bouwer, 23 november 2026)
 Punten A tot H van de keurders hersteld; zie CLAUDE.md voor de regels. Migratie `20261123180000_nv_portemonnee.sql` (alleen `add column if not exists`, kolom al aangemaakt door de regisseur). Getest met nagebootste modelantwoorden en een nep-Supabase; niets met echte sleutels.
+
+## Herstelronde 2 (bouwer, 23 november 2026)
+Punten 1 tot 4 van de keurders hersteld (herschrijven van oude berichten, beeldfilter met France en drempel 7, korte titels in het PEIL-vak, tekst bij leeg €-filter); zie CLAUDE.md. Migratie `20261123190000_nv_regelversie_titel.sql` (alleen `add column if not exists`, kolommen al aangemaakt door de regisseur). Getest met nagebootste modelantwoorden, nep-Unsplash en geheugenopslag; niets met echte sleutels. Keuze: bij een modelfout tijdens het herschrijven blijft het bericht op regelversie 1 staan en probeert de volgende run het opnieuw.

@@ -2,6 +2,11 @@ import bronnenBestand from "../../data/bronnen.json";
 import configBestand from "../../data/config.json";
 import type { Bron } from "./types";
 
+/** Versie van de schrijfregels. Berichten met een lagere regelversie worden (laatste 48 uur) opnieuw geschreven. */
+export const REGELVERSIE = 2;
+/** Hooguit zoveel berichten per oogstrun herschrijven. */
+export const MAX_HERSCHRIJVEN_PER_RUN = 3;
+
 export interface MotorConfig {
   publiceerDrempel: number;
   minRelevantie: number;

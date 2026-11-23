@@ -2,14 +2,14 @@
 // Elke stap faalt netjes: een fout wordt vastgelegd en de volgende stap gaat door
 // met wat er wel is.
 import { haalJson, type ModelClient } from "./ai";
-import { laadConfig, actieveBronnen, modelSynthese, type MotorConfig } from "./config";
+import { laadConfig, actieveBronnen, modelSynthese, REGELVERSIE, MAX_HERSCHRIJVEN_PER_RUN, type MotorConfig } from "./config";
 import { aantalBronnen, clusterItems } from "./cluster";
 import { oogstBronnen, type OogstBronResultaat } from "./feeds";
 import { schoneZoektermen, beeldResultaat, fotoSleutel, type BeeldGenerator, actieveGenerator } from "./beeld";
 import "./beeld-unsplash";
-import type { Opslag, RunRecord, PeilSignaalIn } from "./opslag";
+import type { Opslag, RunRecord, PeilSignaalIn, OpgeslagenBericht, BerichtHerschreven } from "./opslag";
 import { laadPeil, peilKoppeling } from "./peil";
-import { kwaliteitsPoort } from "./poort";
+import { kwaliteitsPoort, type PoortUitslag } from "./poort";
 import { berekenScore, clusterRegime } from "./score";
 import { synthetiseer, SYSTEEM_SYNTHESE, bouwInvoer, leesSynthese } from "./synthese";
 import { verrijkMetArtikelen } from "./artikel";
@@ -42,6 +42,38 @@ export interface RunUitslag {
 }
 
 const ZOEKTERMEN_SYSTEEM = `Geef een JSON-lijst van 3 Engelse zoektermen van 2 tot 4 woorden om een foto te zoeken die zichtbaar bij dit nieuwsbericht past, van specifiek naar algemeen. Zoek het onderwerp zelf, letterlijk en concreet (bijvoorbeeld "flooded street", "airplane factory", "fuel pump prices"), niet de streek of een beroemde plek. Nooit een persoon of naam. Alleen de JSON-lijst.`;
+
+/** Poort met één herkansing (met de redenen erbij). Geeft de beste synthese en haar uitslag. */
+async function poortMetHerkansing(s: Synthese, c: Cluster, client: ModelClient, cfg: MotorConfig): Promise<{ s: Synthese; uitslag: PoortUitslag }> {
+  let uitslag = kwaliteitsPoort(s, c, cfg);
+  if (!uitslag.ok) {
+    try {
+      const antw = await client.tekst({
+        model: modelSynthese(), system: SYSTEEM_SYNTHESE, maxTokens: 2200,
+        user: `${bouwInvoer(c)}\n\nJe vorige versie werd afgekeurd om deze redenen: ${uitslag.redenen.join("; ")}. Schrijf opnieuw en vermijd precies deze fouten.`,
+      });
+      const s2 = leesSynthese(antw);
+      if (s2) {
+        const u2 = kwaliteitsPoort(s2, c, cfg);
+        if (u2.ok || u2.redenen.length < uitslag.redenen.length) ((s = s2), (uitslag = u2));
+      }
+    } catch { /* eerste uitslag blijft staan */ }
+  }
+  return { s, uitslag };
+}
+
+/** De opgeslagen bronnen van een bericht als cluster (naam, originele kop, url, datum); de omschrijving is niet bewaard. */
+export function clusterUitBericht(b: OpgeslagenBericht): Cluster {
+  return {
+    sleutel: b.id,
+    items: b.bronnen.map((x) => ({
+      url: x.url, bronId: x.naam, bronNaam: x.naam, regime: b.regime, groep: b.regime === "overheid" ? "overheid" : "fr_pers",
+      taal: "", land: "", titel: x.origineleKop, samenvatting: "", gepubliceerdOp: x.datum || b.gepubliceerdOp,
+    })),
+  };
+}
+
+const VENSTER_HERSCHRIJVEN_UREN = 48;
 
 const fout = (e: unknown) => (e instanceof Error ? e.message : String(e)).slice(0, 200);
 
@@ -161,25 +193,12 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
       try {
         artikelen += await verrijkMetArtikelen(c, o.fetchFn ?? fetch).catch(() => 0);
         let s: Synthese | null = await synthetiseer(c, o.client);
+        let uitslag: PoortUitslag;
         if (!s) {
           await o.opslag.markeerVerwerkt(c.items.map((i) => i.url), null, "te_weinig_inhoud");
           continue;
         }
-        let uitslag = kwaliteitsPoort(s, c, cfg);
-        if (!uitslag.ok) {
-          // Eén herkansing met de redenen erbij.
-          try {
-            const antw = await o.client.tekst({
-              model: modelSynthese(), system: SYSTEEM_SYNTHESE, maxTokens: 2200,
-              user: `${bouwInvoer(c)}\n\nJe vorige versie werd afgekeurd om deze redenen: ${uitslag.redenen.join("; ")}. Schrijf opnieuw en vermijd precies deze fouten.`,
-            });
-            const s2 = leesSynthese(antw);
-            if (s2) {
-              const u2 = kwaliteitsPoort(s2, c, cfg);
-              if (u2.ok || u2.redenen.length < uitslag.redenen.length) ((s = s2), (uitslag = u2));
-            }
-          } catch { /* eerste uitslag blijft staan */ }
-        }
+        ({ s, uitslag } = await poortMetHerkansing(s, c, o.client, cfg));
         const regime = clusterRegime(c);
         const score = berekenScore(c, s.relevantie, nu);
         const bronnen = [...new Map(c.items.map((i) => [i.url, i])).values()]
@@ -198,7 +217,7 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
         const bericht: Bericht = {
           kop: s.kop, samenvatting: s.samenvatting, tekst: s.tekst, categorie: s.categorie, score, regime, status,
           blokkadeRedenen: uitslag.redenen, portemonnee: s.portemonnee === true, beeldUrl, beeldCredit, peil: koppeling, bronnen, gepubliceerdOp: new Date(nu).toISOString(),
-          sleutel: hashId(c.items.map((i) => i.url).sort().join("|")),
+          sleutel: hashId(c.items.map((i) => i.url).sort().join("|")), regelversie: REGELVERSIE,
         };
         const id = await o.opslag.slaBerichtOp(bericht);
         bericht.id = id;
@@ -218,6 +237,48 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
     noteer({ stap: "synthese", ok: true, aantal: berichten.length, detail: { gepubliceerd, geblokkeerd, concept, mislukt } });
   } else {
     noteer({ stap: "synthese", ok: true, aantal: 0, detail: { reden: "geen kandidaten" } });
+  }
+
+  // 6a. Herschrijven: gepubliceerde berichten van de laatste 48 uur die met oudere schrijfregels zijn gemaakt (regelversie < REGELVERSIE)
+  // worden opnieuw geschreven uit de opgeslagen bronnen (artikeltekst opnieuw opgehaald), hooguit MAX_HERSCHRIJVEN_PER_RUN per run.
+  // Zelfde id, foto en bronnen blijven. Poort of relevantie faalt, of het model geeft publiceren=false: status concept (niet verwijderd).
+  // Een fout bij het model of de opslag laat het bericht staan voor de volgende run.
+  if (o.client) {
+    try {
+      const lijst = await o.opslag.teHerschrijven(new Date(nu - VENSTER_HERSCHRIJVEN_UREN * 3600_000).toISOString(), REGELVERSIE, MAX_HERSCHRIJVEN_PER_RUN);
+      let herschreven = 0, naarConcept = 0, mislukt = 0;
+      for (const b of lijst) {
+        try {
+          const c = clusterUitBericht(b);
+          if (!c.items.length) { mislukt += 1; continue; }
+          await verrijkMetArtikelen(c, o.fetchFn ?? fetch).catch(() => 0);
+          const eerste = await synthetiseer(c, o.client);
+          let v: BerichtHerschreven;
+          if (!eerste) {
+            v = { kop: b.kop, samenvatting: b.samenvatting, tekst: b.tekst, categorie: b.categorie, portemonnee: b.portemonnee === true, status: "concept", blokkadeRedenen: ["herschrijven: model gaf geen bericht (publiceren=false)"], regelversie: REGELVERSIE };
+          } else {
+            const { s, uitslag } = await poortMetHerkansing(eerste, c, o.client, cfg);
+            const goed = uitslag.ok && s.relevantie >= cfg.minRelevantie;
+            v = {
+              kop: s.kop, samenvatting: s.samenvatting, tekst: s.tekst, categorie: s.categorie, portemonnee: s.portemonnee === true,
+              status: goed ? "gepubliceerd" : "concept",
+              blokkadeRedenen: uitslag.ok ? (goed ? [] : [`herschrijven: relevantie ${s.relevantie} onder ${cfg.minRelevantie}`]) : uitslag.redenen,
+              regelversie: REGELVERSIE,
+            };
+          }
+          await o.opslag.werkBerichtBij(b.id, v);
+          if (v.status === "gepubliceerd") herschreven += 1;
+          else naarConcept += 1;
+        } catch (e) {
+          mislukt += 1;
+          noteer({ stap: "herschrijf_bericht", ok: false, fout: fout(e) });
+        }
+      }
+      Object.assign(aantallen, { herschreven, herschrevenNaarConcept: naarConcept, herschrijfMislukt: mislukt });
+      noteer({ stap: "herschrijven", ok: true, aantal: herschreven, detail: { teHerschrijven: lijst.length, naarConcept, mislukt } });
+    } catch (e) {
+      noteer({ stap: "herschrijven", ok: false, fout: fout(e) });
+    }
   }
 
   // 6b. Beeld aanvullen: gepubliceerde berichten zonder beeld krijgen er alsnog een (hooguit 10 per run;
@@ -268,7 +329,7 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
           if (redenen.length < 30) redenen.push(`${p.id}: ${u.reden}`);
           continue;
         }
-        await o.opslag.zetLezerszin(p.id, h, u.zin);
+        await o.opslag.zetLezerszin(p.id, h, u.zin, u.titel);
         if (u.zin === GEEN_ZIN) geen += 1;
         else gemaakt += 1;
       }

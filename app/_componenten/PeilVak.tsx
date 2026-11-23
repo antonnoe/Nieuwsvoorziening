@@ -11,7 +11,7 @@ export default function PeilVak({ lijst, totaal }: { lijst: Aankondiging[]; tota
     <section className="peilvak" aria-labelledby="peilvak-kop">
       <div className="peilkop">
         <h2 id="peilvak-kop">Wat verandert er voor u</h2>
-        <span>Aangekondigde wijzigingen in financiële parameters, uit <a href={PEIL_URL}>PEIL</a></span>
+        <span>Wat er de komende tijd verandert in belastingen, uitkeringen en kosten, bijgehouden in <a href={PEIL_URL}>PEIL</a></span>
       </div>
       <ol>
         {lijst.map((a) => (
@@ -19,7 +19,7 @@ export default function PeilVak({ lijst, totaal }: { lijst: Aankondiging[]; tota
             <time dateTime={a.datum || undefined}>{datum(a)}</time>
             <div>
               <b>{a.naam}</b>
-              <p>{a.omschrijving}{a.voorlopig && " Nog niet definitief."}</p>
+              <p>{a.omschrijving}{a.voorlopig && !a.inDiscussie && " Nog niet definitief."}</p>
               {a.nieuws.length > 0 && (
                 <small className="nieuws">
                   In het nieuws:{" "}
