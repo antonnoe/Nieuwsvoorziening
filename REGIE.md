@@ -65,3 +65,14 @@ Punten 1 tot 4 van de keurders hersteld (herschrijven van oude berichten, beeldf
 
 ## Peil-teller (bouwer, 24 november 2026)
 `/api/peil/teller`: openbaar, alleen lezen, CORS en cache (1 uur) als de andere openbare routes. Onderzocht in de echte export (300 parameters): PEIL houdt geen aanmaakdatum per parameter bij (alleen `verificatiedatum`, `geldig_van`, `volgende_controle`; `geldig_van` is een ingangsdatum van de regel). Daarom telt de route alleen "bijgewerkt" (verificatiedatum in de kalendermaand of het kalenderjaar, Europe/Amsterdam) en bestaat "toegevoegd" niet in de uitvoer. Let op: een verificatiedatum is ook een nagelopen-datum zonder wijziging; bij de ijk van 20-10-2026 kregen 198 van 300 parameters dezelfde datum, dus de maandtelling schommelt met controlerondes en zegt niets over aantal wijzigingen. Bij PEIL-storing: laatst bekende stand met `verouderd: true`, zonder stand een 503 in gewone taal.
+
+## Taak C: nieuwsstromen, drempel, beheer (bouwer, 24 november 2026)
+- C1: inventaris van acht stromen in docs/nieuwsstromen.md (alleen gelezen; repo's waren ondiepe klonen, live niet bereikbaar, onbewezen punten heten hypothese).
+- C2: drempels NIET gewijzigd. De live API (nieuws.infofrankrijk.com) was vanuit de bouwomgeving niet bereikbaar (proxy 403 en host buiten toegestane domeinen), dus geen eigen meting. Uit de scoreformule volgt dat `minRelevantie` (60) de beperkende eis is, niet `publiceerDrempel` (55). Besluitregels voor na 3 tot 5 dagen `/beheer` staan in docs/drempelanalyse.md.
+- C3: Cockpit dekt dit niet (kader 10-09-2026: nieuwsketen prioriteit 2, alleen een plek; Cockpit-repo niet beschikbaar, hypothese), dus `/beheer` gebouwd in deze repo (cookie-inlog, geen sleutel in de URL). Geen migratie nodig. Open: relevantie per bericht bewaren (migratie, voorstel in drempelanalyse).
+- C4: voorstel in docs/voorstel-nieuwsstromen.md; niets uitgeschakeld; wacht op akkoord van Anton.
+| Taak | Status |
+|---|---|
+| Beheerpagina /beheer | gebouwd, getest met geheugenopslag; niet live gezien met echte data |
+| Drempel ijken met echte dagen | open, eerst /beheer 3 tot 5 dagen laten lopen |
+| Stroomvoorstel C4 | wacht op akkoord Anton |

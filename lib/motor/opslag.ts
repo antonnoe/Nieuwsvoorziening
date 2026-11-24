@@ -66,6 +66,10 @@ export interface Opslag {
   berichten(opt: { categorie?: string; limiet: number; offset?: number; peil?: boolean }): Promise<OpgeslagenBericht[]>;
   bericht(id: string): Promise<(OpgeslagenBericht & { signalen: { parameterId: string; status: string }[] }) | null>;
   tellingenSinds(sindsIso: string): Promise<Record<string, number>>;
+  /** Beheer: alle berichten (elke status, zonder tekst) sinds `sindsIso`, nieuwste eerst. */
+  berichtenVoorBeheer(sindsIso: string, limiet: number): Promise<OpgeslagenBericht[]>;
+  /** Beheer: de laatste oogstruns, nieuwste eerst. */
+  recenteRuns(limiet: number): Promise<RunRecord[]>;
   aantallen(): Promise<{ berichtenTotaal: number; gepubliceerdTotaal: number; gepubliceerdVandaag: number; openItems: number; signalenGesignaleerd: number }>;
 }
 
@@ -159,6 +163,12 @@ export class GeheugenOpslag implements Opslag {
     const t: Record<string, number> = {};
     for (const b of this.berichtenLijst) if (b.status === "gepubliceerd" && b.gepubliceerdOp >= sinds) t[b.categorie] = (t[b.categorie] || 0) + 1;
     return t;
+  }
+  async berichtenVoorBeheer(sinds: string, limiet: number) {
+    return this.berichtenLijst.filter((b) => b.gepubliceerdOp >= sinds).sort((a, b) => b.gepubliceerdOp.localeCompare(a.gepubliceerdOp)).slice(0, limiet).map((b) => ({ ...b, tekst: "" }));
+  }
+  async recenteRuns(limiet: number) {
+    return [...this.runs].reverse().slice(0, limiet);
   }
   async aantallen() {
     return {
@@ -336,6 +346,14 @@ export class SupabaseOpslag implements Opslag {
     const t: Record<string, number> = {};
     for (const r of rijen) t[String(r.categorie)] = (t[String(r.categorie)] || 0) + 1;
     return t;
+  }
+  async berichtenVoorBeheer(sinds: string, limiet: number) {
+    const rijen = await this.lees(`nv_berichten?gepubliceerd_op=gte.${encodeURIComponent(sinds)}&order=gepubliceerd_op.desc&limit=${limiet}&select=id,kop,samenvatting,categorie,score,regime,status,blokkade_redenen,gepubliceerd_op,regelversie,portemonnee,peil_raakt,nv_bronnen_per_bericht(bron_naam,originele_kop,datum,url,volgorde)`);
+    return rijen.map(naarBericht);
+  }
+  async recenteRuns(limiet: number) {
+    const rijen = await this.lees(`nv_oogst_runs?order=gestart_op.desc&limit=${limiet}&select=gestart_op,klaar_op,droog,aantallen,fouten`);
+    return rijen.map((r) => ({ gestartOp: String(r.gestart_op), klaarOp: r.klaar_op ? String(r.klaar_op) : undefined, droog: Boolean(r.droog), stappen: [], aantallen: (r.aantallen as Record<string, number>) || {}, fouten: (r.fouten as string[]) || [] }));
   }
   async aantallen() {
     const [berichtenTotaal, gepubliceerdTotaal, gepubliceerdVandaag, openItems, signalenGesignaleerd] = await Promise.all([

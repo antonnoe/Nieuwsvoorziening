@@ -50,3 +50,30 @@ a:focus-visible { outline: 3px solid var(--maroon); outline-offset: 2px; border-
 .peilvak small { color: var(--grijs); display: block; }
 .peilvak small.nieuws a { color: var(--maroon); }
 @media (max-width: 600px) { .peilvak li { grid-template-columns: 1fr; gap: 2px; } }
+
+/* beheer (/beheer, achter CRON_SECRET) */
+.beheer { padding-top: 28px; padding-bottom: 48px; }
+.beheer h1 { font-size: 34px; }
+.beheerkop { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.inlog { display: grid; gap: 10px; max-width: 360px; margin-top: 16px; }
+.inlog input { border: 1px solid var(--lijn); border-radius: 8px; padding: 12px; font: inherit; background: var(--kaart); min-height: 44px; }
+.inlog .knop { border: 0; font: inherit; font-weight: 700; cursor: pointer; min-height: 44px; }
+.beheer .fout { color: var(--maroon); font-weight: 600; }
+.beheer .pil { cursor: pointer; font-family: inherit; display: inline-block; min-height: 40px; }
+.beheer .pil.uit { opacity: .45; }
+.dagnav { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin: 18px 0; }
+.dagnav b { font-size: 20px; text-transform: capitalize; }
+.dagen { background: var(--kaart); border: 1px solid var(--lijn); border-radius: 12px; overflow: hidden; margin-bottom: 10px; }
+.dagrij { display: grid; grid-template-columns: 1.2fr 1fr 1fr 1fr; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--lijn); font-size: 14.5px; }
+.dagrij.kopje { border-top: 0; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--grijs); }
+.dagrij.nu { background: var(--groenzacht); font-weight: 700; }
+.dagrij .goed { color: var(--groen); font-weight: 700; }
+.beheer .blok { margin-top: 28px; }
+.beheer .blok h2 { font-size: 22px; }
+.beheer .telling { font-family: Manrope, system-ui, sans-serif; font-size: 14px; background: var(--groenzacht); border: 1px solid var(--lijn); border-radius: 999px; padding: 1px 10px; margin-left: 6px; vertical-align: 2px; }
+.beheer .lijst { list-style: none; margin-top: 8px; }
+.beheer .lijst li { background: var(--kaart); border: 1px solid var(--lijn); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; overflow-wrap: anywhere; }
+.beheer .rijkop { font-weight: 700; }
+.beheer .rijkop a { color: var(--maroon); }
+.beheer .reden { margin-top: 4px; font-size: 14px; color: var(--inkt); border-left: 3px solid var(--lijn); padding-left: 10px; }
+@media (max-width: 600px) { .beheer.wrap { padding: 0 16px; } .dagrij { font-size: 13.5px; padding: 10px; } }
