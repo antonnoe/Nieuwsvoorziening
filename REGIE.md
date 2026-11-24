@@ -71,9 +71,9 @@ Punten 1 tot 4 van de keurders hersteld (herschrijven van oude berichten, beeldf
 
 ## Taak C: nieuwsstromen, drempel, beheer (bouwer, 24 november 2026)
 - C1: inventaris van acht stromen in docs/nieuwsstromen.md (alleen gelezen; repo's waren ondiepe klonen, live niet bereikbaar, onbewezen punten heten hypothese).
-- C2: drempels NIET gewijzigd. De live API (nieuws.infofrankrijk.com) was vanuit de bouwomgeving niet bereikbaar (proxy 403 en host buiten toegestane domeinen), dus geen eigen meting. Uit de scoreformule volgt dat `minRelevantie` (60) de beperkende eis is, niet `publiceerDrempel` (55). Besluitregels voor na 3 tot 5 dagen `/beheer` staan in docs/drempelanalyse.md.
-- C3: Cockpit dekt dit niet (kader 10-09-2026: nieuwsketen prioriteit 2, alleen een plek; Cockpit-repo niet beschikbaar, hypothese), dus `/beheer` gebouwd in deze repo (cookie-inlog, geen sleutel in de URL). Geen migratie nodig. Open: relevantie per bericht bewaren (migratie, voorstel in drempelanalyse).
-- C4: voorstel in docs/voorstel-nieuwsstromen.md; niets uitgeschakeld; wacht op akkoord van Anton.
+- C2: drempels NIET gewijzigd. Herstelronde 1 (24-11): live gemeten (status, tellingen, nieuws, plus alleen-lezen SELECT op nv_oogst_runs en nv_berichten): 49 berichten, 5 gepubliceerd (doel 10 tot 20 per dag, werkelijk circa 1 tot 4), 0 geblokkeerd, 0 syntheseMislukt, 8 van 44 concepten op score >= 55 zonder poortreden. Geen config-wijziging: beslisregels niet gehaald. Knelpunten: aanbod (4 tot 19 clusters met genoeg bronnen per run) en volgorde van kandidaten. Details en aanbeveling in docs/drempelanalyse.md.
+- C3: of Cockpit dit dekt is onbekend (kader 10-09-2026: nieuwsketen prioriteit 2, alleen een plek; Cockpit-repo niet leesbaar; Anton bevestigt), dus `/beheer` gebouwd in deze repo (cookie-inlog, geen sleutel in de URL). Geen migratie nodig. Open: relevantie per bericht bewaren (migratie, voorstel in drempelanalyse).
+- C4: voorstel in docs/voorstel-nieuwsstromen.md; niets uitgeschakeld; wacht op akkoord van Anton. Herstelronde 1: stroom 6 (frankrijknieuws) is feitelijk niet in bedrijf (ongeldige workflow-YAML, feed van 12-02-2026), stroom 7 toont sinds 24-11 ook deze motor, nlfr-menu concepttermijn is 36 uur.
 | Taak | Status |
 |---|---|
 | Beheerpagina /beheer | gebouwd, getest met geheugenopslag; niet live gezien met echte data |
