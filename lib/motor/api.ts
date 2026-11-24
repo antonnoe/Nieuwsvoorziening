@@ -52,6 +52,7 @@ export function publiekBericht(b: OpgeslagenBericht, metTekst: boolean, wordtNag
     samenvatting: b.samenvatting,
     ...(metTekst ? { tekst: b.tekst } : {}),
     categorie: b.categorie,
+    portemonnee: b.portemonnee === true,
     gepubliceerdOp: b.gepubliceerdOp,
     beeldUrl: b.beeldUrl,
     beeldCredit: b.beeldCredit ?? null,

@@ -10,8 +10,8 @@ import { publiekBericht, jsonAntwoord, geldigeCategorie } from "../lib/motor/api
 import { CATEGORIEEN } from "../lib/motor/types";
 
 test("CORS: alleen nederlanders.fr, infofrankrijk.com en subdomeinen", () => {
-  for (const o of ["https://www.nederlanders.fr", "https://nederlanders.fr", "https://infofrankrijk.com", "https://www.infofrankrijk.com", "https://nieuws.infofrankrijk.com"]) assert.equal(corsToegestaan(o), o);
-  for (const o of ["https://evil.test", "https://infofrankrijk.com.evil.test", "https://xinfofrankrijk.com", "null", "", null]) assert.equal(corsToegestaan(o), null);
+  for (const o of ["https://www.nederlanders.fr", "https://nederlanders.fr", "https://infofrankrijk.com", "https://www.infofrankrijk.com", "https://nieuws.infofrankrijk.com", "https://infopoche.fr"]) assert.equal(corsToegestaan(o), o);
+  for (const o of ["https://evil.test", "https://infofrankrijk.com.evil.test", "https://xinfofrankrijk.com", "http://infopoche.fr", "https://infopoche.fr.evil.test", "https://xinfopoche.fr", "https://evil.test/infopoche.fr", "null", "", null]) assert.equal(corsToegestaan(o), null);
   const r = jsonAntwoord(new Request("https://x.test/api/nieuws", { headers: { origin: "https://evil.test" } }), {});
   assert.equal(r.headers.get("access-control-allow-origin"), null);
 });

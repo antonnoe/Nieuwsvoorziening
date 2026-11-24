@@ -81,6 +81,8 @@ export function corsToegestaan(origin: string | null): string | null {
   try {
     const h = new URL(origin).hostname.toLowerCase();
     if (h === "nederlanders.fr" || h === "www.nederlanders.fr" || h === "infofrankrijk.com" || h.endsWith(".infofrankrijk.com")) return origin;
+    // Infopoche (repo if-mobiel) leest /api/nieuws vanuit de browser; alleen https en de kale host (www.infopoche.fr is niet bevestigd).
+    if (h === "infopoche.fr" && new URL(origin).protocol === "https:") return origin;
   } catch {
     /* ongeldige origin */
   }

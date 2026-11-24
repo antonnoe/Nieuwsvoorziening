@@ -35,6 +35,9 @@
 - Werkwijze en 404 gebruiken dezelfde kop en kolom.
 
 ## Takenlijst
+## D2: Infopoche leest /api/nieuws (bouwer, 24 november 2026)
+CORS toegestaan voor https://infopoche.fr (alleen https, kale host; www.infopoche.fr niet toegevoegd omdat het bestaan niet bevestigd is). `/api/nieuws` ondersteunt `?peil=1` (dezelfde opslagfilter als de voorpagina, inclusief kolom `portemonnee`). Publieke vorm kreeg `portemonnee` (boolean); `peil.raakt` met `wordtNagelopen` bestond al en is ongewijzigd. Geen migratie. Tests in `test/api.test.ts` en `test/nieuws-route.test.ts`.
+
 | Taak | Status |
 |---|---|
 | Motor: oogst, zeef, clustering, synthese, poort, score, PEIL, beeld, opslag | gebouwd, getest met nepbronnen en nepmodel |
