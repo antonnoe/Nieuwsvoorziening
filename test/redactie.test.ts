@@ -334,3 +334,51 @@ test("Supabase: herschrijven en bijwerken sluiten handmatige berichten in de dat
   assert.ok(urls[0].includes("handmatig_op=is.null") && urls[0].includes("regelversie.eq.0"));
   assert.ok(urls[1].includes("handmatig_op=is.null"));
 });
+
+const basisBericht = { kop: "Kop", samenvatting: "S", tekst: "T", categorie: "algemeen", score: 80, regime: "overheid", soort: "overheid", status: "gepubliceerd", blokkadeRedenen: [], beeldUrl: null, peil: { raakt: [], mogelijkGewijzigd: [] }, bronnen: [], gepubliceerdOp: "2026-11-26T08:00:00.000Z", sleutel: "s" } as const;
+
+test("handmatige correctie gaat voor: geheugenopslag overschrijft een bericht met handmatig_op of redactie niet", async () => {
+  const o = new GeheugenOpslag();
+  const id = await o.slaBerichtOp({ ...basisBericht } as never);
+  await o.bewerkBericht(id, { kop: "Handmatige kop" });
+  const id2 = await o.slaBerichtOp({ ...basisBericht, kop: "Motor kop" } as never);
+  assert.equal(id2, id);
+  assert.equal((await o.redactieBericht(id))!.kop, "Handmatige kop");
+  const idB = await o.slaBerichtOp({ ...basisBericht, sleutel: "b" } as never);
+  await o.zetRedactie(idB, "weg");
+  assert.equal(await o.slaBerichtOp({ ...basisBericht, sleutel: "b", kop: "Nieuw" } as never), idB);
+  assert.notEqual((await o.redactieBericht(idB))!.kop, "Nieuw");
+});
+
+test("handmatige correctie gaat voor: Supabase-opslag schrijft niet als het bericht handmatig_op of redactie heeft", async () => {
+  for (const [veld, waarde] of [["handmatig_op", "2026-11-26T09:00:00Z"], ["redactie", "weg"]] as const) {
+    const nep = nepSupabase(true);
+    nep.rij[veld] = waarde;
+    await metSupabase(nep.f, async () => {
+      const o = new SupabaseOpslag("https://p.supabase.co", "k");
+      assert.equal(await o.slaBerichtOp({ ...basisBericht } as never), ID1);
+      assert.equal(nep.log.filter((l) => l.methode === "POST").length, 0);
+    });
+  }
+  const nep = nepSupabase(true);
+  await metSupabase(nep.f, async () => {
+    const o = new SupabaseOpslag("https://p.supabase.co", "k");
+    await o.slaBerichtOp({ ...basisBericht } as never);
+    assert.equal(nep.log.filter((l) => l.methode === "POST").length, 1);
+  });
+});
+
+test("redenTekst: gewone taal per reden, null bij geplaatst", async () => {
+  const { redenTekst } = await import("../lib/redactie");
+  const c = (status: "concept" | "geblokkeerd", blokkadeRedenen: string[], extra: Partial<OpgeslagenBericht> = {}) => bericht(ID1, { status, blokkadeRedenen, ...extra });
+  assert.equal(redenTekst(bericht(ID1)), null);
+  assert.equal(redenTekst(c("geblokkeerd", ['krantennaam buiten bronnenblok: "X"'])), "De tekst noemt een krant.");
+  assert.equal(redenTekst(c("geblokkeerd", ['letterlijk overgenomen uit een bron: "a b"'])), "De tekst lijkt te veel op het origineel.");
+  assert.equal(redenTekst(c("geblokkeerd", ["tekst te kort of leeg"])), "De tekst is te kort.");
+  assert.equal(redenTekst(c("geblokkeerd", ['model praat over invoer: "volgens de bronnen"'])), "De tekst praat over zijn eigen bronnen.");
+  assert.equal(redenTekst(c("concept", ["herschrijven: relevantie 40 onder 60"])), "Te weinig van belang voor onze lezers.");
+  const twee = [{ naam: "A", origineleKop: "k", datum: "2026-11-26", url: "https://a.fr/x" }, { naam: "B", origineleKop: "k", datum: "2026-11-26", url: "https://b.fr/x" }];
+  assert.equal(redenTekst(c("concept", [], { regime: "pers", bronnen: twee })), "Te weinig van belang voor onze lezers.");
+  assert.equal(redenTekst(c("concept", [], { regime: "pers", bronnen: [{ naam: "A", origineleKop: "k", datum: "2026-11-26", url: "https://a.fr/x" }] })), "Maar één bron gevonden.");
+  assert.equal(redenTekst(c("geblokkeerd", ["bedrag niet in bron: 5"])), "Niet geplaatst door de controle.");
+});

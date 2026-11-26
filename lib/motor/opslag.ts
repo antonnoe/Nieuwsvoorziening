@@ -128,8 +128,13 @@ export class GeheugenOpslag implements Opslag {
   async recenteBronKoppen(sinds: string) {
     return this.berichtenLijst.filter((b) => b.gepubliceerdOp >= sinds).flatMap((b) => b.bronnen.map((x) => x.origineleKop));
   }
+  private sleutelId = new Map<string, string>();
   async slaBerichtOp(b: Bericht) {
+    // Handmatige correctie gaat voor: een bericht met handmatig_op of redactie wordt nooit overschreven.
+    const bestaand = b.sleutel ? this.berichtenLijst.find((x) => x.id === this.sleutelId.get(b.sleutel!)) : undefined;
+    if (bestaand && (bestaand.handmatigOp || bestaand.redactie)) return bestaand.id;
     const id = b.id || `mem-${(this.n += 1)}`;
+    if (b.sleutel) this.sleutelId.set(b.sleutel, id);
     const { sleutel: _s, ...rest } = b;
     this.berichtenLijst.push({ ...rest, id, soort: soortVan({ soort: b.soort, regime: b.regime }), kanalen: leesKanalen(b.kanalen) });
     return id;
@@ -327,6 +332,19 @@ export class SupabaseOpslag implements Opslag {
     return (await this.lees(`nv_bronnen_per_bericht?datum=gte.${encodeURIComponent(sinds)}&select=originele_kop&limit=2000`)).map((r) => String(r.originele_kop));
   }
   async slaBerichtOp(b: Bericht) {
+    // Handmatige correctie gaat voor: bestaat het bericht al met handmatig_op of redactie, dan niet schrijven.
+    if (b.sleutel) {
+      const q = (sel: string) => this.lees(`nv_berichten?sleutel=eq.${encodeURIComponent(b.sleutel!)}&select=${sel}&limit=1`);
+      let rij: Rij | undefined;
+      if (!this.kolommenWeg()) {
+        try {
+          rij = (await q("id,handmatig_op,redactie"))[0];
+        } catch (e) {
+          if (!isKolomFout(e)) throw e; // zonder migratie bestaat er niets handmatigs: gewoon schrijven
+        }
+      }
+      if (rij && (rij.handmatig_op || rij.redactie)) return String(rij.id);
+    }
     const schrijf = async (metSoort: boolean) => this.vraag("nv_berichten?on_conflict=sleutel", {
       method: "POST", prefer: "resolution=merge-duplicates,return=representation",
       body: JSON.stringify({

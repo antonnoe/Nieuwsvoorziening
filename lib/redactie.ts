@@ -69,12 +69,31 @@ export function nietGeplaatstReden(b: OpgeslagenBericht): string | null {
   return `Score ${b.score} of relevantie onder de drempel (plaatsen vanaf score ${c.publiceerDrempel} en relevantie ${c.minRelevantie}).`;
 }
 
+/** Eén zin in gewone taal voor een niet-technische beheerder, zonder getallen of drempels; null als het bericht geplaatst is. */
+export function redenTekst(b: OpgeslagenBericht): string | null {
+  if (b.status === "gepubliceerd") return null;
+  const r = b.blokkadeRedenen.join(" | ").toLowerCase();
+  if (r.includes("krantennaam")) return "De tekst noemt een krant.";
+  if (r.includes("letterlijk overgenomen")) return "De tekst lijkt te veel op het origineel.";
+  if (r.includes("te kort of leeg")) return "De tekst is te kort.";
+  if (r.includes("praat over invoer")) return "De tekst praat over zijn eigen bronnen.";
+  if (r.includes("relevantie") && r.includes("onder")) return "Te weinig van belang voor onze lezers.";
+  if (!b.blokkadeRedenen.length) {
+    const c = laadConfig();
+    const min = b.regime === "overheid" ? c.minBronnenOverheid : c.minBronnenPers;
+    if (b.bronnen.length > 0 && b.bronnen.length < min) return "Maar één bron gevonden.";
+    if (b.status === "concept") return "Te weinig van belang voor onze lezers.";
+  }
+  return "Niet geplaatst door de controle.";
+}
+
 /** De vorm voor de redactietool: alles wat nodig is om een lijst te maken, zonder volledige tekst. */
 export function redactieVorm(b: OpgeslagenBericht) {
   const reden = nietGeplaatstReden(b);
   return {
     geplaatst: b.status === "gepubliceerd",
     reden,
+    redenTekst: redenTekst(b),
     kanPlaatsen: b.status === "concept" && !poortBlokkade(b) && b.redactie !== "weg",
     handmatigOp: b.handmatigOp ?? null,
     herschrijfGemarkeerd: b.regelversie === 0,
