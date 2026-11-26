@@ -19,6 +19,8 @@ import { GEEN_ZIN, hashOmschrijving, maakLezerszin } from "./lezerszin";
 export const MAX_LEZERSZINNEN_PER_RUN = 60;
 export const MAX_LEZERSZIN_POGINGEN = 120;
 import { overlap, hashId } from "./tekst";
+import { kiesKandidaten } from "./kandidaten";
+import { overheidPoort } from "./overheidpoort";
 import { dagStart } from "./tijd";
 import type { Bericht, Bron, Cluster, PeilParameter, StapResultaat, Synthese } from "./types";
 
@@ -32,6 +34,8 @@ export interface RunOpties {
   fetchFn?: typeof fetch;
   peil?: PeilParameter[] | null; // voor tests; anders gelezen van PEIL_URL
   generator?: BeeldGenerator | null;
+  /** Tijdbudget (ms) voor het schrijven van kandidaten; daarna stopt de lus netjes (rest komt in de volgende run). */
+  kandidaatBudgetMs?: number;
 }
 
 export interface RunUitslag {
@@ -79,6 +83,14 @@ const fout = (e: unknown) => (e instanceof Error ? e.message : String(e)).slice(
 
 /** Tijdsbudget van een run: de functie mag 800 s duren; na dit budget slaan de optionele stappen (6a, 6b, 6c) over, zodat de run altijd wordt opgeslagen. */
 export const RUN_BUDGET_MS = 480_000;
+/**
+ * Tijdbudget voor de kandidatenlus (besluit 26-11-2026, plafond per run 10). De functie mag 800 s duren (maxDuration);
+ * gemeten kost een run met 6 kandidaten ongeveer 2 minuten in totaal (docs/drempelanalyse.md), dus circa 15 tot 20 s
+ * per kandidaat. Bij 10 kandidaten is dat ruim onder het budget; een trage dag (herkansing, artikelen, Unsplash) breekt
+ * de lus na dit budget netjes af. Wat niet is verwerkt blijft open en komt in de volgende run terug. De optionele
+ * stappen 6a, 6b en 6c houden zo minstens RUN_BUDGET_MS min dit budget over.
+ */
+export const KANDIDAAT_BUDGET_MS = 330_000;
 
 export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
   const nu = o.nu ?? Date.now();
@@ -152,8 +164,19 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
   let kandidaten: Cluster[] = [];
   try {
     const bronKoppen = await o.opslag.recenteBronKoppen(new Date(nu - 48 * 3600_000).toISOString()).catch(() => [] as string[]);
-    const genoeg = clusters.filter((c) => (clusterRegime(c) === "overheid" ? aantalBronnen(c) >= cfg.minBronnenOverheid : aantalBronnen(c) >= cfg.minBronnenPers));
-    aantallen.clustersGenoegBronnen = genoeg.length;
+    const genoegBronnen = clusters.filter((c) => (clusterRegime(c) === "overheid" ? aantalBronnen(c) >= cfg.minBronnenOverheid : aantalBronnen(c) >= cfg.minBronnenPers));
+    aantallen.clustersGenoegBronnen = genoegBronnen.length;
+    // Overheidsstroom: Nederlands binnenlands bestuur (R17) en Caribisch Nederland komen niet door, vóór de synthese.
+    const genoeg: Cluster[] = [];
+    let r17 = 0, caribisch = 0;
+    for (const c of genoegBronnen) {
+      const u = overheidPoort(c);
+      if (u.door) { genoeg.push(c); continue; }
+      if (u.reden === "caribisch") caribisch += 1; else r17 += 1;
+      await o.opslag.markeerVerwerkt(c.items.map((i) => i.url), null, u.reden as string).catch(() => {});
+    }
+    aantallen.overheidR17 = r17;
+    aantallen.overheidCaribisch = caribisch;
     const nietDubbel: Cluster[] = [];
     for (const c of genoeg) {
       const dubbel = bronKoppen.some((k) => c.items.some((i) => { const x = overlap(i.titel, k); return x.gedeeld >= 2 && x.verhouding >= 0.5; }));
@@ -162,8 +185,8 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
     }
     const vandaag = await o.opslag.telGepubliceerdSinds(dagStart(nu)).catch(() => 0);
     const ruimte = Math.max(0, cfg.maxBerichtenPerDag - vandaag);
-    nietDubbel.sort((a, b) => aantalBronnen(b) - aantalBronnen(a) || b.items[0].gepubliceerdOp.localeCompare(a.items[0].gepubliceerdOp));
-    kandidaten = nietDubbel.slice(0, Math.min(cfg.maxSynthesesPerRun, ruimte));
+    // Volgorde op verwachte relevantie (niet meer alleen op aantal bronnen), binnen de ruimte van vandaag.
+    kandidaten = kiesKandidaten(nietDubbel, cfg.maxSynthesesPerRun, ruimte);
     aantallen.kandidaten = kandidaten.length;
     noteer({ stap: "selecteer", ok: true, aantal: kandidaten.length, detail: { vandaagGepubliceerd: vandaag, ruimte } });
   } catch (e) {
@@ -194,7 +217,10 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
     }
     const generator = o.generator === undefined ? actieveGenerator() : o.generator;
     let gepubliceerd = 0, geblokkeerd = 0, concept = 0, mislukt = 0, signalenAantal = 0, artikelen = 0;
+    const kandidaatBudget = o.kandidaatBudgetMs ?? KANDIDAAT_BUDGET_MS;
+    let overgeslagenTijd = 0;
     for (const c of kandidaten) {
+      if (Date.now() - startTijd >= kandidaatBudget) { overgeslagenTijd += 1; continue; }
       try {
         artikelen += await verrijkMetArtikelen(c, o.fetchFn ?? fetch).catch(() => 0);
         let s: Synthese | null = await synthetiseer(c, o.client);
@@ -220,7 +246,7 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
         const beeldUrl = beeld?.url ?? null;
         const beeldCredit = beeld?.credit ?? null;
         const bericht: Bericht = {
-          kop: s.kop, samenvatting: s.samenvatting, tekst: s.tekst, categorie: s.categorie, score, regime, status,
+          soort: regime, kop: s.kop, samenvatting: s.samenvatting, tekst: s.tekst, categorie: s.categorie, score, regime, status,
           blokkadeRedenen: uitslag.redenen, portemonnee: s.portemonnee === true, beeldUrl, beeldCredit, peil: koppeling, bronnen, gepubliceerdOp: new Date(nu).toISOString(),
           sleutel: hashId(c.items.map((i) => i.url).sort().join("|")), regelversie: REGELVERSIE,
         };
@@ -238,8 +264,8 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
         noteer({ stap: "synthese_cluster", ok: false, fout: fout(e) });
       }
     }
-    Object.assign(aantallen, { gepubliceerd, geblokkeerd, concept, syntheseMislukt: mislukt, peilSignalen: signalenAantal, artikelenGelezen: artikelen });
-    noteer({ stap: "synthese", ok: true, aantal: berichten.length, detail: { gepubliceerd, geblokkeerd, concept, mislukt } });
+    Object.assign(aantallen, { gepubliceerd, geblokkeerd, concept, syntheseMislukt: mislukt, peilSignalen: signalenAantal, artikelenGelezen: artikelen, kandidatenTijdOvergeslagen: overgeslagenTijd });
+    noteer({ stap: "synthese", ok: true, aantal: berichten.length, detail: { gepubliceerd, geblokkeerd, concept, mislukt, ...(overgeslagenTijd ? { tijdbudgetBereikt: overgeslagenTijd } : {}) } });
   } else {
     noteer({ stap: "synthese", ok: true, aantal: 0, detail: { reden: "geen kandidaten" } });
   }
@@ -254,6 +280,7 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
       let herschreven = 0, naarConcept = 0, mislukt = 0;
       for (const b of lijst) {
         if (!tijdOver()) break;
+        if (b.handmatigOp) continue; // een correctie van de beheerder gaat voor: nooit herschrijven
         try {
           const c = clusterUitBericht(b);
           if (!c.items.length) { mislukt += 1; continue; }

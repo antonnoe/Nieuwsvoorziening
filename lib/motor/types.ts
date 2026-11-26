@@ -47,6 +47,20 @@ export interface BronItem {
   artikelTekst?: string;
 }
 
+/** Kanalen waarop een bericht verschijnt; de redactietool (nlfr-menu /redactie) zet ze aan of uit per bericht. */
+export const KANALEN = ["actueel", "nieuwsbrief", "infopoche", "zijbalk", "infofrankrijk"] as const;
+export type Kanaal = (typeof KANALEN)[number];
+export type Kanalen = Record<Kanaal, boolean>;
+export const STANDAARD_KANALEN: Kanalen = { actueel: true, nieuwsbrief: true, infopoche: true, zijbalk: true, infofrankrijk: true };
+export type Soort = "overheid" | "pers";
+
+/** Leest een kanalenwaarde uit de opslag; ontbrekend of kapot geeft de standaard (alles aan). */
+export function leesKanalen(v: unknown): Kanalen {
+  const uit: Kanalen = { ...STANDAARD_KANALEN };
+  if (v && typeof v === "object") for (const k of KANALEN) if (typeof (v as Record<string, unknown>)[k] === "boolean") uit[k] = (v as Record<string, boolean>)[k];
+  return uit;
+}
+
 export interface Cluster {
   sleutel: string;
   items: BronItem[];
@@ -99,6 +113,8 @@ export interface Bericht {
   categorie: Categorie;
   score: number;
   regime: Regime;
+  /** Herkenbaar kenmerk in opslag en API: "overheid" of "pers" (ontbreekt = pers, of afgeleid van regime). */
+  soort?: Soort;
   status: "gepubliceerd" | "geblokkeerd" | "concept";
   blokkadeRedenen: string[];
   beeldUrl: string | null;
@@ -111,6 +127,13 @@ export interface Bericht {
   sleutel: string;
   /** Versie van de schrijfregels waarmee dit bericht is gemaakt (ontbreekt = 1). */
   regelversie?: number;
+  /** Kanalen waarop het bericht staat (ontbreekt = alles aan). */
+  kanalen?: Kanalen;
+  /** Redactiebesluit: null of "weg" (dan verschijnt het nergens). */
+  redactie?: "weg" | null;
+  redactieOp?: string | null;
+  /** Tijdstip van een handmatige correctie door de redactie: daarna schrijft de motor dit bericht nooit meer om of over. */
+  handmatigOp?: string | null;
 }
 
 export interface BerichtBron {

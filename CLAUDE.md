@@ -55,6 +55,15 @@ Next.js (app router) + TypeScript op Vercel. Tests `npm test` (tsx, node --test)
 
 - CORS (`corsToegestaan`, `config.ts`): nederlanders.fr (ook www), infofrankrijk.com en subdomeinen, en https://infopoche.fr (Infopoche leest /api/nieuws in de browser, 24-11-2026). www.infopoche.fr niet toegevoegd: niet bevestigd dat die bestaat.
 
+## Besluit 26 november 2026, keuze A
+
+Nieuwsvoorziening wordt de enige nieuwsmotor van het netwerk; de oude motor in nlfr-menu wordt later uitgezet. Deze ronde alleen motor en API, de publieke pagina's zijn niet gewijzigd.
+- Overheidsstroom: `lib/motor/overheidpoort.ts` (R17 en Caribisch Nederland uit nlfr-menu, eindvariant van 20 en 21 november). Een cluster dat alleen uit Nederlandse overheid bestaat (regime overheid, land NL) komt alleen door als minstens een item Nederlanders in Frankrijk of het buitenland raakt (`buitenlandKenmerk`) en geen item Caribisch Nederland betreft; anders vóór de synthese als `r17` of `caribisch` verwerkt. Franse overheid en pers gaan ongemoeid door. Bron Rijksoverheid NL (`rijksoverheid-nl`) is ACTIVE; BOSS en info.gouv.fr blijven CONCEPT (niet bereikbaar). Nieuwe regels in dit bestand horen bij een test in `test/overheidpoort.test.ts`.
+- `soort` ("overheid" of "pers") staat op elk bericht (kolom `nv_berichten.soort`, afgeleid van `regime`) en in `/api/nieuws` en `/api/nieuws/[id]`, samen met `domein` (bron-domein, alleen bij overheid) en `kanalen`; alleen toegevoegd, achteraan.
+- Kanalen en redactie (migratie `20261126120000_nv_kanalen_redactie.sql`, door de regisseur toe te passen): `kanalen` (actueel, nieuwsbrief, infopoche, zijbalk, infofrankrijk; standaard alles aan), `redactie` (null of "weg"), `redactie_op`. `/api/nieuws?kanaal=<naam>` toont alleen berichten waarvan dat kanaal aan staat. Een bericht met `redactie = "weg"` verschijnt nergens (API, RSS, voorpagina, sitemap, tellingen). Zolang de migratie niet is toegepast werkt alles met standaardwaarden (`metKolommen` in `opslag.ts` vangt de fout van Supabase af en probeert het na 5 minuten opnieuw); alleen `POST /api/redactie` geeft dan 503 met uitleg.
+- `POST /api/redactie` (`{id, actie: "weg"|"terug"|"kanaal", kanaal?, aan?}`) en `GET /api/redactie?dagen=2` (alle berichten incl. concept en weg): alleen met Bearer CRON_SECRET, zonder CRON_SECRET dicht, 5 foute pogingen per 10 minuten per afzender, CORS alleen https://nlfr-menu.vercel.app, `no-store`. Logica in `lib/redactie.ts`. De voorpagina filtert niet op kanaal `actueel`; dat is een keuze voor later.
+- Volume: plafond per run 10 (was 6), kandidaatvolgorde op verwachte relevantie (`lib/motor/kandidaten.ts`), tijdbudget 330 s voor de kandidatenlus (`KANDIDAAT_BUDGET_MS`). Zie docs/drempelanalyse.md. Drempels en poort ongewijzigd.
+
 ## Harde grenzen
 nlfr-menu, france-newsdesk, verenigingen-kalender en Café Claude worden nooit gewijzigd, alleen gelezen. Geen sleutels kopiëren, geen waarden van omgevingsvariabelen in code. Migraties worden niet door de bouwer toegepast; dat doet de regisseur.
 

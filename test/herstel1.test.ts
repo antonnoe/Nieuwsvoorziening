@@ -147,7 +147,7 @@ test("status: gepubliceerdTotaal telt alleen zichtbare berichten, berichtenTotaa
   const s = new SupabaseOpslag("https://p.supabase.co", "k", (async (u: string) => { urls.push(String(u)); return new Response("[]", { headers: { "content-range": "*/7" } }); }) as unknown as typeof fetch);
   const a = await s.aantallen();
   assert.equal(a.gepubliceerdTotaal, 7);
-  assert.ok(urls.some((u) => u.includes("nv_berichten?status=eq.gepubliceerd&select=id")));
+  assert.ok(urls.some((u) => u.includes("nv_berichten?status=eq.gepubliceerd&redactie=is.null&select=id")));
 });
 
 test("verder lezen: eerst dezelfde categorie, dan dezelfde PEIL-parameter, dan de nieuwste; nooit het bericht zelf", async () => {

@@ -389,7 +389,7 @@
       "prioriteit": 2,
       "frankrijkFilter": false,
       "vensterUren": 48,
-      "notitie": "Uitgezet: de feed gaf herhaaldelijk een timeout vanaf Vercel (bron-status http=timeout op 03-08-2026). Server-side niet betrouwbaar bereikbaar. Later opnieuw pr"
+      "notitie": "Uitgezet: de feed gaf herhaaldelijk een timeout vanaf Vercel (bron-status http=timeout op 03-08-2026). Server-side niet betrouwbaar bereikbaar. Later opnieuw pr Opnieuw gecontroleerd 26-11-2026 vanaf de bouwomgeving: geen antwoord (verbinding afgebroken). Blijft CONCEPT."
     },
     {
       "id": "douane",
@@ -405,6 +405,21 @@
       "frankrijkFilter": false,
       "vensterUren": 48,
       "notitie": "geverifieerd"
+    },
+    {
+      "id": "rijksoverheid-nl",
+      "naam": "Rijksoverheid — Nieuws",
+      "feed": "https://www.rijksoverheid.nl/api/rss?query=%7B%22filters%22%3A%5B%5D%2C%22resultSearchTerm%22%3A%22%22%7D",
+      "domein": "rijksoverheid.nl",
+      "taal": "nl",
+      "land": "NL",
+      "groep": "overheid",
+      "regime": "overheid",
+      "status": "ACTIVE",
+      "prioriteit": 3,
+      "frankrijkFilter": false,
+      "vensterUren": 48,
+      "notitie": "Overgenomen uit nlfr-menu (26-11-2026). Feed gecontroleerd op 26-11-2026: HTTP 200 en 20 geldige items. Nederlands binnenlands bestuur komt alleen door als het Nederlanders in Frankrijk of het buitenland raakt (regel R17, lib/motor/overheidpoort.ts); Caribisch Nederland nooit."
     },
     {
       "id": "impots-gouv",
@@ -434,7 +449,7 @@
       "prioriteit": 2,
       "frankrijkFilter": false,
       "vensterUren": 48,
-      "notitie": "Uitgezet: info.gouv.fr zit achter Cloudflare-botbescherming die serverside fetches blokkeert (⚪ bevestigd op de preview). Geen bruikbare, niet-geblokkeerde publ"
+      "notitie": "Uitgezet: info.gouv.fr zit achter Cloudflare-botbescherming die serverside fetches blokkeert (⚪ bevestigd op de preview). Geen bruikbare, niet-geblokkeerde publ Opnieuw gecontroleerd 26-11-2026: HTTP 403 (Cloudflare-controle). Blijft CONCEPT."
     },
     {
       "id": "nederlandwereldwijd-frankrijk",

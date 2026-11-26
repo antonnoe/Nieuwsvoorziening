@@ -74,3 +74,18 @@ Uit `lib/motor/motor.ts` (regels 165 en 166, 213) en `lib/motor/score.ts`:
 - Pogingen steeds 6 per run en bijna alle slagen: `maxSynthesesPerRun` van 6 naar 8. Nu: 10% slaagt.
 - Houd `/beheer` open op geblokkeerd: stijgt het aandeel poortblokkades (nu 0), dan terug.
 - `REGELVERSIE` blijft 2; de poort blijft ongemoeid.
+
+
+## Wijziging 26 november 2026 (keuze A): kandidaatkeuze en plafond per run
+
+Besluit opdrachtgever: Nieuwsvoorziening wordt de enige nieuwsmotor en moet daarom meer leveren dan de 1 tot 4 berichten per dag van nu (doel 10 tot 20). De drempels en de poort zijn bewust niet verlaagd; de analyse hierboven wees het aanbod en de kandidaatvolgorde aan als knelpunt.
+
+Wat is gewijzigd:
+
+1. **Plafond per run van 6 naar 10** (`maxSynthesesPerRun` in `data/config.json` en `lib/motor/config.ts`). Reden: in 9 van 15 runs stond `kandidaten` op het plafond terwijl er 7 tot 19 clusters met genoeg bronnen waren. `maxBerichtenPerDag` (20) blijft de harde bovengrens per dag; `publiceerDrempel` (55), `minRelevantie` (60) en de kwaliteitspoort zijn ongewijzigd.
+2. **Volgorde op verwachte relevantie** (`lib/motor/kandidaten.ts`, `kiesKandidaten`). Voorheen: meeste bronnen eerst, dan nieuwste. Nu: eerst een eenvoudige verwachting (0 tot 100) uit titel en omschrijving zonder modelaanroep: een concreet gevolg voor de lezer (prijs, belasting, pensioen, verkeer, weer, enzovoort) telt mee, landelijke politiek en lokale affaires tellen af, overheidsbronnen krijgen een kleine bonus, twee of drie bronnen een kleine plus; veel bronnen geven geen voorrang meer. Bij gelijke verwachting eerst meer bronnen, dan nieuwste. De verwachting bepaalt alleen de volgorde; het model en de drempels beslissen nog steeds over publicatie. De heuristiek is een hypothese (de relevantie per cluster is niet bewaard): meet na een week in `/beheer` of het aantal gepubliceerde berichten per dag stijgt en of het aandeel concepten daalt.
+3. **Tijdbudget voor de kandidatenlus** (`KANDIDAAT_BUDGET_MS`, 330 s, in `lib/motor/motor.ts`). De functie mag 800 s duren (`maxDuration`); de bestaande optionele stappen (herschrijven, beeld aanvullen, PEIL-zinnen) stoppen bij 480 s. Meting: de run van 24-11 19:00 UTC met 6 kandidaten was na ongeveer 2 minuten klaar, dus circa 15 tot 20 s per kandidaat inclusief de rest van de run. Tien kandidaten kosten dan zo'n 3 tot 4 minuten, ruim onder het budget. Is een dag trager (herkansing, artikelen ophalen, Unsplash), dan breekt de lus na 330 s netjes af: de niet verwerkte kandidaten worden niet als verwerkt gemarkeerd en komen in de volgende run terug; het aantal staat in `kandidatenTijdOvergeslagen` in de run en in de stapdetails (`tijdbudgetBereikt`). Test: `test/kandidaten.test.ts`.
+4. **Let op de Unsplash-limiet**: `MAX_AANVRAGEN_PER_RUN` (36) blijft gelden en de demomodus is 50 aanvragen per uur. Met meer gepubliceerde berichten per run kan een bericht zonder foto blijven; stap 6b vult die in de volgende run aan. Bij 403 of 429 stopt de run met Unsplash zonder fout.
+5. **Overheidsstroom**: Rijksoverheid NL is een nieuwe actieve bron. Nederlands binnenlands bestuur wordt vóór de synthese tegengehouden (R17, `lib/motor/overheidpoort.js` in nlfr-menu overgenomen als `lib/motor/overheidpoort.ts`); `aantallen.overheidR17` en `overheidCaribisch` tellen dat per run. Dit voegt aanbod toe zonder extra modelkosten voor wat toch wegvalt.
+
+Te meten na een week: gepubliceerd per dag (doel 10 tot 20), `kandidatenTijdOvergeslagen` (moet 0 zijn), aandeel concepten per verwachtingsklasse. Pas bij een duidelijke uitkomst de beslisregels hierboven (drempels) heroverwegen.

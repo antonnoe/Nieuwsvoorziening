@@ -34,7 +34,7 @@ const STANDAARD: MotorConfig = {
   voorkeurBronnenPers: 3,
   minBronnenOverheid: 1,
   maxItemsPerBron: 25,
-  maxSynthesesPerRun: 6,
+  maxSynthesesPerRun: 10,
   maxBerichtenPerDag: 20,
   maxClusterItems: 150,
   ruweItemsBewaarDagen: 30,
