@@ -1,7 +1,8 @@
 // Redactiebesluit (besluit opdrachtgever 26-11-2026): één redactietool in nlfr-menu (/redactie) stuurt deze
-// motor aan via POST en GET /api/redactie, achter Authorization: Bearer <CRON_SECRET>. Zonder CRON_SECRET is
-// alles dicht. Sleutels komen nooit in logs of antwoorden.
-import { bearerGeldig, geheim } from "@/lib/beheer";
+// motor aan via POST en GET /api/redactie, achter Authorization: Bearer <REDACTIE_SECRET> (eigen sleutel, terugval CRON_SECRET). Zonder
+// sleutel is alles dicht. Sleutels komen nooit in logs of antwoorden.
+import { timingSafeEqual } from "node:crypto";
+import { geheim } from "@/lib/beheer";
 import { bronDomein } from "@/lib/motor/api";
 import { soortVan, type OpgeslagenBericht } from "@/lib/motor/opslag";
 import { CATEGORIEEN, KANALEN, leesKanalen, type Bericht, type Kanaal } from "@/lib/motor/types";
@@ -36,12 +37,24 @@ export function wisRem() {
 export type Toegang = "ok" | "dicht" | "geweigerd" | "te-vaak";
 
 /** Controleert de Bearer-sleutel en houdt foute pogingen bij. */
+/** Eigen sleutel voor de redactie (REDACTIE_SECRET, kleinste rechten: alleen deze route); valt terug op CRON_SECRET. */
+export function redactieGeheim(): string | null {
+  const r = process.env.REDACTIE_SECRET;
+  return r && r.length > 0 ? r : geheim();
+}
+function redactieBearerGeldig(authorization: string | null | undefined): boolean {
+  const g = redactieGeheim();
+  if (!g) return false;
+  const x = Buffer.from(authorization || ""), y = Buffer.from(`Bearer ${g}`);
+  return x.length === y.length && timingSafeEqual(x, y);
+}
+
 export function controleerToegang(req: Request, nu = Date.now()): Toegang {
-  if (!geheim()) return "dicht";
+  if (!redactieGeheim()) return "dicht";
   const wie = (req.headers.get("x-forwarded-for") || "onbekend").split(",")[0].trim();
   const recent = (pogingen.get(wie) || []).filter((t) => nu - t < 600_000);
   if (recent.length >= 5) return "te-vaak";
-  if (!bearerGeldig(req.headers.get("authorization"))) {
+  if (!redactieBearerGeldig(req.headers.get("authorization"))) {
     pogingen.set(wie, [...recent, nu]);
     return "geweigerd";
   }

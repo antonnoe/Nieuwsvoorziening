@@ -4,7 +4,7 @@ Voor de redactietool in nlfr-menu (/redactie). Basis: het adres van Nieuwsvoorzi
 
 ## Toegang
 - Elke aanroep: header `Authorization: Bearer <CRON_SECRET>`. Zonder ingestelde CRON_SECRET is de route dicht (503).
-- nlfr-menu authenticeert met zijn eigen variabele `NV_REDACTIE_SECRET`. De waarde daarvan moet exact gelijk zijn aan `CRON_SECRET` van Nieuwsvoorziening; anders geeft elke aanroep 401.
+- nlfr-menu authenticeert met zijn eigen variabele `NV_REDACTIE_SECRET`. De waarde daarvan is gelijk aan `REDACTIE_SECRET` van Nieuwsvoorziening (eigen sleutel, alleen voor deze route); zonder REDACTIE_SECRET valt de route terug op `CRON_SECRET`. Een verkeerde waarde geeft 401.
 - Fout geheim: 401. Na 5 foute pogingen binnen 10 minuten vanaf hetzelfde adres: 429.
 - CORS: alleen `https://nlfr-menu.vercel.app` (preflight OPTIONS ondersteund; toegestane headers `authorization`, `content-type`). Antwoorden zijn `no-store`.
 - Foutvorm altijd: `{"fout": "<gewone taal>"}`.

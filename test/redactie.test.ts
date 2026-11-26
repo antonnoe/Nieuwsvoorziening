@@ -382,3 +382,16 @@ test("redenTekst: gewone taal per reden, null bij geplaatst", async () => {
   assert.equal(redenTekst(c("concept", [], { regime: "pers", bronnen: [{ naam: "A", origineleKop: "k", datum: "2026-11-26", url: "https://a.fr/x" }] })), "Maar één bron gevonden.");
   assert.equal(redenTekst(c("geblokkeerd", ["bedrag niet in bron: 5"])), "Niet geplaatst door de controle.");
 });
+
+test("redactie: eigen sleutel REDACTIE_SECRET gaat voor, CRON_SECRET blijft terugval", async () => {
+  const { controleerToegang } = await import("../lib/redactie");
+  const oud = { r: process.env.REDACTIE_SECRET, c: process.env.CRON_SECRET };
+  process.env.CRON_SECRET = "cron-x"; process.env.REDACTIE_SECRET = "red-y";
+  const req = (a: string) => new Request("https://x/api/redactie", { headers: { authorization: a, "x-forwarded-for": "9.9.9." + a.length } });
+  assert.equal(controleerToegang(req("Bearer red-y")), "ok");
+  assert.equal(controleerToegang(req("Bearer cron-x")), "geweigerd");
+  delete process.env.REDACTIE_SECRET;
+  assert.equal(controleerToegang(req("Bearer cron-x")), "ok");
+  process.env.REDACTIE_SECRET = oud.r ?? ""; if (!oud.r) delete process.env.REDACTIE_SECRET;
+  if (oud.c === undefined) delete process.env.CRON_SECRET; else process.env.CRON_SECRET = oud.c;
+});
