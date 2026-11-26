@@ -64,6 +64,8 @@ Nieuwsvoorziening wordt de enige nieuwsmotor van het netwerk; de oude motor in n
 - `POST /api/redactie` (`{id, actie: "weg"|"terug"|"kanaal", kanaal?, aan?}`) en `GET /api/redactie?dagen=2` (alle berichten incl. concept en weg): alleen met Bearer REDACTIE_SECRET (eigen sleutel, alleen voor deze route; in nlfr-menu heet dezelfde waarde NV_REDACTIE_SECRET; terugval CRON_SECRET), zonder sleutel dicht, 5 foute pogingen per 10 minuten per afzender, CORS alleen https://nlfr-menu.vercel.app, `no-store`. Logica in `lib/redactie.ts`. De voorpagina filtert niet op kanaal `actueel`; dat is een keuze voor later.
 - Volume: plafond per run 10 (was 6), kandidaatvolgorde op verwachte relevantie (`lib/motor/kandidaten.ts`), tijdbudget 330 s voor de kandidatenlus (`KANDIDAAT_BUDGET_MS`). Zie docs/drempelanalyse.md. Drempels en poort ongewijzigd.
 
+- `/beheer` gearchiveerd (26-11-2026, besluit één redactietool): de oude pagina staat in `archief/beheer` (niet gerouteerd), `/beheer` stuurt door naar https://nlfr-menu.vercel.app/redactie. `lib/beheer.ts` blijft (sleutelcontrole).
+
 ## Harde grenzen
 nlfr-menu, france-newsdesk, verenigingen-kalender en Café Claude worden nooit gewijzigd, alleen gelezen. Geen sleutels kopiëren, geen waarden van omgevingsvariabelen in code. Migraties worden niet door de bouwer toegepast; dat doet de regisseur.
 

@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { GeheugenOpslag } from "../lib/motor/opslag";
 import { bearerGeldig, conceptReden, cookieGeldig, cookieKop, dagVan, maakCookieWaarde, perDag, sleutelKlopt } from "../lib/beheer";
-import { POST as inloggen } from "../app/beheer/inloggen/route";
+import { POST as inloggen } from "../archief/beheer/inloggen/route";
 
 const metGeheim = async (g: string | undefined, f: () => unknown | Promise<unknown>) => {
   const oud = process.env.CRON_SECRET;
