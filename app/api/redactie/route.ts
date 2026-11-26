@@ -54,6 +54,7 @@ export async function POST(req: Request) {
     if (opdracht.actie === "peil") {
       const sig = await opslag.peilSignaal(opdracht.id);
       if (!sig) return redactieAntwoord(req, { fout: "Signaal niet gevonden." }, 404);
+      if (sig.status !== "gesignaleerd") return redactieAntwoord(req, { fout: `Dit signaal is al afgehandeld (status ${sig.status}) en kan niet nog een keer worden beslist.` }, 409);
       await opslag.zetPeilBesluit(opdracht.id, opdracht.keuze!);
       // Bij "raakt niet" verdwijnt de koppeling ook bij het bericht, zodat lezers hem niet meer zien. PEIL zelf blijft ongemoeid.
       if (opdracht.keuze === "raakt_niet" && sig.soort === "wijziging") {
