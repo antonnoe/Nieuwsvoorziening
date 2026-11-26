@@ -30,7 +30,7 @@
 ## Huisstijl (bouwer, 23 november 2026)
 - app/huisstijl.css is letterlijk docs/huisstijl/huisstijl.css; site.css bevat alleen aanvullingen met die variabelen. Inter is weg.
 - Klassen volgens de schetsen (.net, .kop, .keuken, .pil, .hoofd, .raster, .kaart, .peil, .voet, .meer, .art, .zij, .paneel, .verder). Netwerkbalk uit lib/netwerkbalk.ts.
-- Artikelpagina: Open keuken toont Geplaatst, Gecontroleerd (ja, want elk gepubliceerd bericht passeerde de poort) en Correcties (link). Bijgewerkt en Kort ontbreken: geen gegevens. Beeldbijschrift ontbreekt om dezelfde reden.
+- Artikelpagina: Verantwoording toont Geplaatst, Gecontroleerd (ja, want elk gepubliceerd bericht passeerde de poort) en Correcties (link). Bijgewerkt en Kort ontbreken: geen gegevens. Beeldbijschrift ontbreekt om dezelfde reden.
 - Verder lezen: drie berichten uit dezelfde categorie, dan met dezelfde PEIL-parameter (herstelronde 1), dan de nieuwste.
 - Werkwijze en 404 gebruiken dezelfde kop en kolom.
 

@@ -40,6 +40,7 @@ export default function Kaart({ b, groot = false, compact = false }: { b: Opgesl
         {meta}
         {!compact && (groot ? <p className="intro">{b.samenvatting}</p> : <p>{b.samenvatting}</p>)}
         {!compact && <PeilRegel peil={peilWeergave(b)} />}
+        <span className="leesmeer" aria-hidden="true">Lees meer …</span>
         {voet}
       </div>
     </article>

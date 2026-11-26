@@ -58,7 +58,7 @@ export default async function BerichtPagina({ params }: { params: P }) {
           </article>
           <aside className="zij">
             <div className="paneel">
-              <h4>Open keuken</h4>
+              <h4>Verantwoording</h4>
               <div className="rij"><span>Geplaatst</span><span>{datumLang(b.gepubliceerdOp)}</span></div>
               <div className="rij"><span>Gecontroleerd</span><span className="ja">✓ ja</span></div>
               <div className="rij"><span>Correcties</span><a href="/werkwijze#correcties">Zo melden</a></div>

@@ -8,11 +8,13 @@ const datum = (a: Aankondiging) =>
 export default function PeilVak({ lijst, totaal }: { lijst: Aankondiging[]; totaal: number }) {
   if (!lijst.length) return null;
   return (
-    <section className="peilvak" aria-labelledby="peilvak-kop">
-      <div className="peilkop">
-        <h2 id="peilvak-kop">Wat verandert er voor u</h2>
-        <span>Wat er de komende tijd verandert in belastingen, uitkeringen en kosten, bijgehouden in <a href={PEIL_URL}>PEIL</a></span>
-      </div>
+    <details className="peilvak">
+      <summary>
+        <span className="pk">Wat verandert er voor u</span>
+        <span className="pa">· {lijst.length} aangekondigde {lijst.length === 1 ? "wijziging" : "wijzigingen"} in belastingen, uitkeringen en kosten</span>
+        <span className="pijl" aria-hidden="true" />
+      </summary>
+      <p className="peiluitleg">Wat er de komende tijd verandert in belastingen, uitkeringen en kosten, bijgehouden in <a href={PEIL_URL}>PEIL</a></p>
       <ol>
         {lijst.map((a) => (
           <li key={a.id}>
@@ -41,6 +43,6 @@ export default function PeilVak({ lijst, totaal }: { lijst: Aankondiging[]; tota
         ))}
       </ol>
       <a className="pil" href={PEIL_URL}>Alle aangekondigde wijzigingen ({totaal}) in PEIL</a>
-    </section>
+    </details>
   );
 }
