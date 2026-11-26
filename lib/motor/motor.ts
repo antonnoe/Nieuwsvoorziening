@@ -2,7 +2,7 @@
 // Elke stap faalt netjes: een fout wordt vastgelegd en de volgende stap gaat door
 // met wat er wel is.
 import { haalJson, type ModelClient } from "./ai";
-import { laadConfig, actieveBronnen, modelSynthese, REGELVERSIE, MAX_HERSCHRIJVEN_PER_RUN, type MotorConfig } from "./config";
+import { laadConfig, actieveBronnen, modelSynthese, REGELVERSIE, MAX_HERSCHRIJVEN_PER_RUN, EENMALIGE_PEIL_HERTOETS, type MotorConfig } from "./config";
 import { aantalBronnen, clusterItems } from "./cluster";
 import { oogstBronnen, type OogstBronResultaat } from "./feeds";
 import { schoneZoektermen, beeldResultaat, fotoSleutel, type BeeldGenerator, actieveGenerator } from "./beeld";
@@ -389,7 +389,7 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
   if (o.client) {
     try {
       const parameters = o.peil ?? (await laadPeil(cfg.peilCacheMinuten, o.fetchFn));
-      const lijst = await o.opslag.teToetsenPeil(new Date(nu - 14 * 86400_000).toISOString(), 10);
+      const lijst = await o.opslag.teToetsenPeil(new Date(nu - 14 * 86400_000).toISOString(), 10, EENMALIGE_PEIL_HERTOETS);
       let getoetst = 0, behouden = 0, gewist = 0, uitgesteld = 0, signalen = 0;
       const perBericht: Record<string, unknown>[] = [];
       for (const b of lijst) {
@@ -408,7 +408,7 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
         if (t.koppeling.raakt.length) behouden += 1;
         else gewist += 1;
       }
-      Object.assign(aantallen, { peilHertoetst: getoetst });
+      Object.assign(aantallen, { peilHertoetst: getoetst, peilSignalenHertoets: signalen, peilSignalen: Number(aantallen.peilSignalen || 0) + signalen });
       noteer({ stap: "peil_hertoets", ok: true, aantal: getoetst, detail: { teToetsen: lijst.length, behouden, gewist, uitgesteld, signalen, berichten: perBericht } });
     } catch (e) {
       noteer({ stap: "peil_hertoets", ok: false, fout: fout(e) });
