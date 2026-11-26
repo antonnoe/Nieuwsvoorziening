@@ -2,6 +2,7 @@
 // 23-11-2026). Alleen lezen uit de openbare PEIL-export; faalt stil (geen vak).
 import { veiligeUrl } from "./site";
 import { leesOpslag } from "./motor/api";
+import { groenePeil } from "./motor/types";
 import { GEEN_ZIN, hashOmschrijving } from "./motor/lezerszin";
 
 const EXPORT = process.env.PEIL_URL || "https://communitiesabroad.com/manifest/peil-zoek.json";
@@ -98,7 +99,7 @@ export async function laadAankondigingen(max = 4): Promise<{ lijst: Aankondiging
       opslag?.berichten({ limiet: 60, peil: true }).catch(() => []) ?? Promise.resolve([]),
     ]);
     const nieuws: NieuwsPerParameter = new Map();
-    for (const b of berichten || []) for (const r of b.peil?.raakt || []) nieuws.set(r.id, [...(nieuws.get(r.id) || []), { id: b.id, kop: b.kop }]);
+    for (const b of berichten || []) for (const r of groenePeil(b.peil?.raakt)) nieuws.set(r.id, [...(nieuws.get(r.id) || []), { id: b.id, kop: b.kop }]);
     return kiesAankondigingen(Array.isArray(d.parameters) ? d.parameters : [], vandaag, max, zinnen, nieuws);
   } catch {
     return { lijst: [], totaal: 0 };

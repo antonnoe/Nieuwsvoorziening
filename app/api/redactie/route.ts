@@ -1,12 +1,12 @@
 import { geenOpslag, leesOpslag } from "@/lib/motor/api";
 import { MigratieOntbreekt } from "@/lib/motor/opslag";
-import { controleerToegang, leesOpdracht, poortBlokkade, redactieAntwoord, redactieCors, redactieVorm, toegangFout } from "@/lib/redactie";
+import { controleerToegang, leesOpdracht, peilVorm, poortBlokkade, redactieAntwoord, redactieCors, redactieVorm, toegangFout } from "@/lib/redactie";
 
 export const dynamic = "force-dynamic";
 
 export const OPTIONS = (req: Request) => new Response(null, { status: 204, headers: redactieCors(req) });
 
-const GEEN_MIGRATIE = { fout: "De migratie voor kanalen en redactie is nog niet toegepast; deze actie kan nog niet worden bewaard." };
+const GEEN_MIGRATIE = { fout: "De migratie (kanalen en redactie, of PEIL streng) is nog niet toegepast; deze actie kan nog niet worden bewaard." };
 
 /** Alle berichten van de laatste N dagen (standaard 2, hooguit 30), ook concept, geblokkeerd en "weg". */
 export async function GET(req: Request) {
@@ -20,19 +20,22 @@ export async function GET(req: Request) {
     const lijst = await opslag.berichtenVoorRedactie(new Date(Date.now() - dagen * 86400_000).toISOString(), 500);
     // Voor de statusregel "De nieuwsmotor loopt, laatste ronde ...": een storing hier laat de lijst niet falen.
     const run = await opslag.laatsteRun().catch(() => null);
+    // Open PEIL-signalen (groen en oranje) voor de redactie; een storing of ontbrekende migratie laat de lijst niet falen.
+    const peil = (await opslag.peilSignalen(200).catch(() => [])).map(peilVorm);
     return redactieAntwoord(req, {
       dagen,
       aantal: lijst.length,
       aantalNietGeplaatst: lijst.filter((b) => b.status !== "gepubliceerd").length,
       laatsteRun: run ? { gestartOp: run.gestartOp, klaarOp: run.klaarOp ?? null, droog: run.droog, aantallen: run.aantallen, fouten: run.fouten.slice(0, 5) } : null,
       berichten: lijst.map(redactieVorm),
+      peil,
     });
   } catch {
     return redactieAntwoord(req, { fout: "Berichten konden niet worden gelezen." }, 502);
   }
 }
 
-/** Body: {id, actie: "weg"|"terug"|"kanaal", kanaal?, aan?}. Geeft het bijgewerkte bericht terug. */
+/** Body: {id, actie: "weg"|"terug"|"kanaal"|..., kanaal?, aan?} of {actie: "peil", id: signaal-id, keuze}. Geeft het bijgewerkte bericht (of het signaal) terug. */
 export async function POST(req: Request) {
   const t = controleerToegang(req);
   if (t !== "ok") return toegangFout(req, t);
@@ -48,6 +51,17 @@ export async function POST(req: Request) {
   if ("fout" in l) return redactieAntwoord(req, { fout: l.fout }, 400);
   const { opdracht } = l;
   try {
+    if (opdracht.actie === "peil") {
+      const sig = await opslag.peilSignaal(opdracht.id);
+      if (!sig) return redactieAntwoord(req, { fout: "Signaal niet gevonden." }, 404);
+      await opslag.zetPeilBesluit(opdracht.id, opdracht.keuze!);
+      // Bij "raakt niet" verdwijnt de koppeling ook bij het bericht, zodat lezers hem niet meer zien. PEIL zelf blijft ongemoeid.
+      if (opdracht.keuze === "raakt_niet" && sig.soort === "wijziging") {
+        const b = await opslag.redactieBericht(sig.berichtId);
+        if (b) await opslag.zetPeilKoppeling(b.id, { raakt: b.peil.raakt.filter((r) => r.id !== sig.parameterId), mogelijkGewijzigd: b.peil.mogelijkGewijzigd.filter((r) => r.id !== sig.parameterId) });
+      }
+      return redactieAntwoord(req, { signaal: { id: sig.id, status: opdracht.keuze } });
+    }
     const bestaat = await opslag.redactieBericht(opdracht.id);
     if (!bestaat) return redactieAntwoord(req, { fout: "Bericht niet gevonden." }, 404);
     if (opdracht.actie === "plaats") {

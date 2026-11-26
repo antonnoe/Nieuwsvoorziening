@@ -5,7 +5,7 @@ import { timingSafeEqual } from "node:crypto";
 import { geheim } from "@/lib/beheer";
 import { bronDomein } from "@/lib/motor/api";
 import { soortVan, type OpgeslagenBericht } from "@/lib/motor/opslag";
-import { CATEGORIEEN, KANALEN, leesKanalen, type Bericht, type Kanaal } from "@/lib/motor/types";
+import { CATEGORIEEN, KANALEN, PEIL_BESLUITEN, leesKanalen, type Bericht, type Kanaal, type PeilBesluit, type PeilSignaalRij } from "@/lib/motor/types";
 import { laadConfig } from "@/lib/motor/config";
 
 export const REDACTIE_ORIGIN = "https://nlfr-menu.vercel.app";
@@ -129,15 +129,37 @@ export function redactieVorm(b: OpgeslagenBericht) {
   };
 }
 
+/** Een open PEIL-signaal voor de redactie: gewone taal, geen PEIL-ids. Advies: vastgesteld bij een definitieve wijziging, verwacht bij een voorlopige, lijst bij "ontbreekt in PEIL". */
+export function peilVorm(x: PeilSignaalRij) {
+  const advies: PeilBesluit = x.soort === "ontbreekt" ? "lijst" : x.definitief === true ? "vastgesteld" : "verwacht";
+  return {
+    id: x.id,
+    soort: x.soort,
+    zekerheid: x.zekerheid,
+    titel: x.titel,
+    huidige: x.huidigeWaarde,
+    nieuw: x.nieuweWaarde,
+    vanaf: x.vanaf,
+    twijfel: x.twijfel,
+    berichtId: x.berichtId,
+    berichtKop: x.berichtKop,
+    bronUrl: x.bronUrl,
+    aantal: x.aantal,
+    advies: advies as "vastgesteld" | "verwacht" | "lijst",
+  };
+}
+
 export interface RedactieOpdracht {
   id: string;
-  actie: "weg" | "terug" | "kanaal" | "plaats" | "herschrijf" | "bewerk";
+  actie: "weg" | "terug" | "kanaal" | "plaats" | "herschrijf" | "bewerk" | "peil";
+  /** Alleen bij actie "peil": het besluit over het signaal (id is dan het signaal-id). */
+  keuze?: PeilBesluit;
   kanaal?: Kanaal;
   aan?: boolean;
   bewerk?: { kop?: string; samenvatting?: string; tekst?: string; categorie?: Bericht["categorie"] };
 }
 
-const ACTIES = ["weg", "terug", "kanaal", "plaats", "herschrijf", "bewerk"];
+const ACTIES = ["weg", "terug", "kanaal", "plaats", "herschrijf", "bewerk", "peil"];
 
 /** Leest en valideert de body. Geeft de opdracht of een foutmelding. */
 export function leesOpdracht(body: unknown): { opdracht: RedactieOpdracht } | { fout: string } {
@@ -146,6 +168,10 @@ export function leesOpdracht(body: unknown): { opdracht: RedactieOpdracht } | { 
   const id = typeof b.id === "string" ? b.id.trim() : "";
   if (!id || id.length > 80 || !/^[A-Za-z0-9-]+$/.test(id)) return { fout: "Ongeldig id." };
   if (typeof b.actie !== "string" || !ACTIES.includes(b.actie)) return { fout: `Actie moet een van ${ACTIES.join(", ")} zijn.` };
+  if (b.actie === "peil") {
+    if (typeof b.keuze !== "string" || !(PEIL_BESLUITEN as readonly string[]).includes(b.keuze)) return { fout: `Keuze moet een van ${PEIL_BESLUITEN.join(", ")} zijn.` };
+    return { opdracht: { id, actie: "peil", keuze: b.keuze as PeilBesluit } };
+  }
   if (b.actie === "bewerk") {
     const v: NonNullable<RedactieOpdracht["bewerk"]> = {};
     const tekstveld = (naam: "kop" | "samenvatting" | "tekst", min: number, max: number): string | null => {

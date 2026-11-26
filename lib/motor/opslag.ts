@@ -1,7 +1,8 @@
 // Opslag: Supabase via de REST-interface (geen extra afhankelijkheid), met een
 // geheugenvariant voor tests en droge runs. Elke methode gooit bij een storing;
 // de motor vangt dat per stap op.
-import { leesKanalen, type BeeldCredit, type Bericht, type BronItem, type Kanaal, type PeilKoppeling } from "./types";
+import { leesKanalen, groenePeil, type BeeldCredit, type Bericht, type BronItem, type Kanaal, type PeilBesluit, type PeilKoppeling, type PeilSignaalIn, type PeilSignaalRij } from "./types";
+import { zoekSamenvoeging } from "./peilbeoordeling";
 import { dagStart } from "./tijd";
 import { REGELVERSIE } from "./config";
 
@@ -46,11 +47,13 @@ export interface BerichtHerschreven {
   regelversie: number;
 }
 
-export interface PeilSignaalIn {
-  berichtId: string;
-  parameterId: string;
-  parameterNaam: string;
-  toelichting: string;
+export type { PeilSignaalIn, PeilSignaalRij };
+
+/** De migratie 20261126190000_nv_peil_streng.sql is nog niet toegepast: de nieuwe signaalkolommen of statuswaarden bestaan niet. */
+export function isPeilKolomFout(e: unknown): boolean {
+  const m = e instanceof Error ? e.message : String(e);
+  return /(zekerheid|soort|nieuwe_waarde|huidige_waarde|vanaf|definitief|twijfel|citaat|bron_url|titel|aantal|besluit)/i.test(m) && /(42703|PGRST204|PGRST205|does not exist|Could not find)/i.test(m)
+    || /(23514|check constraint)/i.test(m) && /nv_peil_signalen/i.test(m);
 }
 
 export interface Opslag {
@@ -61,7 +64,19 @@ export interface Opslag {
   /** Originele bronkoppen van recent verwerkte berichten, om een tweede bericht over hetzelfde onderwerp te voorkomen. */
   recenteBronKoppen(sindsIso: string): Promise<string[]>;
   slaBerichtOp(b: Bericht): Promise<string>;
+  /** Slaat signalen op; "ontbreekt"-signalen over hetzelfde onderwerp worden samengevoegd (aantal). Zonder migratie: niets bewaard (0). */
   slaPeilSignalenOp(s: PeilSignaalIn[]): Promise<number>;
+  /** Open signalen (status gesignaleerd, getoetst) voor de redactie, nieuwste eerst. Zonder migratie: leeg. */
+  peilSignalen(limiet?: number): Promise<PeilSignaalRij[]>;
+  peilSignaal(id: string): Promise<PeilSignaalRij | null>;
+  /** Zet de status volgens het besluit van de redactie. Gooit MigratieOntbreekt zolang de migratie niet is toegepast. */
+  zetPeilBesluit(id: string, keuze: PeilBesluit, nu?: number): Promise<void>;
+  /** Vervangt de PEIL-koppeling van een bericht (peil_raakt en peil_mogelijk_gewijzigd). */
+  zetPeilKoppeling(berichtId: string, koppeling: PeilKoppeling): Promise<void>;
+  /** Gepubliceerde berichten sinds `sindsIso` met een oude, ongetoetste PEIL-koppeling (zonder zekerheid), met tekst. */
+  teToetsenPeil(sindsIso: string, limiet: number): Promise<OpgeslagenBericht[]>;
+  /** Sluit oude signalen zonder zekerheid (van vóór PEIL streng) van een bericht. */
+  sluitOudePeilSignalen(berichtId: string): Promise<void>;
   telGepubliceerdSinds(sindsIso: string): Promise<number>;
   slaRunOp(r: RunRecord): Promise<void>;
   laatsteRun(): Promise<RunRecord | null>;
@@ -108,7 +123,7 @@ export class GeheugenOpslag implements Opslag {
   naam = "geheugen";
   items = new Map<string, BronItem & { verwerkt?: string; berichtId?: string | null }>();
   berichtenLijst: OpgeslagenBericht[] = [];
-  signalen: (PeilSignaalIn & { status: string })[] = [];
+  signalen: PeilSignaalRij[] = [];
   runs: RunRecord[] = [];
   private n = 0;
   async upsertItems(items: BronItem[]) {
@@ -140,8 +155,42 @@ export class GeheugenOpslag implements Opslag {
     return id;
   }
   async slaPeilSignalenOp(s: PeilSignaalIn[]) {
-    for (const x of s) this.signalen.push({ ...x, status: "gesignaleerd" });
-    return s.length;
+    let n = 0;
+    for (const x of s) {
+      if (x.soort === "ontbreekt") {
+        const m = zoekSamenvoeging(x.titel, x.parameterId, this.signalen.filter((y) => y.soort === "ontbreekt"));
+        if (m) {
+          if (m.berichtId !== x.berichtId) m.aantal += 1;
+          continue;
+        }
+      } else if (this.signalen.some((y) => y.berichtId === x.berichtId && y.parameterId === x.parameterId)) continue;
+      this.signalen.push({ ...x, id: `sig-${(this.n += 1)}`, status: "gesignaleerd", aantal: 1, besluit: null, besluitOp: null, berichtKop: this.berichtenLijst.find((b) => b.id === x.berichtId)?.kop || "" });
+      n += 1;
+    }
+    return n;
+  }
+  async peilSignalen(limiet = 200) {
+    return this.signalen.filter((x) => x.status === "gesignaleerd" && x.zekerheid).slice(-limiet).reverse();
+  }
+  async peilSignaal(id: string) {
+    return this.signalen.find((x) => x.id === id) || null;
+  }
+  async zetPeilBesluit(id: string, keuze: PeilBesluit, nu = Date.now()) {
+    const x = this.signalen.find((y) => y.id === id);
+    if (x) Object.assign(x, { status: keuze, besluit: keuze, besluitOp: new Date(nu).toISOString() });
+  }
+  async zetPeilKoppeling(berichtId: string, koppeling: PeilKoppeling) {
+    const b = this.berichtenLijst.find((x) => x.id === berichtId);
+    if (b) b.peil = koppeling;
+  }
+  async teToetsenPeil(sinds: string, limiet: number) {
+    return this.berichtenLijst
+      .filter((b) => b.status === "gepubliceerd" && b.gepubliceerdOp >= sinds && b.peil.raakt.some((r) => !r.zekerheid))
+      .sort((a, b) => b.gepubliceerdOp.localeCompare(a.gepubliceerdOp))
+      .slice(0, limiet);
+  }
+  async sluitOudePeilSignalen(berichtId: string) {
+    for (const x of this.signalen) if (x.berichtId === berichtId && !x.zekerheid && x.status === "gesignaleerd") x.status = "raakt_niet";
   }
   async telGepubliceerdSinds(sinds: string) {
     return this.berichtenLijst.filter((b) => b.status === "gepubliceerd" && b.gepubliceerdOp >= sinds).length;
@@ -214,7 +263,7 @@ export class GeheugenOpslag implements Opslag {
   }
   async berichten({ categorie, limiet, offset = 0, peil, kanaal }: { categorie?: string; limiet: number; offset?: number; peil?: boolean; kanaal?: Kanaal }) {
     return this.berichtenLijst
-      .filter((b) => b.status === "gepubliceerd" && b.redactie !== "weg" && (!kanaal || leesKanalen(b.kanalen)[kanaal]) && (!categorie || b.categorie === categorie) && (!peil || b.peil.raakt.length > 0 || b.portemonnee === true))
+      .filter((b) => b.status === "gepubliceerd" && b.redactie !== "weg" && (!kanaal || leesKanalen(b.kanalen)[kanaal]) && (!categorie || b.categorie === categorie) && (!peil || groenePeil(b.peil.raakt).length > 0 || b.portemonnee === true))
       .sort((a, b) => b.gepubliceerdOp.localeCompare(a.gepubliceerdOp))
       .slice(offset, offset + limiet);
   }
@@ -239,7 +288,7 @@ export class GeheugenOpslag implements Opslag {
       gepubliceerdTotaal: this.berichtenLijst.filter((b) => b.status === "gepubliceerd" && b.redactie !== "weg").length,
       gepubliceerdVandaag: await this.telGepubliceerdSinds(dagStart()),
       openItems: [...this.items.values()].filter((i) => !i.verwerkt).length,
-      signalenGesignaleerd: this.signalen.length,
+      signalenGesignaleerd: this.signalen.filter((x) => x.status === "gesignaleerd").length,
     };
   }
 }
@@ -366,11 +415,93 @@ export class SupabaseOpslag implements Opslag {
   }
   async slaPeilSignalenOp(s: PeilSignaalIn[]) {
     if (!s.length) return 0;
-    await this.vraag("nv_peil_signalen?on_conflict=bericht_id,parameter_id", {
-      method: "POST", prefer: "resolution=ignore-duplicates,return=minimal",
-      body: JSON.stringify(s.map((x) => ({ bericht_id: x.berichtId, parameter_id: x.parameterId, parameter_naam: x.parameterNaam, toelichting: x.toelichting, status: "gesignaleerd" }))),
-    });
-    return s.length;
+    try {
+      let bestaande: { id: string; parameterId: string; titel: string; berichtId: string; aantal: number }[] | null = null;
+      const nieuw: PeilSignaalIn[] = [];
+      for (const x of s) {
+        if (x.soort === "ontbreekt") {
+          bestaande ??= (await this.lees("nv_peil_signalen?soort=eq.ontbreekt&select=id,parameter_id,titel,bericht_id,aantal&limit=500")).map((r) => ({ id: String(r.id), parameterId: String(r.parameter_id), titel: String(r.titel || ""), berichtId: String(r.bericht_id), aantal: Number(r.aantal || 1) }));
+          const m = zoekSamenvoeging(x.titel, x.parameterId, bestaande);
+          if (m) {
+            if (m.berichtId !== x.berichtId) {
+              m.aantal += 1;
+              await this.vraag(`nv_peil_signalen?id=eq.${m.id}`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ aantal: m.aantal }) });
+            }
+            continue;
+          }
+          bestaande.push({ id: "", parameterId: x.parameterId, titel: x.titel, berichtId: x.berichtId, aantal: 1 });
+        }
+        nieuw.push(x);
+      }
+      if (!nieuw.length) return 0;
+      await this.vraag("nv_peil_signalen?on_conflict=bericht_id,parameter_id", {
+        method: "POST", prefer: "resolution=ignore-duplicates,return=minimal",
+        body: JSON.stringify(nieuw.map((x) => ({
+          bericht_id: x.berichtId, parameter_id: x.parameterId, parameter_naam: x.parameterNaam, toelichting: x.toelichting, status: "gesignaleerd",
+          soort: x.soort, zekerheid: x.zekerheid, titel: x.titel, nieuwe_waarde: x.nieuweWaarde, huidige_waarde: x.huidigeWaarde, vanaf: x.vanaf,
+          definitief: x.definitief, twijfel: x.twijfel, citaat: x.citaat, bron_url: x.bronUrl,
+        }))),
+      });
+      return nieuw.length;
+    } catch (e) {
+      if (isPeilKolomFout(e)) return 0; // migratie nog niet toegepast: geen signalen bewaard, de koppeling zelf werkt wel
+      throw e;
+    }
+  }
+  private naarSignaal(r: Rij): PeilSignaalRij {
+    const t = (v: unknown) => (v === null || v === undefined || v === "" ? null : String(v));
+    return {
+      id: String(r.id), berichtId: String(r.bericht_id), parameterId: String(r.parameter_id), parameterNaam: String(r.parameter_naam || ""), toelichting: String(r.toelichting || ""),
+      soort: r.soort === "ontbreekt" ? "ontbreekt" : "wijziging", zekerheid: r.zekerheid === "groen" ? "groen" : r.zekerheid === "oranje" ? "oranje" : (null as unknown as "oranje"),
+      titel: String(r.titel || r.parameter_naam || ""), nieuweWaarde: t(r.nieuwe_waarde), huidigeWaarde: t(r.huidige_waarde), vanaf: t(r.vanaf),
+      definitief: typeof r.definitief === "boolean" ? r.definitief : null, twijfel: t(r.twijfel), citaat: t(r.citaat), bronUrl: t(r.bron_url),
+      status: String(r.status), aantal: Number(r.aantal || 1), besluit: t(r.besluit), besluitOp: t(r.besluit_op),
+      berichtKop: String((r.nv_berichten as Rij | null)?.kop || ""),
+    };
+  }
+  async peilSignalen(limiet = 200) {
+    try {
+      const rijen = await this.lees(`nv_peil_signalen?status=eq.gesignaleerd&zekerheid=not.is.null&order=aangemaakt_op.desc&limit=${limiet}&select=*,nv_berichten(kop)`);
+      return rijen.map((r) => this.naarSignaal(r));
+    } catch (e) {
+      if (isPeilKolomFout(e)) return [];
+      throw e;
+    }
+  }
+  async peilSignaal(id: string) {
+    if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
+    try {
+      const r = (await this.lees(`nv_peil_signalen?id=eq.${id}&select=*,nv_berichten(kop)`))[0];
+      return r ? this.naarSignaal(r) : null;
+    } catch (e) {
+      if (isPeilKolomFout(e)) throw new MigratieOntbreekt();
+      throw e;
+    }
+  }
+  async zetPeilBesluit(id: string, keuze: PeilBesluit, nu = Date.now()) {
+    if (!/^[0-9a-f-]{36}$/i.test(id)) return;
+    try {
+      await this.vraag(`nv_peil_signalen?id=eq.${id}`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ status: keuze, besluit: keuze, besluit_op: new Date(nu).toISOString() }) });
+    } catch (e) {
+      if (isPeilKolomFout(e)) throw new MigratieOntbreekt();
+      throw e;
+    }
+  }
+  async zetPeilKoppeling(berichtId: string, koppeling: PeilKoppeling) {
+    if (!/^[0-9a-f-]{36}$/i.test(berichtId)) return;
+    await this.vraag(`nv_berichten?id=eq.${berichtId}`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ peil_raakt: koppeling.raakt, peil_mogelijk_gewijzigd: koppeling.mogelijkGewijzigd }) });
+  }
+  async teToetsenPeil(sinds: string, limiet: number) {
+    const rijen = await this.lees(`nv_berichten?status=eq.gepubliceerd&gepubliceerd_op=gte.${encodeURIComponent(sinds)}&peil_raakt=neq.[]&order=gepubliceerd_op.desc&limit=100&select=*,nv_bronnen_per_bericht(*)`);
+    return rijen.map(naarBericht).filter((b) => b.peil.raakt.some((r) => !r.zekerheid)).slice(0, limiet);
+  }
+  async sluitOudePeilSignalen(berichtId: string) {
+    if (!/^[0-9a-f-]{36}$/i.test(berichtId)) return;
+    try {
+      await this.vraag(`nv_peil_signalen?bericht_id=eq.${berichtId}&zekerheid=is.null&status=eq.gesignaleerd`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ status: "raakt_niet" }) });
+    } catch (e) {
+      if (!isPeilKolomFout(e)) throw e; // zonder migratie bestaan er geen oude signalen om te sluiten die we kunnen onderscheiden
+    }
   }
   async telGepubliceerdSinds(sinds: string) {
     return this.tel(`nv_berichten?status=eq.gepubliceerd&gepubliceerd_op=gte.${encodeURIComponent(sinds)}&select=id`);

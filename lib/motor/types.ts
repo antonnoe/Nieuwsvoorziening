@@ -101,8 +101,47 @@ export interface PeilParameter {
 }
 
 export interface PeilKoppeling {
-  raakt: { id: string; naam: string; bronUrl?: string | null; tools?: { naam: string; url: string | null }[] }[];
+  /** Alleen koppelingen met zekerheid "groen" (twee onafhankelijke controles) horen hier; zonder zekerheid is een oude, ongetoetste koppeling. */
+  raakt: { id: string; naam: string; bronUrl?: string | null; tools?: { naam: string; url: string | null }[]; zekerheid?: "groen" }[];
   mogelijkGewijzigd: { id: string; naam: string; toelichting: string }[];
+}
+
+/** Wat lezers mogen zien: alleen groene koppelingen (besluit 26-11-2026, PEIL streng). Oude koppelingen zonder zekerheid vallen af. */
+export const groenePeil = <T extends { zekerheid?: string }>(raakt: T[] | undefined | null): T[] => (raakt || []).filter((r) => r.zekerheid === "groen");
+
+export type PeilSoort = "wijziging" | "ontbreekt";
+export type PeilZekerheid = "groen" | "oranje";
+export type PeilBesluit = "vastgesteld" | "verwacht" | "raakt_niet" | "lijst" | "niet_nodig";
+export const PEIL_BESLUITEN: readonly PeilBesluit[] = ["vastgesteld", "verwacht", "raakt_niet", "lijst", "niet_nodig"];
+
+/** Een signaal voor de redactie (tabel nv_peil_signalen). */
+export interface PeilSignaalIn {
+  berichtId: string;
+  /** Een PEIL-id (wijziging) of "ontbreekt:<sleutel>" (ontbreekt in PEIL). */
+  parameterId: string;
+  parameterNaam: string;
+  toelichting: string;
+  soort: PeilSoort;
+  zekerheid: PeilZekerheid;
+  /** Titel in gewone taal, zonder PEIL-ids. */
+  titel: string;
+  nieuweWaarde: string | null;
+  huidigeWaarde: string | null;
+  vanaf: string | null;
+  definitief: boolean | null;
+  /** Eén zin gewone taal: waarom is dit niet groen. */
+  twijfel: string | null;
+  citaat: string | null;
+  bronUrl: string | null;
+}
+export type PeilSignaalNieuw = Omit<PeilSignaalIn, "berichtId">;
+export interface PeilSignaalRij extends PeilSignaalIn {
+  id: string;
+  status: string;
+  aantal: number;
+  besluit: string | null;
+  besluitOp: string | null;
+  berichtKop: string;
 }
 
 export interface Bericht {

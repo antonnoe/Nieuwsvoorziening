@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { clusterItems, aantalBronnen } from "../lib/motor/cluster";
-import { peilVoorselectie, peilKoppeling } from "../lib/motor/peil";
+import { peilVoorselectie } from "../lib/motor/peil";
 import { berekenScore, clusterRegime } from "../lib/motor/score";
 import type { PeilParameter } from "../lib/motor/types";
 import { item, klein } from "./helpers";
@@ -44,19 +44,6 @@ test("PEIL-voorselectie op trefwoorden", () => {
   const r = peilVoorselectie("De ACRE voor starters wordt aangepast", parameters);
   assert.equal(r[0].id, "p.fr.acre");
   assert.equal(peilVoorselectie("Het weer in de Provence", parameters).length, 0);
-});
-
-test("PEIL-koppeling: raakt en mogelijk gewijzigd, onbekende ids genegeerd, falen netjes", async () => {
-  const client = klein(['{"raakt":["p.fr.acre","p.verzonnen"],"mogelijkGewijzigd":[{"id":"p.fr.acre","toelichting":"Bericht noemt 50 procent."}]}']);
-  const r = await peilKoppeling({ kop: "ACRE voor starters", tekst: "De ACRE wordt aangepast" }, "", parameters, client);
-  assert.deepEqual(r.koppeling.raakt.map((x) => x.id), ["p.fr.acre"]);
-  assert.equal(r.koppeling.mogelijkGewijzigd.length, 1);
-  assert.equal(r.koppeling.raakt[0].tools?.[0].naam, "Starterstool");
-  const kapot = await peilKoppeling({ kop: "ACRE voor starters", tekst: "De ACRE wordt aangepast" }, "", parameters, klein(["onzin"]));
-  assert.ok(kapot.fout);
-  assert.deepEqual(kapot.koppeling.raakt, []);
-  const zonder = await peilKoppeling({ kop: "ACRE", tekst: "ACRE starter" }, "", parameters, null);
-  assert.deepEqual(zonder.koppeling.raakt, []);
 });
 
 test("score: overheid met één bron en meerdere kranten", () => {

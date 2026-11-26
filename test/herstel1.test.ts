@@ -122,7 +122,7 @@ test("voorpagina: pagina 2 en 3 geven de volgende berichten zonder dubbelen", as
 });
 
 test("filter portemonnee/PEIL: berichten die PEIL raken óf portemonnee true hebben", async () => {
-  const o = await vul([b("a", "algemeen"), b("p", "algemeen", { peil: { raakt: [{ id: "x", naam: "X" }], mogelijkGewijzigd: [] } }), b("w", "algemeen", { portemonnee: true })]);
+  const o = await vul([b("a", "algemeen"), b("p", "algemeen", { peil: { raakt: [{ id: "x", naam: "X", zekerheid: "groen" as const }], mogelijkGewijzigd: [] } }), b("w", "algemeen", { portemonnee: true })]);
   const r = await laadVoorpagina({ pagina: 1, peil: true, opslag: o });
   assert.deepEqual([r.uitgelicht, ...r.kaarten].map((x) => x!.id).sort(), ["p", "w"]);
 });
@@ -152,14 +152,14 @@ test("status: gepubliceerdTotaal telt alleen zichtbare berichten, berichtenTotaa
 
 test("verder lezen: eerst dezelfde categorie, dan dezelfde PEIL-parameter, dan de nieuwste; nooit het bericht zelf", async () => {
   const t = (n: number) => new Date(Date.UTC(2026, 10, 23, 12, 0, 59 - n)).toISOString();
-  const peilP = { raakt: [{ id: "pens", naam: "Pensioen" }], mogelijkGewijzigd: [] };
+  const peilP = { raakt: [{ id: "pens", naam: "Pensioen", zekerheid: "groen" as const }], mogelijkGewijzigd: [] };
   const o = await vul([
     b("zelf", "politiek", { gepubliceerdOp: t(0), peil: peilP }),
     b("cat1", "politiek", { gepubliceerdOp: t(5) }),
     b("peilA", "algemeen", { gepubliceerdOp: t(1), peil: peilP }),
     b("nieuw", "algemeen", { gepubliceerdOp: t(2) }),
     b("peilB", "merkwaardig", { gepubliceerdOp: t(8), peil: peilP }),
-    b("andere", "merkwaardig", { gepubliceerdOp: t(9), peil: { raakt: [{ id: "iets", naam: "Iets" }], mogelijkGewijzigd: [] } }),
+    b("andere", "merkwaardig", { gepubliceerdOp: t(9), peil: { raakt: [{ id: "iets", naam: "Iets", zekerheid: "groen" as const }], mogelijkGewijzigd: [] } }),
   ]);
   const r = await laadVerwant({ id: "zelf", categorie: "politiek", peil: peilP }, o);
   assert.deepEqual(r.map((x) => x.id), ["cat1", "peilA", "peilB"], "categorie, dan PEIL-parameter (nieuwste eerst), niet 'nieuw' of zichzelf");
