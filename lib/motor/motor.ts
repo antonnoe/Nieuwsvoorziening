@@ -8,7 +8,7 @@ import { oogstBronnen, type OogstBronResultaat } from "./feeds";
 import { schoneZoektermen, beeldResultaat, fotoSleutel, type BeeldGenerator, actieveGenerator } from "./beeld";
 import "./beeld-unsplash";
 import type { Opslag, RunRecord, PeilSignaalIn, OpgeslagenBericht, BerichtHerschreven } from "./opslag";
-import { laadPeil, peilKoppeling } from "./peil";
+import { laadPeil, peilKoppeling, type PeilOordeelLog } from "./peil";
 import { kwaliteitsPoort, type PoortUitslag } from "./poort";
 import { berekenScore, clusterRegime } from "./score";
 import { synthetiseer, SYSTEEM_SYNTHESE, bouwInvoer, leesSynthese } from "./synthese";
@@ -238,6 +238,7 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
         const status: Bericht["status"] = !uitslag.ok ? "geblokkeerd" : score >= cfg.publiceerDrempel && s.relevantie >= cfg.minRelevantie ? "gepubliceerd" : "concept";
         let koppeling = { raakt: [], mogelijkGewijzigd: [] } as Bericht["peil"];
         let peilSignalen: PeilSignaalNieuw[] = [];
+        let peilLog: PeilOordeelLog[] = [];
         if (status === "gepubliceerd" && peil.length) {
           const p = await peilKoppeling({ kop: s.kop, samenvatting: s.samenvatting, tekst: s.tekst }, c.items.map((i) => `${i.titel} ${i.samenvatting}`).join("\n"), peil, o.client, cfg.peilKandidatenPerBericht, {
             publicatie: new Date(nu).toISOString(), bronUrl: bronnen[0]?.url ?? null, ontbreekt: s.portemonnee === true,
@@ -245,6 +246,7 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
           koppeling = p.koppeling;
           peilSignalen = p.signalen;
           peilAanroepen += p.aanroepen;
+          peilLog = p.oordelen;
           if (p.fout) noteer({ stap: "peil_oordeel", ok: false, fout: p.fout });
         }
         const beeld = status === "gepubliceerd" ? await beeldResultaat({ kop: s.kop, samenvatting: s.samenvatting, categorie: s.categorie, zoektermen: s.beeldZoektermen, zoekterm: s.beeldZoekterm, client: o.client, vermijd }, generator) : null;
@@ -259,6 +261,7 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
         bericht.id = id;
         berichten.push(bericht);
         await o.opslag.markeerVerwerkt(c.items.map((i) => i.url), id, status);
+        if (peilLog.length) noteer({ stap: "peil_oordeel", ok: true, detail: { bericht: id.slice(0, 8), kandidaten: peilLog.filter((l) => l.p !== "ontbreekt").map((l) => l.p), oordelen: peilLog } });
         const signalen: PeilSignaalIn[] = peilSignalen.map((x) => ({ ...x, berichtId: id }));
         if (signalen.length) signalenAantal += await o.opslag.slaPeilSignalenOp(signalen).catch((e) => (noteer({ stap: "peil_signaal", ok: false, fout: fout(e) }), 0));
         if (status === "gepubliceerd") gepubliceerd += 1;
@@ -388,11 +391,15 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
       const parameters = o.peil ?? (await laadPeil(cfg.peilCacheMinuten, o.fetchFn));
       const lijst = await o.opslag.teToetsenPeil(new Date(nu - 14 * 86400_000).toISOString(), 10);
       let getoetst = 0, behouden = 0, gewist = 0, uitgesteld = 0, signalen = 0;
+      const perBericht: Record<string, unknown>[] = [];
       for (const b of lijst) {
         if (!tijdOver()) break;
-        const t = await peilKoppeling({ kop: b.kop, samenvatting: b.samenvatting, tekst: b.tekst }, b.bronnen.map((x) => x.origineleKop).join("\n"), parameters, o.client, cfg.peilKandidatenPerBericht, {
+        // Zoals de gewone oogst: bronkop en bronsamenvatting (de samenvatting komt uit de opgeslagen bronitems, voor zover die er nog zijn).
+        const samenv = await o.opslag.bronSamenvattingen(b.bronnen.map((x) => x.url)).catch(() => new Map<string, string>());
+        const t = await peilKoppeling({ kop: b.kop, samenvatting: b.samenvatting, tekst: b.tekst }, b.bronnen.map((x) => `${x.origineleKop} ${samenv.get(x.url) || ""}`.trim()).join("\n"), parameters, o.client, cfg.peilKandidatenPerBericht, {
           publicatie: b.gepubliceerdOp, bronUrl: b.bronnen[0]?.url ?? null, ontbreekt: false,
         });
+        perBericht.push({ bericht: b.id.slice(0, 8), kandidaten: t.kandidaten.map((k) => k.id), oordelen: t.oordelen, ...(t.fout ? { uitgesteld: true } : {}) });
         if (t.fout) { uitgesteld += 1; noteer({ stap: "peil_hertoets_fout", ok: false, fout: t.fout }); continue; }
         await o.opslag.zetPeilKoppeling(b.id, t.koppeling);
         await o.opslag.sluitOudePeilSignalen(b.id);
@@ -402,7 +409,7 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
         else gewist += 1;
       }
       Object.assign(aantallen, { peilHertoetst: getoetst });
-      noteer({ stap: "peil_hertoets", ok: true, aantal: getoetst, detail: { teToetsen: lijst.length, behouden, gewist, uitgesteld, signalen } });
+      noteer({ stap: "peil_hertoets", ok: true, aantal: getoetst, detail: { teToetsen: lijst.length, behouden, gewist, uitgesteld, signalen, berichten: perBericht } });
     } catch (e) {
       noteer({ stap: "peil_hertoets", ok: false, fout: fout(e) });
     }

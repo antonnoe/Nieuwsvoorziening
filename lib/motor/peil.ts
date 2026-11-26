@@ -96,7 +96,21 @@ export interface PeilOpties {
   ontbreekt?: boolean;
 }
 
+/** Korte logregel per kandidaat voor de stapdetails: wie zei wat, en de uitkomst. Geen brontekst, geen sleutels. */
+export interface PeilOordeelLog {
+  /** PEIL-id, of "ontbreekt" voor de controle op parameters die PEIL mist. */
+  p: string;
+  /** goedkoop model: ja, nee of fout */
+  a: "ja" | "nee" | "fout";
+  /** synthesemodel: ja, nee, fout of "-" (niet gevraagd omdat het eerste model nee zei) */
+  b: "ja" | "nee" | "fout" | "-";
+  uitkomst: "groen" | "oranje" | "niets";
+  problemen?: string[];
+}
+
 export interface PeilToets {
+  /** Per kandidaat wat de twee modellen zeiden en de uitkomst (voor de stapdetails). */
+  oordelen: PeilOordeelLog[];
   koppeling: PeilKoppeling;
   /** Signalen voor de redactie (groen of oranje); nog zonder berichtId. */
   signalen: PeilSignaalNieuw[];
@@ -120,7 +134,7 @@ export async function peilKoppeling(
 ): Promise<PeilToets> {
   const alle = peilVoorselectie(`${bericht.kop} ${bericht.tekst}`, parameters, max);
   const kandidaten = alle.slice(0, opties.ontbreekt ? Math.min(alle.length, 4) : alle.length);
-  const uit: PeilToets = { koppeling: leeg(), signalen: [], kandidaten, aanroepen: 0 };
+  const uit: PeilToets = { koppeling: leeg(), signalen: [], kandidaten, aanroepen: 0, oordelen: [] };
   if (!client || (!kandidaten.length && !opties.ontbreekt)) return uit;
   const publicatie = opties.publicatie || new Date().toISOString();
   const tekst = `${bericht.kop} ${bericht.samenvatting || ""} ${bericht.tekst} ${bronTekst}`;
@@ -139,22 +153,29 @@ export async function peilKoppeling(
       return null;
     }
   };
-  /** Beide controles; de tweede alleen als de eerste "ja" zegt. */
-  const tweeControles = async (system: string, user: string, sleutel: "raakt" | "ontbreekt"): Promise<[Controle, Controle] | null> => {
+  /** Beide controles; de tweede alleen als de eerste "ja" zegt. `log` krijgt wat elk model zei. */
+  const tweeControles = async (system: string, user: string, sleutel: "raakt" | "ontbreekt", log: PeilOordeelLog): Promise<[Controle, Controle] | null> => {
     const a = await vraag(modelGoedkoop(), system, user, sleutel);
+    log.a = !a ? "fout" : a.raakt ? "ja" : "nee";
     if (!a || !a.raakt) return null;
     const b = await vraag(modelSynthese(), system, user, sleutel);
+    log.b = !b ? "fout" : b.raakt ? "ja" : "nee";
     return b && b.raakt ? [a, b] : null;
   };
+  const nieuwLog = (p: string): PeilOordeelLog => ({ p, a: "nee", b: "-", uitkomst: "niets" });
 
   for (const p of kandidaten) {
     if (uit.aanroepen >= MAX_PEIL_AANROEPEN) break;
     const user = `${bericht_}\n\nPARAMETER\nnaam: ${p.naam}\ntrefwoorden: ${p.trefwoorden || ""}\nhuidige waarde in PEIL: ${String(p.waarde_weergave || "").slice(0, 240)}`;
-    const t = await tweeControles(SYSTEEM_PARAMETER, user, "raakt");
+    const log = nieuwLog(p.id);
+    uit.oordelen.push(log);
+    const t = await tweeControles(SYSTEEM_PARAMETER, user, "raakt", log);
     if (!t) continue;
     const [a, b] = t;
     const o = beoordeel(a, b, { tekst, publicatie });
     if (!o) continue;
+    log.uitkomst = o.zekerheid === "groen" || o.soort === "wijziging" ? o.zekerheid : "niets"; // oranje zonder wijziging levert niets op
+    if (o.problemen.length) log.problemen = o.problemen.slice(0, 4).map((x) => x.slice(0, 120));
     if (o.zekerheid === "groen") {
       uit.koppeling.raakt.push({ id: p.id, naam: p.naam, bronUrl: p.bron_url || null, tools: (p.tools || []).filter((x) => x && x.naam).map((x) => ({ naam: String(x.naam), url: x.url || null })), zekerheid: "groen" });
       if (o.soort === "wijziging") uit.koppeling.mogelijkGewijzigd.push({ id: p.id, naam: p.naam, toelichting: `${b.nieuweWaarde || "nieuwe waarde"}${b.ingangsdatum ? `, vanaf ${b.ingangsdatum}` : ""}`.slice(0, 300) });
@@ -173,12 +194,16 @@ export async function peilKoppeling(
   // Ontbreekt in PEIL: alleen als er geen groene koppeling is en er nog ruimte in het aanroepbudget is.
   if (opties.ontbreekt && !uit.koppeling.raakt.length && uit.aanroepen < MAX_PEIL_AANROEPEN) {
     const namen = parameters.map((p) => p.naam).join("; ").slice(0, 8000);
-    const t = await tweeControles(SYSTEEM_ONTBREEKT, `${bericht_}\n\nPARAMETERS DIE PEIL AL KENT\n${namen}`, "ontbreekt");
+    const log = nieuwLog("ontbreekt");
+    uit.oordelen.push(log);
+    const t = await tweeControles(SYSTEEM_ONTBREEKT, `${bericht_}\n\nPARAMETERS DIE PEIL AL KENT\n${namen}`, "ontbreekt", log);
     if (t) {
       const [a, b] = t;
       const titel = b.titel || a.titel;
       const o = titel ? beoordeel(a, b, { tekst, publicatie, ontbreekt: true }) : null;
       if (o && titel) {
+        log.uitkomst = o.zekerheid;
+        if (o.problemen.length) log.problemen = o.problemen.slice(0, 4).map((x) => x.slice(0, 120));
         uit.signalen.push({
           parameterId: ontbreektSleutel(titel), parameterNaam: titel, soort: "ontbreekt", zekerheid: o.zekerheid, titel,
           toelichting: (o.twijfel || "Het bericht noemt een grootheid die PEIL nog niet kent.").slice(0, 300),

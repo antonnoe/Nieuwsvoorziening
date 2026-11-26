@@ -68,13 +68,56 @@ export function datumNl(datum: string): string {
   return [m[3] ? String(Number(m[3])) : "", m[2] ? MAANDEN[Number(m[2]) - 1] || "" : "", m[1]].filter(Boolean).join(" ");
 }
 
-function getallen(t: string): string[] {
-  return (String(t).match(/\d+(?:[.,]\d+)?/g) || []).map((x) => x.replace(",", ".").replace(/\.0+$/, "").replace(/(\.\d*?)0+$/, "$1"));
+const SPATIES = "[ \\u00a0\\u202f\\u2009]";
+const GETAL = new RegExp(`\\d{1,3}(?:${SPATIES}\\d{3})+(?:[.,]\\d+)?|\\d+(?:[.,]\\d+)*`, "g");
+
+const schoon = (n: number): string => String(Math.round(n * 1e6) / 1e6);
+
+/**
+ * Leest één getal in Nederlandse, Franse of Engelse notatie. Geeft de mogelijke waarden: meestal één, twee bij een echt
+ * dubbelzinnige schrijfwijze ("1,500": 1,5 of 1500). Spatie (ook niet-brekend of smal) is altijd duizendtal; "1.500" is 1500
+ * (Nederlands), maar "0.500" is 0,5; punt én komma samen: de laatste is de decimaal ("1.897,35", "1,897.35").
+ */
+export function leesGetal(token: string): string[] {
+  let t = token.replace(new RegExp(SPATIES, "g"), "");
+  const metSpatie = t.length !== token.length;
+  const punt = (t.match(/\./g) || []).length, komma = (t.match(/,/g) || []).length;
+  const alsGetal = (x: string) => { const n = Number(x); return Number.isFinite(n) ? [schoon(n)] : []; };
+  if (!punt && !komma) return alsGetal(t);
+  if (metSpatie) return alsGetal(t.replace(",", "."));
+  if (punt && komma) {
+    const dec = t.lastIndexOf(",") > t.lastIndexOf(".") ? "," : ".";
+    const dui = dec === "," ? "." : ",";
+    return alsGetal(t.split(dui).join("").replace(dec, "."));
+  }
+  const sep = punt ? "." : ",";
+  const delen = t.split(sep);
+  if (delen.length > 2) return alsGetal(delen.join(""));
+  const [kop, staart] = delen;
+  if (staart.length === 3 && kop.length >= 1 && kop.length <= 3 && Number(kop) > 0) {
+    const duizend = alsGetal(kop + staart), decimaal = alsGetal(`${kop}.${staart}`);
+    return sep === "." ? duizend : [...decimaal, ...duizend];
+  }
+  return alsGetal(`${kop}.${staart}`);
 }
-/** Noemen beide controles dezelfde nieuwe waarde? Getallen moeten gelijk zijn; zonder getallen volstaat gelijke tekst. */
+
+/** Alle getallen in een tekst, elk met zijn mogelijke waarden. */
+export function getallen(t: string): string[][] {
+  return (String(t).match(GETAL) || []).map(leesGetal).filter((x) => x.length);
+}
+
+/** Komt elk getal van `klein` ook voor in `groot`? */
+const bevatGetallen = (groot: string[][], klein: string[][]) => klein.every((k) => groot.some((g) => g.some((x) => k.includes(x))));
+
+/**
+ * Noemen beide controles dezelfde nieuwe waarde? Getallen worden eerst genormaliseerd (Nederlandse, Franse en Engelse notatie)
+ * en gelden als gelijk als de getallen van de ene waarde allemaal in de andere voorkomen (een deelverzameling).
+ * Zonder getallen volstaat gelijke tekst.
+ */
 export function waardenGelijk(a: string, b: string): boolean {
   const ga = getallen(a), gb = getallen(b);
-  if (ga.length || gb.length) return ga.length === gb.length && [...ga].sort().join("|") === [...gb].sort().join("|");
+  if (ga.length && gb.length) return bevatGetallen(ga, gb) || bevatGetallen(gb, ga);
+  if (ga.length || gb.length) return false;
   return platte(a) === platte(b) || platte(a).includes(platte(b)) || platte(b).includes(platte(a));
 }
 

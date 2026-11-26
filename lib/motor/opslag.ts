@@ -56,6 +56,12 @@ export function isPeilKolomFout(e: unknown): boolean {
     || /(23514|check constraint)/i.test(m) && /nv_peil_signalen/i.test(m);
 }
 
+/**
+ * Een bestaand signaal mag opnieuw worden beoordeeld (overschreven) zolang de redactie er niets over heeft besloten:
+ * zonder besluit_op en met status gesignaleerd, raakt_niet of afgewezen. Een besluit van de redactie blijft altijd staan.
+ */
+export const signaalOverschrijfbaar = (r: { status: string; besluitOp?: string | null }) => !r.besluitOp && ["gesignaleerd", "raakt_niet", "afgewezen"].includes(r.status);
+
 export interface Opslag {
   naam: string;
   upsertItems(items: BronItem[]): Promise<number>;
@@ -64,7 +70,11 @@ export interface Opslag {
   /** Originele bronkoppen van recent verwerkte berichten, om een tweede bericht over hetzelfde onderwerp te voorkomen. */
   recenteBronKoppen(sindsIso: string): Promise<string[]>;
   slaBerichtOp(b: Bericht): Promise<string>;
-  /** Slaat signalen op; "ontbreekt"-signalen over hetzelfde onderwerp worden samengevoegd (aantal). Zonder migratie: niets bewaard (0). */
+  /**
+   * Slaat signalen op; "ontbreekt"-signalen over hetzelfde onderwerp worden samengevoegd (aantal). Een bestaande rij voor
+   * dezelfde (bericht, parameter) zonder redactiebesluit wordt overschreven (signaalOverschrijfbaar), een rij met besluit blijft staan.
+   * Geeft het werkelijk bewaarde aantal (nieuw of overschreven). Zonder migratie: niets bewaard (0).
+   */
   slaPeilSignalenOp(s: PeilSignaalIn[]): Promise<number>;
   /** Open signalen (status gesignaleerd, getoetst) voor de redactie, nieuwste eerst. Zonder migratie: leeg. */
   peilSignalen(limiet?: number): Promise<PeilSignaalRij[]>;
@@ -73,10 +83,15 @@ export interface Opslag {
   zetPeilBesluit(id: string, keuze: PeilBesluit, nu?: number): Promise<void>;
   /** Vervangt de PEIL-koppeling van een bericht (peil_raakt en peil_mogelijk_gewijzigd). */
   zetPeilKoppeling(berichtId: string, koppeling: PeilKoppeling): Promise<void>;
-  /** Gepubliceerde berichten sinds `sindsIso` met een oude, ongetoetste PEIL-koppeling (zonder zekerheid), met tekst. */
+  /**
+   * Gepubliceerde berichten sinds `sindsIso` met een oude, ongetoetste PEIL-koppeling (zonder zekerheid), of met een oud signaal
+   * zonder zekerheid en status raakt_niet zonder redactiebesluit (door een eerdere hertoets leeggemaakt), met tekst.
+   */
   teToetsenPeil(sindsIso: string, limiet: number): Promise<OpgeslagenBericht[]>;
-  /** Sluit oude signalen zonder zekerheid (van vóór PEIL streng) van een bericht. */
+  /** Sluit oude signalen zonder zekerheid (van vóór PEIL streng) en zonder redactiebesluit van een bericht af (status afgewezen), zodat het bericht niet opnieuw wordt getoetst. */
   sluitOudePeilSignalen(berichtId: string): Promise<void>;
+  /** Samenvattingen van de bronitems (op url), voor de hertoets; ontbrekende urls komen niet in de map. */
+  bronSamenvattingen(urls: string[]): Promise<Map<string, string>>;
   telGepubliceerdSinds(sindsIso: string): Promise<number>;
   slaRunOp(r: RunRecord): Promise<void>;
   laatsteRun(): Promise<RunRecord | null>;
@@ -157,13 +172,21 @@ export class GeheugenOpslag implements Opslag {
   async slaPeilSignalenOp(s: PeilSignaalIn[]) {
     let n = 0;
     for (const x of s) {
+      let doel: PeilSignaalRij | undefined;
       if (x.soort === "ontbreekt") {
         const m = zoekSamenvoeging(x.titel, x.parameterId, this.signalen.filter((y) => y.soort === "ontbreekt"));
-        if (m) {
-          if (m.berichtId !== x.berichtId) m.aantal += 1;
+        if (m && m.berichtId !== x.berichtId) {
+          m.aantal += 1;
           continue;
         }
-      } else if (this.signalen.some((y) => y.berichtId === x.berichtId && y.parameterId === x.parameterId)) continue;
+        doel = m ?? undefined;
+      } else doel = this.signalen.find((y) => y.berichtId === x.berichtId && y.parameterId === x.parameterId);
+      if (doel) {
+        if (!signaalOverschrijfbaar(doel)) continue;
+        Object.assign(doel, { ...x, parameterId: doel.parameterId, status: "gesignaleerd", besluit: null, besluitOp: null });
+        n += 1;
+        continue;
+      }
       this.signalen.push({ ...x, id: `sig-${(this.n += 1)}`, status: "gesignaleerd", aantal: 1, besluit: null, besluitOp: null, berichtKop: this.berichtenLijst.find((b) => b.id === x.berichtId)?.kop || "" });
       n += 1;
     }
@@ -185,12 +208,15 @@ export class GeheugenOpslag implements Opslag {
   }
   async teToetsenPeil(sinds: string, limiet: number) {
     return this.berichtenLijst
-      .filter((b) => b.status === "gepubliceerd" && b.gepubliceerdOp >= sinds && b.peil.raakt.some((r) => !r.zekerheid))
+      .filter((b) => b.status === "gepubliceerd" && b.gepubliceerdOp >= sinds && (b.peil.raakt.some((r) => !r.zekerheid) || this.signalen.some((x) => x.berichtId === b.id && !x.zekerheid && x.status === "raakt_niet" && !x.besluitOp)))
       .sort((a, b) => b.gepubliceerdOp.localeCompare(a.gepubliceerdOp))
       .slice(0, limiet);
   }
   async sluitOudePeilSignalen(berichtId: string) {
-    for (const x of this.signalen) if (x.berichtId === berichtId && !x.zekerheid && x.status === "gesignaleerd") x.status = "raakt_niet";
+    for (const x of this.signalen) if (x.berichtId === berichtId && !x.zekerheid && !x.besluitOp && (x.status === "gesignaleerd" || x.status === "raakt_niet")) x.status = "afgewezen";
+  }
+  async bronSamenvattingen(urls: string[]) {
+    return new Map(urls.flatMap((u) => (this.items.get(u) ? [[u, this.items.get(u)!.samenvatting] as [string, string]] : [])));
   }
   async telGepubliceerdSinds(sinds: string) {
     return this.berichtenLijst.filter((b) => b.status === "gepubliceerd" && b.gepubliceerdOp >= sinds).length;
@@ -416,33 +442,54 @@ export class SupabaseOpslag implements Opslag {
   async slaPeilSignalenOp(s: PeilSignaalIn[]) {
     if (!s.length) return 0;
     try {
-      let bestaande: { id: string; parameterId: string; titel: string; berichtId: string; aantal: number }[] | null = null;
+      type Bestaand = { id: string; parameterId: string; titel: string; berichtId: string; aantal: number; status: string; besluitOp: string | null };
+      const naarBestaand = (r: Rij): Bestaand => ({ id: String(r.id), parameterId: String(r.parameter_id), titel: String(r.titel || ""), berichtId: String(r.bericht_id), aantal: Number(r.aantal || 1), status: String(r.status), besluitOp: r.besluit_op ? String(r.besluit_op) : null });
+      const kolommen = "id,parameter_id,titel,bericht_id,aantal,status,besluit_op";
+      // Bestaande rijen van de betrokken berichten: dezelfde (bericht, parameter) wordt overschreven of laat staan, nooit stil genegeerd.
+      const ids = [...new Set(s.map((x) => x.berichtId))].filter((i) => /^[0-9a-f-]{36}$/i.test(i));
+      const perPaar = new Map<string, Bestaand>();
+      if (ids.length) for (const r of await this.lees(`nv_peil_signalen?bericht_id=in.(${ids.join(",")})&select=${kolommen}&limit=1000`)) { const b = naarBestaand(r); perPaar.set(`${b.berichtId}|${b.parameterId}`, b); }
+      let ontbreekt: Bestaand[] | null = null;
+      const veld = (x: PeilSignaalIn) => ({
+        parameter_naam: x.parameterNaam, toelichting: x.toelichting, status: "gesignaleerd", soort: x.soort, zekerheid: x.zekerheid, titel: x.titel, nieuwe_waarde: x.nieuweWaarde,
+        huidige_waarde: x.huidigeWaarde, vanaf: x.vanaf, definitief: x.definitief, twijfel: x.twijfel, citaat: x.citaat, bron_url: x.bronUrl,
+      });
       const nieuw: PeilSignaalIn[] = [];
+      let bewaard = 0;
+      const overschrijf = async (b: Bestaand, x: PeilSignaalIn) => {
+        const r = await this.vraag(`nv_peil_signalen?id=eq.${b.id}`, {
+          method: "PATCH", prefer: "return=representation",
+          body: JSON.stringify({ ...veld(x), besluit: null, besluit_op: null, aangemaakt_op: new Date().toISOString() }),
+        });
+        bewaard += ((await r.json()) as Rij[]).length;
+      };
       for (const x of s) {
+        let doel: Bestaand | undefined;
         if (x.soort === "ontbreekt") {
-          bestaande ??= (await this.lees("nv_peil_signalen?soort=eq.ontbreekt&select=id,parameter_id,titel,bericht_id,aantal&limit=500")).map((r) => ({ id: String(r.id), parameterId: String(r.parameter_id), titel: String(r.titel || ""), berichtId: String(r.bericht_id), aantal: Number(r.aantal || 1) }));
-          const m = zoekSamenvoeging(x.titel, x.parameterId, bestaande);
-          if (m) {
-            if (m.berichtId !== x.berichtId) {
-              m.aantal += 1;
-              await this.vraag(`nv_peil_signalen?id=eq.${m.id}`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ aantal: m.aantal }) });
-            }
+          ontbreekt ??= (await this.lees(`nv_peil_signalen?soort=eq.ontbreekt&select=${kolommen}&limit=500`)).map(naarBestaand);
+          const m = zoekSamenvoeging(x.titel, x.parameterId, ontbreekt);
+          if (m && m.berichtId !== x.berichtId) {
+            m.aantal += 1;
+            if (m.id) await this.vraag(`nv_peil_signalen?id=eq.${m.id}`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ aantal: m.aantal }) });
             continue;
           }
-          bestaande.push({ id: "", parameterId: x.parameterId, titel: x.titel, berichtId: x.berichtId, aantal: 1 });
+          doel = m ?? undefined;
+          if (!doel) ontbreekt.push({ id: "", parameterId: x.parameterId, titel: x.titel, berichtId: x.berichtId, aantal: 1, status: "gesignaleerd", besluitOp: null });
+        } else doel = perPaar.get(`${x.berichtId}|${x.parameterId}`);
+        if (doel) {
+          if (doel.id && signaalOverschrijfbaar(doel)) await overschrijf(doel, x);
+          continue; // een besluit van de redactie blijft staan
         }
         nieuw.push(x);
       }
-      if (!nieuw.length) return 0;
-      await this.vraag("nv_peil_signalen?on_conflict=bericht_id,parameter_id", {
-        method: "POST", prefer: "resolution=ignore-duplicates,return=minimal",
-        body: JSON.stringify(nieuw.map((x) => ({
-          bericht_id: x.berichtId, parameter_id: x.parameterId, parameter_naam: x.parameterNaam, toelichting: x.toelichting, status: "gesignaleerd",
-          soort: x.soort, zekerheid: x.zekerheid, titel: x.titel, nieuwe_waarde: x.nieuweWaarde, huidige_waarde: x.huidigeWaarde, vanaf: x.vanaf,
-          definitief: x.definitief, twijfel: x.twijfel, citaat: x.citaat, bron_url: x.bronUrl,
-        }))),
-      });
-      return nieuw.length;
+      if (nieuw.length) {
+        const r = await this.vraag("nv_peil_signalen?on_conflict=bericht_id,parameter_id", {
+          method: "POST", prefer: "resolution=ignore-duplicates,return=representation",
+          body: JSON.stringify(nieuw.map((x) => ({ bericht_id: x.berichtId, parameter_id: x.parameterId, ...veld(x) }))),
+        });
+        bewaard += ((await r.json()) as Rij[]).length; // het werkelijke aantal, niet het aantal dat we probeerden
+      }
+      return bewaard;
     } catch (e) {
       if (isPeilKolomFout(e)) return 0; // migratie nog niet toegepast: geen signalen bewaard, de koppeling zelf werkt wel
       throw e;
@@ -492,16 +539,38 @@ export class SupabaseOpslag implements Opslag {
     await this.vraag(`nv_berichten?id=eq.${berichtId}`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ peil_raakt: koppeling.raakt, peil_mogelijk_gewijzigd: koppeling.mogelijkGewijzigd }) });
   }
   async teToetsenPeil(sinds: string, limiet: number) {
-    const rijen = await this.lees(`nv_berichten?status=eq.gepubliceerd&gepubliceerd_op=gte.${encodeURIComponent(sinds)}&peil_raakt=neq.[]&order=gepubliceerd_op.desc&limit=100&select=*,nv_bronnen_per_bericht(*)`);
-    return rijen.map(naarBericht).filter((b) => b.peil.raakt.some((r) => !r.zekerheid)).slice(0, limiet);
+    const sel = "select=*,nv_bronnen_per_bericht(*)";
+    const rijen = await this.lees(`nv_berichten?status=eq.gepubliceerd&gepubliceerd_op=gte.${encodeURIComponent(sinds)}&peil_raakt=neq.[]&order=gepubliceerd_op.desc&limit=100&${sel}`);
+    const lijst = rijen.map(naarBericht).filter((b) => b.peil.raakt.some((r) => !r.zekerheid));
+    // Berichten die een eerdere hertoets leeggemaakt heeft: oud signaal zonder zekerheid, raakt_niet, zonder redactiebesluit.
+    try {
+      const sig = await this.lees("nv_peil_signalen?zekerheid=is.null&status=eq.raakt_niet&besluit_op=is.null&select=bericht_id&limit=200");
+      const ids = [...new Set(sig.map((r) => String(r.bericht_id)))].filter((i) => /^[0-9a-f-]{36}$/i.test(i) && !lijst.some((b) => b.id === i)).slice(0, 60);
+      if (ids.length) {
+        const extra = await this.lees(`nv_berichten?id=in.(${ids.join(",")})&status=eq.gepubliceerd&gepubliceerd_op=gte.${encodeURIComponent(sinds)}&order=gepubliceerd_op.desc&limit=100&${sel}`);
+        lijst.push(...extra.map(naarBericht));
+      }
+    } catch (e) {
+      if (!isPeilKolomFout(e)) throw e; // zonder migratie bestaan zekerheid en besluit_op niet: dan geen oude signalen om te onderscheiden
+    }
+    return lijst.sort((a, b) => b.gepubliceerdOp.localeCompare(a.gepubliceerdOp)).slice(0, limiet);
   }
   async sluitOudePeilSignalen(berichtId: string) {
     if (!/^[0-9a-f-]{36}$/i.test(berichtId)) return;
     try {
-      await this.vraag(`nv_peil_signalen?bericht_id=eq.${berichtId}&zekerheid=is.null&status=eq.gesignaleerd`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ status: "raakt_niet" }) });
+      // Status afgewezen = automatisch afgesloten na de hertoets, zonder redactiebesluit (besluit_op blijft leeg); komt niet meer terug als kandidaat.
+      await this.vraag(`nv_peil_signalen?bericht_id=eq.${berichtId}&zekerheid=is.null&besluit_op=is.null&status=in.(gesignaleerd,raakt_niet)`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ status: "afgewezen" }) });
     } catch (e) {
       if (!isPeilKolomFout(e)) throw e; // zonder migratie bestaan er geen oude signalen om te sluiten die we kunnen onderscheiden
     }
+  }
+  async bronSamenvattingen(urls: string[]) {
+    const uit = new Map<string, string>();
+    for (let i = 0; i < urls.length; i += 40) {
+      const lijst = urls.slice(i, i + 40).map((u) => `"${u.replace(/"/g, '\\"')}"`).join(",");
+      for (const r of await this.lees(`nv_bron_items?url=in.(${encodeURIComponent(lijst)})&select=url,samenvatting`)) uit.set(String(r.url), String(r.samenvatting || ""));
+    }
+    return uit;
   }
   async telGepubliceerdSinds(sinds: string) {
     return this.tel(`nv_berichten?status=eq.gepubliceerd&gepubliceerd_op=gte.${encodeURIComponent(sinds)}&select=id`);
@@ -578,8 +647,21 @@ export class SupabaseOpslag implements Opslag {
     await this.vraag(`nv_berichten?id=eq.${id}`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ beeld_url: url, beeld_credit: credit }) });
   }
   async berichten({ categorie, limiet, offset = 0, peil, kanaal }: { categorie?: string; limiet: number; offset?: number; peil?: boolean; kanaal?: Kanaal }) {
-    const filter = (categorie ? `&categorie=eq.${encodeURIComponent(categorie)}` : "") + (peil ? `&or=${encodeURIComponent("(peil_raakt.neq.[],portemonnee.eq.true)")}` : "");
-    const zoek = (extra: string) => this.lees(`nv_berichten?status=eq.gepubliceerd${extra}${filter}&order=gepubliceerd_op.desc&limit=${limiet}&offset=${offset}&select=*,nv_bronnen_per_bericht(*)`);
+    const cat = categorie ? `&categorie=eq.${encodeURIComponent(categorie)}` : "";
+    // Lezers zien alleen groene koppelingen (besluit 26-11-2026): het filter eist een groene koppeling of portemonnee=true.
+    // Valt de database over de syntaxis, dan het oude filter, met het groen-filter achteraf (groenePeil).
+    const filterGroen = cat + (peil ? `&or=${encodeURIComponent('(peil_raakt.cs."[{\\"zekerheid\\":\\"groen\\"}]",portemonnee.eq.true)')}` : "");
+    const filterOud = cat + (peil ? `&or=${encodeURIComponent("(peil_raakt.neq.[],portemonnee.eq.true)")}` : "");
+    const zoek = async (extra: string) => {
+      const pad = (f: string) => `nv_berichten?status=eq.gepubliceerd${extra}${f}&order=gepubliceerd_op.desc&limit=${limiet}&offset=${offset}&select=*,nv_bronnen_per_bericht(*)`;
+      if (!peil) return this.lees(pad(filterGroen));
+      try {
+        return await this.lees(pad(filterGroen));
+      } catch (e) {
+        if (isKolomFout(e) || isPeilKolomFout(e)) throw e;
+        return (await this.lees(pad(filterOud))).filter((r) => r.portemonnee === true || groenePeil((r.peil_raakt as PeilKoppeling["raakt"]) || []).length > 0);
+      }
+    };
     // Zonder de migratie bestaan redactie en kanalen niet: alles staat dan "aan" en niets is "weg".
     const rijen = await this.metKolommen(
       () => zoek(`&redactie=is.null${kanaal ? `&kanalen->>${kanaal}=eq.true` : ""}`),

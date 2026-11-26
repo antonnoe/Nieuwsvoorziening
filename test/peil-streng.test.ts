@@ -243,7 +243,7 @@ test("hertoets: de oude foute koppeling verdwijnt bij de eerstvolgende oogst, ou
   assert.deepEqual(m1.peil.mogelijkGewijzigd, []);
   assert.equal(m2.peil.raakt.length, 1);
   assert.equal(m2.peil.raakt[0].zekerheid, "groen");
-  assert.equal(o.signalen.find((s) => s.id === "s0")!.status, "raakt_niet");
+  assert.equal(o.signalen.find((s) => s.id === "s0")!.status, "afgewezen", "automatisch afgesloten, zonder redactiebesluit");
   assert.equal(r.aantallen.peilHertoetst, 2);
   // Tweede oogst: niets meer te toetsen.
   const r2 = await draaiOogst({ opslag: o, client, config: laadConfig(), bronnen: [], fetchFn: geenWeb, peil: [P_DPE, P_CSG], generator: null });
@@ -265,13 +265,13 @@ const BER = "44444444-4444-4444-4444-444444444444";
 const bearer = { authorization: "Bearer geheim-test" };
 type Log = { methode: string; url: string; body?: string };
 
-async function metNepSupabase<T>(f: (log: Log[]) => Promise<T>, opties: { zonderMigratie?: boolean } = {}): Promise<T> {
+async function metNepSupabase<T>(f: (log: Log[]) => Promise<T>, opties: { zonderMigratie?: boolean; signaalStatus?: string } = {}): Promise<T> {
   const echt = globalThis.fetch;
   const was = [process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, process.env.CRON_SECRET, process.env.REDACTIE_SECRET];
   Object.assign(process.env, { SUPABASE_URL: "https://p.supabase.co", SUPABASE_SERVICE_ROLE_KEY: "dienstsleutel", CRON_SECRET: "geheim-test" });
   delete process.env.REDACTIE_SECRET;
   const log: Log[] = [];
-  const rij = { id: SIG, bericht_id: BER, parameter_id: "p.fr.csg", parameter_naam: "CSG tarief", toelichting: "t", status: "gesignaleerd", soort: "wijziging", zekerheid: "oranje", titel: "Sociale heffing", nieuwe_waarde: "1,5 procent", huidige_waarde: "9,2 procent", vanaf: "2027-01-01", definitief: false, twijfel: "Nog niet zeker.", citaat: "c", bron_url: "https://bron.test/1", aantal: 1, besluit: null, besluit_op: null, nv_berichten: { kop: "CSG gaat omhoog" } };
+  const rij = { id: SIG, bericht_id: BER, parameter_id: "p.fr.csg", parameter_naam: "CSG tarief", toelichting: "t", status: opties.signaalStatus || "gesignaleerd", soort: "wijziging", zekerheid: "oranje", titel: "Sociale heffing", nieuwe_waarde: "1,5 procent", huidige_waarde: "9,2 procent", vanaf: "2027-01-01", definitief: false, twijfel: "Nog niet zeker.", citaat: "c", bron_url: "https://bron.test/1", aantal: 1, besluit: null, besluit_op: null, nv_berichten: { kop: "CSG gaat omhoog" } };
   const bericht = { id: BER, kop: "CSG gaat omhoog", samenvatting: "S", tekst: "T", categorie: "algemeen", score: 80, regime: "pers", status: "gepubliceerd", blokkade_redenen: [], gepubliceerd_op: PUB, peil_raakt: [{ id: "p.fr.csg", naam: "CSG", zekerheid: "groen" }, { id: "p.x", naam: "X", zekerheid: "groen" }], peil_mogelijk_gewijzigd: [{ id: "p.fr.csg", naam: "CSG", toelichting: "t" }], nv_bronnen_per_bericht: [] };
   globalThis.fetch = (async (u: string, init?: RequestInit) => {
     const d = decodeURIComponent(String(u));
@@ -349,4 +349,13 @@ test("zonder migratie: GET geeft een lege peil-lijst, POST peil geeft 503, opsla
   const s: PeilSignaalIn = { berichtId: BER, parameterId: "p", parameterNaam: "P", toelichting: "", soort: "wijziging", zekerheid: "groen", titel: "T", nieuweWaarde: null, huidigeWaarde: null, vanaf: null, definitief: true, twijfel: null, citaat: null, bronUrl: null };
   assert.equal(await o.slaPeilSignalenOp([s]), 0);
   await assert.rejects(() => o.zetPeilBesluit(SIG, "lijst"), MigratieOntbreekt);
+});
+
+test("POST peil op een al afgehandeld signaal geeft 409 met uitleg en schrijft niets", async () => {
+  await metNepSupabase(async (log) => {
+    const r = await post({ actie: "peil", id: SIG, keuze: "vastgesteld" });
+    assert.equal(r.status, 409);
+    assert.match(((await r.json()) as { fout: string }).fout, /al afgehandeld/);
+    assert.ok(!log.some((l) => l.methode === "PATCH"), "geen wijziging weggeschreven");
+  }, { signaalStatus: "lijst" });
 });
