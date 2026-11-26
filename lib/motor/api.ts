@@ -1,7 +1,7 @@
 // Gedeelde hulpjes voor de API-routes: CORS, JSON, opslag, gepubliceerde vorm.
 import { corsToegestaan } from "./config";
 import { maakOpslag, soortVan, type Opslag, type OpgeslagenBericht } from "./opslag";
-import { CATEGORIEEN, KANALEN, leesKanalen, type Kanaal } from "./types";
+import { CATEGORIEEN, KANALEN, groenePeil, leesKanalen, type Kanaal } from "./types";
 
 export function corsHeaders(req: Request): Record<string, string> {
   const h: Record<string, string> = { vary: "origin" };
@@ -77,7 +77,7 @@ export function publiekBericht(b: OpgeslagenBericht, metTekst: boolean, wordtNag
     beeldCredit: b.beeldCredit ?? null,
     bronnen: b.bronnen,
     peil: {
-      raakt: b.peil.raakt.map((p) => ({ ...p, wordtNagelopen: wordtNagelopen.includes(p.id) || b.peil.mogelijkGewijzigd.some((g) => g.id === p.id) })),
+      raakt: groenePeil(b.peil.raakt).map(({ zekerheid: _z, ...p }) => ({ ...p, wordtNagelopen: wordtNagelopen.includes(p.id) || b.peil.mogelijkGewijzigd.some((g) => g.id === p.id) })),
     },
     // Toegevoegd 26-11-2026 (keuze A): alleen toevoegen, de velden hierboven zijn ongewijzigd.
     soort: soortVan(b),

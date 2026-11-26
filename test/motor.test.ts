@@ -94,14 +94,17 @@ test("opslagstoring in één stap breekt de run niet", async () => {
   assert.ok(r.fouten.some((f) => f.startsWith("opruimen")));
 });
 
-test("PEIL-signaal: mogelijk gewijzigde waarde wordt gesignaleerd, PEIL niet aangepast", async () => {
+test("PEIL-signaal: groen bij twee controles, PEIL niet aangepast", async () => {
   const opslag = new GeheugenOpslag();
   const peil = [{ id: "p.test.afval", naam: "Afvalheffing marseille tarief", trefwoorden: "marseille afvalheffing vuilnisophaal", waarde_weergave: "5 procent" }];
-  const client = klein([(a) => (a.system.includes("groepeert") ? '{"groepen":[]}' : a.system.includes("PEIL") ? '{"raakt":["p.test.afval"],"mogelijkGewijzigd":[{"id":"p.test.afval","toelichting":"Afwijkende waarde genoemd."}]}' : synthese())]);
+  const controle = JSON.stringify({ raakt: true, soort: "wijziging", nieuweWaarde: "6 procent", ingangsdatum: "2027-01-01", definitief: true, citaat: "Grève des éboueurs à Marseille", titel: "Afvalheffing in Marseille" });
+  const client = klein([(a) => (a.system.includes("groepeert") ? '{"groepen":[]}' : a.system.includes("STRENGE") ? controle : synthese())]);
   const r = await draaiOogst({ opslag, client, nu, config: cfg, bronnen, fetchFn, peil, generator: null });
   assert.equal(r.berichten[0].peil.raakt.length, 1);
+  assert.equal(r.berichten[0].peil.raakt[0].zekerheid, "groen");
   assert.equal(opslag.signalen.length, 1);
   assert.equal(opslag.signalen[0].status, "gesignaleerd");
+  assert.equal(opslag.signalen[0].zekerheid, "groen");
   assert.deepEqual(peil[0].waarde_weergave, "5 procent");
 });
 

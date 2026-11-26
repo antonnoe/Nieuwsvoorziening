@@ -36,7 +36,7 @@ test("categorieën zijn precies de zeven", () => {
 const b: OpgeslagenBericht = {
   id: "11111111-1111-1111-1111-111111111111", kop: "Kop & meer", samenvatting: "Samenvatting", tekst: "Tekst", categorie: "algemeen", score: 70, regime: "pers", status: "gepubliceerd",
   blokkadeRedenen: ["intern"], beeldUrl: null, gepubliceerdOp: "2026-11-23T08:00:00.000Z",
-  peil: { raakt: [{ id: "p1", naam: "P1" }], mogelijkGewijzigd: [{ id: "p1", naam: "P1", toelichting: "intern" }] },
+  peil: { raakt: [{ id: "p1", naam: "P1", zekerheid: "groen" }], mogelijkGewijzigd: [{ id: "p1", naam: "P1", toelichting: "intern" }] },
   bronnen: [{ naam: "Bron", origineleKop: "Titre", datum: "2026-11-23T07:00:00.000Z", url: "https://a.test/1" }],
 };
 
@@ -93,7 +93,7 @@ test("berichten: peil-filter in geheugen en in het Supabase-verzoek", async () =
   const g = new GeheugenOpslag();
   const basis = { kop: "k", samenvatting: "s", tekst: "t", categorie: "algemeen" as const, score: 70, regime: "pers" as const, status: "gepubliceerd" as const, blokkadeRedenen: [], beeldUrl: null, bronnen: [], gepubliceerdOp: new Date().toISOString(), sleutel: "x" };
   await g.slaBerichtOp({ ...basis, sleutel: "a", peil: { raakt: [], mogelijkGewijzigd: [] } });
-  await g.slaBerichtOp({ ...basis, sleutel: "b", peil: { raakt: [{ id: "p", naam: "P" }], mogelijkGewijzigd: [] } });
+  await g.slaBerichtOp({ ...basis, sleutel: "b", peil: { raakt: [{ id: "p", naam: "P", zekerheid: "groen" }], mogelijkGewijzigd: [] } });
   assert.equal((await g.berichten({ limiet: 10 })).length, 2);
   assert.equal((await g.berichten({ limiet: 10, peil: true })).length, 1);
   const urls: string[] = [];

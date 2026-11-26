@@ -7,7 +7,7 @@ import { GET } from "../app/api/nieuws/route";
 const basis: OpgeslagenBericht = {
   id: "11111111-1111-1111-1111-111111111111", kop: "Kop", samenvatting: "S", tekst: "T", categorie: "economie en ondernemen", score: 88, regime: "pers", status: "gepubliceerd",
   blokkadeRedenen: ["intern"], beeldUrl: null, gepubliceerdOp: "2026-11-23T08:00:00.000Z", portemonnee: true,
-  peil: { raakt: [{ id: "p1", naam: "Drempel" }], mogelijkGewijzigd: [{ id: "p1", naam: "Drempel", toelichting: "geheime toelichting" }] },
+  peil: { raakt: [{ id: "p1", naam: "Drempel", zekerheid: "groen" }], mogelijkGewijzigd: [{ id: "p1", naam: "Drempel", toelichting: "geheime toelichting" }] },
   bronnen: [{ naam: "Bron", origineleKop: "Titre", datum: "2026-11-23T07:00:00.000Z", url: "https://a.test/1" }],
 };
 

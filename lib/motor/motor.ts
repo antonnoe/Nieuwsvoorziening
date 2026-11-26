@@ -22,7 +22,7 @@ import { overlap, hashId } from "./tekst";
 import { kiesKandidaten } from "./kandidaten";
 import { overheidPoort } from "./overheidpoort";
 import { dagStart } from "./tijd";
-import type { Bericht, Bron, Cluster, PeilParameter, StapResultaat, Synthese } from "./types";
+import type { Bericht, Bron, Cluster, PeilParameter, PeilSignaalNieuw, StapResultaat, Synthese } from "./types";
 
 export interface RunOpties {
   opslag: Opslag;
@@ -216,7 +216,7 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
       }
     }
     const generator = o.generator === undefined ? actieveGenerator() : o.generator;
-    let gepubliceerd = 0, geblokkeerd = 0, concept = 0, mislukt = 0, signalenAantal = 0, artikelen = 0;
+    let gepubliceerd = 0, geblokkeerd = 0, concept = 0, mislukt = 0, signalenAantal = 0, artikelen = 0, peilAanroepen = 0;
     const kandidaatBudget = o.kandidaatBudgetMs ?? KANDIDAAT_BUDGET_MS;
     let overgeslagenTijd = 0;
     for (const c of kandidaten) {
@@ -237,9 +237,14 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
           .map((i) => ({ naam: i.bronNaam, origineleKop: i.titel, datum: i.gepubliceerdOp, url: i.url }));
         const status: Bericht["status"] = !uitslag.ok ? "geblokkeerd" : score >= cfg.publiceerDrempel && s.relevantie >= cfg.minRelevantie ? "gepubliceerd" : "concept";
         let koppeling = { raakt: [], mogelijkGewijzigd: [] } as Bericht["peil"];
+        let peilSignalen: PeilSignaalNieuw[] = [];
         if (status === "gepubliceerd" && peil.length) {
-          const p = await peilKoppeling({ kop: s.kop, tekst: s.tekst }, c.items.map((i) => `${i.titel} ${i.samenvatting}`).join("\n"), peil, o.client, cfg.peilKandidatenPerBericht);
+          const p = await peilKoppeling({ kop: s.kop, samenvatting: s.samenvatting, tekst: s.tekst }, c.items.map((i) => `${i.titel} ${i.samenvatting}`).join("\n"), peil, o.client, cfg.peilKandidatenPerBericht, {
+            publicatie: new Date(nu).toISOString(), bronUrl: bronnen[0]?.url ?? null, ontbreekt: s.portemonnee === true,
+          });
           koppeling = p.koppeling;
+          peilSignalen = p.signalen;
+          peilAanroepen += p.aanroepen;
           if (p.fout) noteer({ stap: "peil_oordeel", ok: false, fout: p.fout });
         }
         const beeld = status === "gepubliceerd" ? await beeldResultaat({ kop: s.kop, samenvatting: s.samenvatting, categorie: s.categorie, zoektermen: s.beeldZoektermen, zoekterm: s.beeldZoekterm, client: o.client, vermijd }, generator) : null;
@@ -254,7 +259,7 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
         bericht.id = id;
         berichten.push(bericht);
         await o.opslag.markeerVerwerkt(c.items.map((i) => i.url), id, status);
-        const signalen: PeilSignaalIn[] = koppeling.mogelijkGewijzigd.map((g) => ({ berichtId: id, parameterId: g.id, parameterNaam: g.naam, toelichting: g.toelichting }));
+        const signalen: PeilSignaalIn[] = peilSignalen.map((x) => ({ ...x, berichtId: id }));
         if (signalen.length) signalenAantal += await o.opslag.slaPeilSignalenOp(signalen).catch((e) => (noteer({ stap: "peil_signaal", ok: false, fout: fout(e) }), 0));
         if (status === "gepubliceerd") gepubliceerd += 1;
         else if (status === "geblokkeerd") geblokkeerd += 1;
@@ -264,7 +269,7 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
         noteer({ stap: "synthese_cluster", ok: false, fout: fout(e) });
       }
     }
-    Object.assign(aantallen, { gepubliceerd, geblokkeerd, concept, syntheseMislukt: mislukt, peilSignalen: signalenAantal, artikelenGelezen: artikelen, kandidatenTijdOvergeslagen: overgeslagenTijd });
+    Object.assign(aantallen, { gepubliceerd, geblokkeerd, concept, syntheseMislukt: mislukt, peilSignalen: signalenAantal, peilModelAanroepen: peilAanroepen, artikelenGelezen: artikelen, kandidatenTijdOvergeslagen: overgeslagenTijd });
     noteer({ stap: "synthese", ok: true, aantal: berichten.length, detail: { gepubliceerd, geblokkeerd, concept, mislukt, ...(overgeslagenTijd ? { tijdbudgetBereikt: overgeslagenTijd } : {}) } });
   } else {
     noteer({ stap: "synthese", ok: true, aantal: 0, detail: { reden: "geen kandidaten" } });
@@ -372,6 +377,34 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
       noteer({ stap: "peil_lezerszinnen", ok: true, aantal: gemaakt, detail: { geenGevolg: geen, afgekeurd, pogingen, redenen } });
     } catch (e) {
       noteer({ stap: "peil_lezerszinnen", ok: false, fout: fout(e) });
+    }
+  }
+
+  // 6d. Eenmalig: oude PEIL-koppelingen (zonder zekerheid, van vóór "PEIL streng", 26-11-2026) van de laatste 14 dagen
+  // opnieuw toetsen met twee controles; hooguit 10 berichten per run. Faalt een controle door een modelfout, dan blijft het
+  // bericht staan voor de volgende run (lezers zien oude koppelingen sowieso niet meer). Oude signalen worden gesloten.
+  if (o.client) {
+    try {
+      const parameters = o.peil ?? (await laadPeil(cfg.peilCacheMinuten, o.fetchFn));
+      const lijst = await o.opslag.teToetsenPeil(new Date(nu - 14 * 86400_000).toISOString(), 10);
+      let getoetst = 0, behouden = 0, gewist = 0, uitgesteld = 0, signalen = 0;
+      for (const b of lijst) {
+        if (!tijdOver()) break;
+        const t = await peilKoppeling({ kop: b.kop, samenvatting: b.samenvatting, tekst: b.tekst }, b.bronnen.map((x) => x.origineleKop).join("\n"), parameters, o.client, cfg.peilKandidatenPerBericht, {
+          publicatie: b.gepubliceerdOp, bronUrl: b.bronnen[0]?.url ?? null, ontbreekt: false,
+        });
+        if (t.fout) { uitgesteld += 1; noteer({ stap: "peil_hertoets_fout", ok: false, fout: t.fout }); continue; }
+        await o.opslag.zetPeilKoppeling(b.id, t.koppeling);
+        await o.opslag.sluitOudePeilSignalen(b.id);
+        if (t.signalen.length) signalen += await o.opslag.slaPeilSignalenOp(t.signalen.map((x) => ({ ...x, berichtId: b.id })));
+        getoetst += 1;
+        if (t.koppeling.raakt.length) behouden += 1;
+        else gewist += 1;
+      }
+      Object.assign(aantallen, { peilHertoetst: getoetst });
+      noteer({ stap: "peil_hertoets", ok: true, aantal: getoetst, detail: { teToetsen: lijst.length, behouden, gewist, uitgesteld, signalen } });
+    } catch (e) {
+      noteer({ stap: "peil_hertoets", ok: false, fout: fout(e) });
     }
   }
 

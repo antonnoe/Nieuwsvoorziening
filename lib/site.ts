@@ -2,7 +2,7 @@
 import { leesOpslag } from "./motor/api";
 import type { Opslag } from "./motor/opslag";
 import { dagStart } from "./motor/tijd";
-import { CATEGORIEEN, type Categorie } from "./motor/types";
+import { CATEGORIEEN, groenePeil, type Categorie } from "./motor/types";
 import type { OpgeslagenBericht } from "./motor/opslag";
 
 export const BASIS_URL = (process.env.NIEUWS_BASIS_URL || "https://nieuws.infofrankrijk.com").replace(/\/+$/, "");
@@ -42,7 +42,7 @@ export const aantalBronnen = (n: number) => (n === 1 ? "1 bron" : `${n} bronnen`
 export interface PeilWeergave { naam: string; wordtNagelopen: boolean; tools: { naam: string; url: string | null }[] }
 export function peilWeergave(b: OpgeslagenBericht): PeilWeergave[] {
   const gewijzigd = new Set(b.peil.mogelijkGewijzigd.map((g) => g.id));
-  return b.peil.raakt.map((p) => ({ naam: p.naam, wordtNagelopen: gewijzigd.has(p.id), tools: (p.tools || []).map((t) => ({ naam: t.naam, url: t.url || null })) }));
+  return groenePeil(b.peil.raakt).map((p) => ({ naam: p.naam, wordtNagelopen: gewijzigd.has(p.id), tools: (p.tools || []).map((t) => ({ naam: t.naam, url: t.url || null })) }));
 }
 export const uniekeTools = (p: PeilWeergave[]) => {
   const m = new Map<string, { naam: string; url: string | null }>();
@@ -133,7 +133,7 @@ export async function laadActieveCategorieen(opslagIn?: Opslag | null, nu = Date
  * Drie verwante berichten voor "Verder lezen", nooit het bericht zelf: eerst dezelfde categorie, dan berichten die
  * dezelfde PEIL-parameter raken, en bij te weinig de nieuwste andere berichten.
  */
-export async function laadVerwant(b: { id: string; categorie: Categorie; peil?: { raakt: { id: string }[] } }, opslagIn?: Opslag | null): Promise<OpgeslagenBericht[]> {
+export async function laadVerwant(b: { id: string; categorie: Categorie; peil?: { raakt: { id: string; zekerheid?: string }[] } }, opslagIn?: Opslag | null): Promise<OpgeslagenBericht[]> {
   const opslag = opslagIn === undefined ? leesOpslag() : opslagIn;
   if (!opslag) return [];
   try {
@@ -142,10 +142,10 @@ export async function laadVerwant(b: { id: string; categorie: Categorie; peil?: 
       for (const x of lijst) if (uit.length < 3 && x.id !== b.id && !uit.some((u) => u.id === x.id)) uit.push(x);
     };
     voeg(await opslag.berichten({ categorie: b.categorie, limiet: 6 }));
-    const ids = new Set((b.peil?.raakt || []).map((p) => p.id));
+    const ids = new Set(groenePeil(b.peil?.raakt).map((p) => p.id));
     if (uit.length < 3 && ids.size) {
       const metPeil = await opslag.berichten({ peil: true, limiet: 30 });
-      voeg(metPeil.filter((x) => x.peil.raakt.some((p) => ids.has(p.id))));
+      voeg(metPeil.filter((x) => groenePeil(x.peil.raakt).some((p) => ids.has(p.id))));
     }
     if (uit.length < 3) voeg(await opslag.berichten({ limiet: 8 }));
     return uit;
