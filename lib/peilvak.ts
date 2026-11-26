@@ -86,7 +86,9 @@ export function kiesAankondigingen(parameters: Ruw[], vandaag: string, max = 4, 
 
 export async function laadAankondigingen(max = 4): Promise<{ lijst: Aankondiging[]; totaal: number }> {
   try {
-    const r = await fetch(EXPORT, { next: { revalidate: 21600 }, signal: AbortSignal.timeout(8000) });
+    // Hooguit een uur oud (was zes uur): een correctie in PEIL moet dezelfde ochtend in het vak en de nieuwsbrief staan (26-11-2026,
+    // AOW-leeftijd). Zonder verse export past de bewaarde zin niet bij de oude omschrijving en valt het item weg.
+    const r = await fetch(EXPORT, { headers: { accept: "application/json" }, next: { revalidate: 3600 }, signal: AbortSignal.timeout(8000) });
     if (!r.ok) return { lijst: [], totaal: 0 };
     const d = (await r.json()) as { parameters?: Ruw[] };
     const vandaag = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Amsterdam" });
