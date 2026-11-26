@@ -13,36 +13,71 @@ const PEIL_STOP = new Set(
     "maximale minimale totaal korting partner bedragen frankrijk nederland franse nederlandse wet wetten").split(" ")
 );
 
-export function peilTermen(p: PeilParameter): string[] {
+/** Termen uit de naam van een parameter (zwaar) en uit de trefwoorden (licht). Afkortingen van drie letters in de naam (DPE, SMIC, CSG) tellen mee. */
+export function peilTermenGewogen(p: PeilParameter): { naam: string[]; tref: string[] } {
   const tref = kernwoorden(p.trefwoorden || "").filter((w) => w.length >= 3 && !PEIL_STOP.has(w));
   // kernwoorden filtert < 4; trefwoorden mogen korte afkortingen (cak, aow, csg) hebben.
   const kort = normaliseer(p.trefwoorden || "").split(/[^a-z0-9]+/).filter((w) => w.length === 3 && !PEIL_STOP.has(w));
-  const naam = kernwoorden(`${p.naam || ""} ${p.naam_fr || ""}`).filter((w) => w.length >= 5 && !PEIL_STOP.has(w));
-  return [...new Set([...tref, ...kort, ...naam])];
+  const naamTekst = `${p.naam || ""} ${p.naam_fr || ""}`;
+  const afkortingen = (naamTekst.match(/\b[A-Z]{3,5}\b/g) || []).map((w) => normaliseer(w)).filter((w) => !PEIL_STOP.has(w));
+  const naam = kernwoorden(naamTekst).filter((w) => w.length >= 5 && !PEIL_STOP.has(w));
+  const naamSet = new Set([...naam, ...afkortingen]);
+  return { naam: [...naamSet], tref: [...new Set([...tref, ...kort])].filter((w) => !naamSet.has(w)) };
 }
 
-/** Rangschikt op zeldzaamheid van de gevonden termen; door bij één zeldzame term of twee termen. */
-export function peilVoorselectie(tekst: string, parameters: PeilParameter[], max = 6): PeilParameter[] {
+export function peilTermen(p: PeilParameter): string[] {
+  const t = peilTermenGewogen(p);
+  return [...new Set([...t.tref, ...t.naam])];
+}
+
+/** Familie van een parameter: het id tot de laatste punt (p.fr.dpe.klassegrenzen wordt p.fr.dpe). */
+export function peilFamilie(id: string): string {
+  const i = id.lastIndexOf(".");
+  return i > 0 ? id.slice(0, i) : id;
+}
+
+/** Hooguit zoveel kandidaten uit dezelfde familie, zodat één onderwerp (bijvoorbeeld DPE) de lijst niet vult. */
+export const MAX_PER_FAMILIE = 2;
+
+/**
+ * Rangschikt op zeldzaamheid van de gevonden termen; door bij één zeldzame term of twee termen.
+ * Termen uit de parameternaam wegen zwaarder dan trefwoorden; een term die in de naam staat en bij precies één parameter voorkomt krijgt een bonus.
+ * Hooguit MAX_PER_FAMILIE kandidaten per familie.
+ */
+export function peilVoorselectie(tekst: string, parameters: PeilParameter[], max = 8): PeilParameter[] {
   const woorden = new Set(normaliseer(tekst).replace(/[^a-z0-9]+/g, " ").split(" ").filter(Boolean));
   const n = normaliseer(tekst);
-  const termenPer = parameters.map(peilTermen);
+  const gewogen = parameters.map(peilTermenGewogen);
   const df = new Map<string, number>();
-  for (const t of termenPer) for (const x of t) df.set(x, (df.get(x) || 0) + 1);
+  for (const t of gewogen) for (const x of new Set([...t.naam, ...t.tref])) df.set(x, (df.get(x) || 0) + 1);
   const scores: { p: PeilParameter; score: number }[] = [];
   parameters.forEach((p, i) => {
     let score = 0;
     let raak = 0;
     let zeldzaam = false;
-    for (const t of termenPer[i]) {
-      if (!(woorden.has(t) || (t.length >= 7 && n.includes(t)))) continue;
+    const tel = (t: string, gewicht: number, inNaam: boolean) => {
+      if (!(woorden.has(t) || (t.length >= 7 && n.includes(t)))) return;
       const d = df.get(t) || 1;
       raak += 1;
       if (d <= 8) zeldzaam = true;
-      score += Math.log(1 + parameters.length / d);
-    }
+      score += gewicht * Math.log(1 + parameters.length / d);
+      if (inNaam && d === 1) score += 3;
+    };
+    for (const t of gewogen[i].tref) tel(t, 1, false);
+    for (const t of gewogen[i].naam) tel(t, 2, true);
     if (zeldzaam || raak >= 2) scores.push({ p, score });
   });
-  return scores.sort((a, b) => b.score - a.score).slice(0, max).map((s) => s.p);
+  scores.sort((a, b) => b.score - a.score);
+  const perFamilie = new Map<string, number>();
+  const uit: PeilParameter[] = [];
+  for (const x of scores) {
+    const f = peilFamilie(x.p.id);
+    if ((perFamilie.get(f) || 0) >= MAX_PER_FAMILIE) continue;
+    perFamilie.set(f, (perFamilie.get(f) || 0) + 1);
+    uit.push(x.p);
+    if (uit.length >= max) break;
+  }
+  return uit;
 }
 
 let cache: { op: number; parameters: PeilParameter[] } | null = null;
@@ -69,8 +104,11 @@ export function wisPeilCache() {
 
 const leeg = (): PeilKoppeling => ({ raakt: [], mogelijkGewijzigd: [] });
 
-/** Hooguit zoveel modelaanroepen per bericht (twee controles per kandidaat, plus de controle op "ontbreekt in PEIL"). */
-export const MAX_PEIL_AANROEPEN = 6;
+/** Budget per model per bericht: het goedkope model hooguit 8 kandidaten, het synthesemodel hooguit 3; de controle op "ontbreekt in PEIL" heeft een eigen aanroep per model, buiten dit budget. */
+export const MAX_GOEDKOOP_AANROEPEN = 8;
+export const MAX_SYNTHESE_AANROEPEN = 3;
+/** Absolute bovengrens per bericht: 8 + 3 + 2 (ontbreekt). */
+export const MAX_PEIL_AANROEPEN = MAX_GOEDKOOP_AANROEPEN + MAX_SYNTHESE_AANROEPEN + 2;
 
 const REGELS = `Je bent een STRENGE controleur. Je beoordeelt of een nieuwsbericht precies over de grootheid of regel van één parameter uit het register PEIL gaat (een tarief, drempel, termijn of regel voor Nederlanders in Frankrijk).
 - raakt: alleen true als het bericht precies over de grootheid of regel van déze parameter gaat, voor dezelfde doelgroep. Een verwant onderwerp, een ander onderdeel van dezelfde wet, een los woord of een algemeen verband is NIET genoeg. Voorbeeld: een bericht over het tijdpad van een verhuurverbod voor slecht geïsoleerde woningen gaat niet over de klassegrenzen van het energielabel. Twijfel je, zeg dan false.
@@ -101,10 +139,11 @@ export interface PeilOordeelLog {
   /** PEIL-id, of "ontbreekt" voor de controle op parameters die PEIL mist. */
   p: string;
   /** goedkoop model: ja, nee of fout */
-  a: "ja" | "nee" | "fout";
+  a: "ja" | "nee" | "fout" | "-";
   /** synthesemodel: ja, nee, fout of "-" (niet gevraagd omdat het eerste model nee zei) */
   b: "ja" | "nee" | "fout" | "-";
-  uitkomst: "groen" | "oranje" | "niets";
+  /** "overgeslagen": het budget van een model was op voordat deze kandidaat aan de beurt kwam (a of b is dan "-") */
+  uitkomst: "groen" | "oranje" | "niets" | "overgeslagen";
   problemen?: string[];
 }
 
@@ -129,20 +168,21 @@ export async function peilKoppeling(
   bronTekst: string,
   parameters: PeilParameter[],
   client: ModelClient | null,
-  max = 6,
+  max = MAX_GOEDKOOP_AANROEPEN,
   opties: PeilOpties = {}
 ): Promise<PeilToets> {
-  const alle = peilVoorselectie(`${bericht.kop} ${bericht.tekst}`, parameters, max);
-  const kandidaten = alle.slice(0, opties.ontbreekt ? Math.min(alle.length, 4) : alle.length);
+  const kandidaten = peilVoorselectie(`${bericht.kop} ${bericht.tekst}`, parameters, Math.min(max, MAX_GOEDKOOP_AANROEPEN));
   const uit: PeilToets = { koppeling: leeg(), signalen: [], kandidaten, aanroepen: 0, oordelen: [] };
   if (!client || (!kandidaten.length && !opties.ontbreekt)) return uit;
   const publicatie = opties.publicatie || new Date().toISOString();
   const tekst = `${bericht.kop} ${bericht.samenvatting || ""} ${bericht.tekst} ${bronTekst}`;
   const fouten: string[] = [];
   const bericht_ = `PUBLICATIEDATUM: ${publicatie.slice(0, 10)}\n\nBERICHT\n${bericht.kop}\n${bericht.samenvatting || ""}\n${bericht.tekst}\n\nBRONGEGEVENS\n${bronTekst.slice(0, 1500)}`;
-  const vraag = async (model: string, system: string, user: string, sleutel: "raakt" | "ontbreekt"): Promise<Controle | null> => {
-    if (uit.aanroepen >= MAX_PEIL_AANROEPEN) return null;
+  let goedkoop = 0, synthese = 0, ontbreektGoedkoop = 0, ontbreektSynthese = 0;
+  const vraag = async (model: string, system: string, user: string, sleutel: "raakt" | "ontbreekt", soort: "g" | "s"): Promise<Controle | null> => {
     uit.aanroepen += 1;
+    if (sleutel === "ontbreekt") (soort === "g" ? ontbreektGoedkoop++ : ontbreektSynthese++);
+    else (soort === "g" ? goedkoop++ : synthese++);
     try {
       const j = haalJson<unknown>(await client.tekst({ model, system, user, maxTokens: 500 }));
       const c = leesControle(j, sleutel);
@@ -155,17 +195,19 @@ export async function peilKoppeling(
   };
   /** Beide controles; de tweede alleen als de eerste "ja" zegt. `log` krijgt wat elk model zei. */
   const tweeControles = async (system: string, user: string, sleutel: "raakt" | "ontbreekt", log: PeilOordeelLog): Promise<[Controle, Controle] | null> => {
-    const a = await vraag(modelGoedkoop(), system, user, sleutel);
+    const eigen = sleutel === "ontbreekt";
+    if ((eigen ? ontbreektGoedkoop >= 1 : goedkoop >= MAX_GOEDKOOP_AANROEPEN)) { log.a = "-"; log.uitkomst = "overgeslagen"; return null; }
+    const a = await vraag(modelGoedkoop(), system, user, sleutel, "g");
     log.a = !a ? "fout" : a.raakt ? "ja" : "nee";
     if (!a || !a.raakt) return null;
-    const b = await vraag(modelSynthese(), system, user, sleutel);
+    if ((eigen ? ontbreektSynthese >= 1 : synthese >= MAX_SYNTHESE_AANROEPEN)) { log.uitkomst = "overgeslagen"; return null; }
+    const b = await vraag(modelSynthese(), system, user, sleutel, "s");
     log.b = !b ? "fout" : b.raakt ? "ja" : "nee";
     return b && b.raakt ? [a, b] : null;
   };
   const nieuwLog = (p: string): PeilOordeelLog => ({ p, a: "nee", b: "-", uitkomst: "niets" });
 
   for (const p of kandidaten) {
-    if (uit.aanroepen >= MAX_PEIL_AANROEPEN) break;
     const user = `${bericht_}\n\nPARAMETER\nnaam: ${p.naam}\ntrefwoorden: ${p.trefwoorden || ""}\nhuidige waarde in PEIL: ${String(p.waarde_weergave || "").slice(0, 240)}`;
     const log = nieuwLog(p.id);
     uit.oordelen.push(log);
@@ -192,7 +234,7 @@ export async function peilKoppeling(
   }
 
   // Ontbreekt in PEIL: alleen als er geen groene koppeling is en er nog ruimte in het aanroepbudget is.
-  if (opties.ontbreekt && !uit.koppeling.raakt.length && uit.aanroepen < MAX_PEIL_AANROEPEN) {
+  if (opties.ontbreekt && !uit.koppeling.raakt.length) {
     const namen = parameters.map((p) => p.naam).join("; ").slice(0, 8000);
     const log = nieuwLog("ontbreekt");
     uit.oordelen.push(log);

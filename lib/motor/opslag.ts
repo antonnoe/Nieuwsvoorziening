@@ -87,7 +87,7 @@ export interface Opslag {
    * Gepubliceerde berichten sinds `sindsIso` met een oude, ongetoetste PEIL-koppeling (zonder zekerheid), of met een oud signaal
    * zonder zekerheid en status raakt_niet zonder redactiebesluit (door een eerdere hertoets leeggemaakt), met tekst.
    */
-  teToetsenPeil(sindsIso: string, limiet: number): Promise<OpgeslagenBericht[]>;
+  teToetsenPeil(sindsIso: string, limiet: number, eenmalig?: string[]): Promise<OpgeslagenBericht[]>;
   /** Sluit oude signalen zonder zekerheid (van vóór PEIL streng) en zonder redactiebesluit van een bericht af (status afgewezen), zodat het bericht niet opnieuw wordt getoetst. */
   sluitOudePeilSignalen(berichtId: string): Promise<void>;
   /** Samenvattingen van de bronitems (op url), voor de hertoets; ontbrekende urls komen niet in de map. */
@@ -206,9 +206,9 @@ export class GeheugenOpslag implements Opslag {
     const b = this.berichtenLijst.find((x) => x.id === berichtId);
     if (b) b.peil = koppeling;
   }
-  async teToetsenPeil(sinds: string, limiet: number) {
+  async teToetsenPeil(sinds: string, limiet: number, eenmalig: string[] = []) {
     return this.berichtenLijst
-      .filter((b) => b.status === "gepubliceerd" && b.gepubliceerdOp >= sinds && (b.peil.raakt.some((r) => !r.zekerheid) || this.signalen.some((x) => x.berichtId === b.id && !x.zekerheid && x.status === "raakt_niet" && !x.besluitOp)))
+      .filter((b) => b.status === "gepubliceerd" && (b.gepubliceerdOp >= sinds && (b.peil.raakt.some((r) => !r.zekerheid) || this.signalen.some((x) => x.berichtId === b.id && !x.zekerheid && x.status === "raakt_niet" && !x.besluitOp)) || (eenmalig.includes(b.id || "") && !this.signalen.some((x) => x.berichtId === b.id && x.zekerheid))))
       .sort((a, b) => b.gepubliceerdOp.localeCompare(a.gepubliceerdOp))
       .slice(0, limiet);
   }
@@ -538,7 +538,7 @@ export class SupabaseOpslag implements Opslag {
     if (!/^[0-9a-f-]{36}$/i.test(berichtId)) return;
     await this.vraag(`nv_berichten?id=eq.${berichtId}`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ peil_raakt: koppeling.raakt, peil_mogelijk_gewijzigd: koppeling.mogelijkGewijzigd }) });
   }
-  async teToetsenPeil(sinds: string, limiet: number) {
+  async teToetsenPeil(sinds: string, limiet: number, eenmalig: string[] = []) {
     const sel = "select=*,nv_bronnen_per_bericht(*)";
     const rijen = await this.lees(`nv_berichten?status=eq.gepubliceerd&gepubliceerd_op=gte.${encodeURIComponent(sinds)}&peil_raakt=neq.[]&order=gepubliceerd_op.desc&limit=100&${sel}`);
     const lijst = rijen.map(naarBericht).filter((b) => b.peil.raakt.some((r) => !r.zekerheid));
@@ -553,7 +553,19 @@ export class SupabaseOpslag implements Opslag {
     } catch (e) {
       if (!isPeilKolomFout(e)) throw e; // zonder migratie bestaan zekerheid en besluit_op niet: dan geen oude signalen om te onderscheiden
     }
-    return lijst.sort((a, b) => b.gepubliceerdOp.localeCompare(a.gepubliceerdOp)).slice(0, limiet);
+    // Eenmalige hertoets: opgegeven berichten zonder enig signaal met zekerheid (zie EENMALIGE_PEIL_HERTOETS in config.ts).
+    const ids = eenmalig.filter((i) => /^[0-9a-f-]{36}$/i.test(i) && !lijst.some((b) => b.id === i));
+    if (ids.length) {
+      try {
+        const met = new Set((await this.lees(`nv_peil_signalen?bericht_id=in.(${ids.join(",")})&zekerheid=not.is.null&select=bericht_id&limit=200`)).map((r) => String(r.bericht_id)));
+        const open = ids.filter((i) => !met.has(i));
+        if (open.length) lijst.push(...(await this.lees(`nv_berichten?id=in.(${open.join(",")})&status=eq.gepubliceerd&limit=20&${sel}`)).map(naarBericht));
+      } catch (e) {
+        if (!isPeilKolomFout(e)) throw e;
+      }
+    }
+    // Eenmalig opgegeven berichten gaan voor, daarna de nieuwste.
+    return lijst.sort((a, b) => Number(eenmalig.includes(b.id || "")) - Number(eenmalig.includes(a.id || "")) || b.gepubliceerdOp.localeCompare(a.gepubliceerdOp)).slice(0, limiet);
   }
   async sluitOudePeilSignalen(berichtId: string) {
     if (!/^[0-9a-f-]{36}$/i.test(berichtId)) return;

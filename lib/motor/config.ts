@@ -7,6 +7,13 @@ export const REGELVERSIE = 2;
 /** Hooguit zoveel berichten per oogstrun herschrijven. */
 export const MAX_HERSCHRIJVEN_PER_RUN = 3;
 
+/**
+ * Eenmalige hertoets (PEIL streng, herstelronde 2): berichten die opnieuw door de PEIL-controle moeten, ook al hebben ze geen oude
+ * koppeling meer. Een id valt vanzelf af zodra het bericht een signaal met zekerheid heeft; levert de toets niets op, haal het id dan
+ * uit deze lijst (het bericht komt anders elke run terug, hooguit binnen het plafond van 10 hertoetsen).
+ */
+export const EENMALIGE_PEIL_HERTOETS: string[] = ["55fdeaca-d7e7-4973-bb23-e4086fbbd107"];
+
 export interface MotorConfig {
   publiceerDrempel: number;
   minRelevantie: number;
@@ -39,7 +46,7 @@ const STANDAARD: MotorConfig = {
   maxClusterItems: 150,
   ruweItemsBewaarDagen: 30,
   peilCacheMinuten: 360,
-  peilKandidatenPerBericht: 6,
+  peilKandidatenPerBericht: 8,
   minTekstTekens: 280,
   minKopTekens: 15,
   minSamenvattingTekens: 40,

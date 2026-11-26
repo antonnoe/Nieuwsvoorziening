@@ -13,7 +13,7 @@
   "maxClusterItems": 150,
   "ruweItemsBewaarDagen": 30,
   "peilCacheMinuten": 360,
-  "peilKandidatenPerBericht": 6,
+  "peilKandidatenPerBericht": 8,
   "minTekstTekens": 280,
   "minKopTekens": 15,
   "minSamenvattingTekens": 40
