@@ -36,20 +36,32 @@ a:focus-visible { outline: 3px solid var(--maroon); outline-offset: 2px; border-
 .art .groot { margin-bottom: 30px; }
 @media (max-width: 720px) { .art .groot { margin-bottom: 22px; } }
 
-/* vak "Wat verandert er voor u" (aangekondigde wijzigingen uit PEIL) */
-.peilvak { background: var(--groenzacht); border: 1px solid var(--lijn); border-left: 4px solid var(--groen); border-radius: 8px; padding: 20px 22px; margin: 20px 0 28px; }
-.peilvak .peilkop { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; margin-bottom: 10px; }
-.peilvak h2 { font-size: 22px; margin: 0; }
-.peilvak .peilkop span { color: var(--grijs); font-size: 14px; }
-.peilvak a { color: var(--groen); font-weight: 700; }
-.peilvak ol { list-style: none; margin: 0 0 14px; padding: 0; }
+/* vak "Wat verandert er voor u": uitklapper, standaard dicht */
+.peilvak { background: var(--kaart); border: 1px solid var(--lijn); border-radius: 12px; margin: 16px 0 24px; }
+.peilvak summary { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 8px; padding: 14px 48px 14px 18px; cursor: pointer; list-style: none; position: relative; min-height: 48px; }
+.peilvak summary::-webkit-details-marker { display: none; }
+.peilvak .pk { font-weight: 700; color: var(--inkt); }
+.peilvak .pa { color: var(--grijs); font-size: 14px; }
+.peilvak .pijl { position: absolute; right: 20px; top: 50%; width: 8px; height: 8px; margin-top: -6px; border-right: 2px solid var(--grijs); border-bottom: 2px solid var(--grijs); transform: rotate(45deg); transition: transform .15s; }
+.peilvak[open] .pijl { transform: rotate(-135deg); margin-top: -2px; }
+.peilvak summary:hover .pk { color: var(--maroon); }
+.peilvak summary:focus-visible { outline: 3px solid var(--maroon); outline-offset: 2px; border-radius: 12px; }
+.peilvak[open] summary { border-bottom: 1px solid var(--lijn); }
+.peilvak > :not(summary) { margin-left: 18px; margin-right: 18px; }
+.peilvak .peiluitleg { color: var(--grijs); font-size: 14px; margin-top: 14px; margin-bottom: 4px; }
+.peilvak a { color: var(--maroon); font-weight: 700; }
+.peilvak ol { list-style: none; margin-top: 0; margin-bottom: 14px; padding: 0; }
 .peilvak li { display: grid; grid-template-columns: 110px 1fr; gap: 12px; padding: 12px 0; border-top: 1px solid var(--lijn); }
 .peilvak time { font-weight: 700; color: var(--groen); font-size: 14px; }
 .peilvak b { display: block; }
 .peilvak p { margin: 2px 0; font-size: 15px; }
 .peilvak small { color: var(--grijs); display: block; }
-.peilvak small.nieuws a { color: var(--maroon); }
-@media (max-width: 600px) { .peilvak li { grid-template-columns: 1fr; gap: 2px; } }
+.peilvak > a.pil { display: inline-block; margin-bottom: 18px; color: var(--inkt); font-weight: 600; }
+@media (max-width: 600px) { .peilvak li { grid-template-columns: 1fr; gap: 2px; } .peilvak summary { padding-right: 44px; } }
+
+/* "Lees meer" onder de introductie van elke kaart */
+.leesmeer { color: var(--maroon); font-weight: 700; font-size: 14.5px; }
+.kaart:hover .leesmeer, .hoofd:hover .leesmeer { text-decoration: underline; }
 
 /* beheer (/beheer, achter CRON_SECRET) */
 .beheer { padding-top: 28px; padding-bottom: 48px; }

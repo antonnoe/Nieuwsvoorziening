@@ -54,7 +54,7 @@ Integriteit, actualiteit en kwaliteit zijn op elk scherm zichtbaar.
 
 - Voorpagina: een regel onder de kop met het moment van bijwerken, het aantal berichten van vandaag, het aantal geraadpleegde bronnen en een link "Zo werken wij".
 - Elke kaart: onderaan het aantal bronnen en "Gecontroleerd".
-- Artikelpagina: een paneel "Open keuken" (geplaatst, bijgewerkt, gecontroleerd, correcties) en een paneel "Bronnen" met genummerde bronnen.
+- Artikelpagina: een paneel "Verantwoording" (geplaatst, bijgewerkt, gecontroleerd, correcties) en een paneel "Bronnen" met genummerde bronnen.
 - Toon alleen echte gegevens. Is een getal of datum niet beschikbaar, laat de regel dan weg. Nooit een verzonnen aantal of een vast "gecontroleerd" zonder dat de controle heeft plaatsgevonden.
 
 ## onderdelen van de voorpagina, van boven naar beneden
