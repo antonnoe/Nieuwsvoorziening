@@ -1,7 +1,7 @@
 // Opslag: Supabase via de REST-interface (geen extra afhankelijkheid), met een
 // geheugenvariant voor tests en droge runs. Elke methode gooit bij een storing;
 // de motor vangt dat per stap op.
-import { leesKanalen, groenePeil, type BeeldCredit, type Bericht, type BronItem, type Kanaal, type PeilBesluit, type PeilKoppeling, type PeilSignaalIn, type PeilSignaalRij } from "./types";
+import { leesKanalen, leesSignaal, groenePeil, type Signaal, type BeeldCredit, type Bericht, type BronItem, type Kanaal, type PeilBesluit, type PeilKoppeling, type PeilSignaalIn, type PeilSignaalRij } from "./types";
 import { zoekSamenvoeging } from "./peilbeoordeling";
 import { dagStart } from "./tijd";
 import { REGELVERSIE } from "./config";
@@ -33,6 +33,12 @@ export function isKolomFout(e: unknown): boolean {
   return /(redactie|kanalen|soort|handmatig)/i.test(m) && /(42703|PGRST204|PGRST205|does not exist|Could not find)/i.test(m);
 }
 
+/** Herkent de fout van Supabase bij ontbrekende signaalkolommen (migratie 20261127120000_nv_signaal.sql nog niet toegepast). */
+export function isSignaalKolomFout(e: unknown): boolean {
+  const m = e instanceof Error ? e.message : String(e);
+  return /signaal/i.test(m) && /(42703|PGRST204|PGRST205|does not exist|Could not find)/i.test(m);
+}
+
 /** Afgeleid kenmerk: "overheid" of "pers" (ontbrekende waarde telt als pers, behalve bij een overheidsregime). */
 export const soortVan = (b: { soort?: string | null; regime?: string }): "overheid" | "pers" => (b.soort === "overheid" || (!b.soort && b.regime === "overheid") ? "overheid" : "pers");
 
@@ -45,6 +51,9 @@ export interface BerichtHerschreven {
   status: Bericht["status"];
   blokkadeRedenen: string[];
   regelversie: number;
+  /** Alleen meegeven als het model een oordeel gaf; ontbreekt = signaal ongemoeid laten. */
+  signaal?: Signaal | null;
+  signaalBeoordeeld?: boolean;
 }
 
 export type { PeilSignaalIn, PeilSignaalRij };
@@ -105,6 +114,10 @@ export interface Opslag {
   teHerschrijven(sindsIso: string, versie: number, limiet: number): Promise<OpgeslagenBericht[]>;
   /** Werkt kop, samenvatting, tekst, categorie, portemonnee, status, blokkaderedenen en regelversie bij; id, foto en bronnen blijven. */
   werkBerichtBij(id: string, v: BerichtHerschreven): Promise<void>;
+  /** Gepubliceerde berichten sinds `sindsIso` zonder signaal-oordeel (nieuwste eerst, met tekst). Zonder de signaalkolommen: leeg. */
+  teBeoordelenSignaal(sindsIso: string, limiet: number): Promise<OpgeslagenBericht[]>;
+  /** Zet het signaal-oordeel van een bericht (null is ook een oordeel). Zonder de signaalkolommen: niets. */
+  zetSignaal(id: string, signaal: Signaal | null): Promise<void>;
   /** Leesbare zinnen en korte titels per PEIL-parameter (met de hash van de omschrijving waaruit ze zijn gemaakt). */
   lezerszinnen(): Promise<Map<string, { hash: string; zin: string; titel?: string }>>;
   zetLezerszin(parameterId: string, hash: string, zin: string, titel?: string): Promise<void>;
@@ -246,6 +259,16 @@ export class GeheugenOpslag implements Opslag {
       .sort((a, b) => b.gepubliceerdOp.localeCompare(a.gepubliceerdOp))
       .slice(0, limiet);
   }
+  async teBeoordelenSignaal(sinds: string, limiet: number) {
+    return this.berichtenLijst
+      .filter((b) => b.status === "gepubliceerd" && b.redactie !== "weg" && b.gepubliceerdOp >= sinds && b.signaalBeoordeeld !== true)
+      .sort((a, b) => b.gepubliceerdOp.localeCompare(a.gepubliceerdOp))
+      .slice(0, limiet);
+  }
+  async zetSignaal(id: string, signaal: Signaal | null) {
+    const b = this.berichtenLijst.find((x) => x.id === id);
+    if (b) ((b.signaal = signaal), (b.signaalBeoordeeld = true));
+  }
   async werkBerichtBij(id: string, v: BerichtHerschreven) {
     const b = this.berichtenLijst.find((x) => x.id === id);
     if (b && !b.handmatigOp) Object.assign(b, v);
@@ -327,6 +350,20 @@ export class SupabaseOpslag implements Opslag {
   /** Tot dit tijdstip (ms) werken we alsof de nieuwe kolommen ontbreken (migratie niet toegepast); daarna proberen we opnieuw. */
   private zonderKolommenTot = 0;
   private kolommenWeg = () => Date.now() < this.zonderKolommenTot;
+  /** Idem voor de signaalkolommen (eigen vlag, zodat een ontbrekende signaalmigratie de redactiekolommen niet uitschakelt). */
+  private zonderSignaalTot = 0;
+  private signaalWeg = () => Date.now() < this.zonderSignaalTot;
+  /** Probeer met de signaalvelden; ontbreken de kolommen, dan zonder (en 5 minuten niet meer proberen). */
+  private async metSignaal<T>(mooi: () => Promise<T>, oud: () => Promise<T>): Promise<T> {
+    if (this.signaalWeg()) return oud();
+    try {
+      return await mooi();
+    } catch (e) {
+      if (!isSignaalKolomFout(e)) throw e;
+      this.zonderSignaalTot = Date.now() + 5 * 60_000;
+      return oud();
+    }
+  }
   private markeerKolommenWeg() {
     this.zonderKolommenTot = Date.now() + 5 * 60_000;
   }
@@ -420,16 +457,20 @@ export class SupabaseOpslag implements Opslag {
       }
       if (rij && (rij.handmatig_op || rij.redactie)) return String(rij.id);
     }
-    const schrijf = async (metSoort: boolean) => this.vraag("nv_berichten?on_conflict=sleutel", {
+    const schrijf = async (metSoort: boolean, metSignaal = true) => this.vraag("nv_berichten?on_conflict=sleutel", {
       method: "POST", prefer: "resolution=merge-duplicates,return=representation",
       body: JSON.stringify({
         ...(metSoort ? { soort: soortVan({ soort: b.soort, regime: b.regime }) } : {}),
+        ...(metSignaal ? { signaal: leesSignaal(b.signaal), signaal_beoordeeld: b.signaalBeoordeeld === true } : {}),
         sleutel: b.sleutel, kop: b.kop, samenvatting: b.samenvatting, tekst: b.tekst, categorie: b.categorie, score: b.score, regime: b.regime,
         status: b.status, blokkade_redenen: b.blokkadeRedenen, beeld_url: b.beeldUrl, beeld_credit: b.beeldCredit ?? null, portemonnee: b.portemonnee === true, regelversie: b.regelversie ?? REGELVERSIE, peil_raakt: b.peil.raakt, peil_mogelijk_gewijzigd: b.peil.mogelijkGewijzigd,
         model: process.env.NIEUWS_MODEL_SYNTHESE || null, gepubliceerd_op: b.gepubliceerdOp,
       }),
     });
-    const r = await this.metKolommen(() => schrijf(true), () => schrijf(false));
+    const r = await this.metSignaal(
+      () => this.metKolommen(() => schrijf(true), () => schrijf(false)),
+      () => this.metKolommen(() => schrijf(true, false), () => schrijf(false, false))
+    );
     const id = String(((await r.json()) as Rij[])[0].id);
     if (b.bronnen.length) {
       await this.vraag("nv_bronnen_per_bericht?on_conflict=bericht_id,url", {
@@ -637,12 +678,35 @@ export class SupabaseOpslag implements Opslag {
   }
   async werkBerichtBij(id: string, v: BerichtHerschreven) {
     if (!/^[0-9a-f-]{36}$/i.test(id)) return;
-    const patch = (extra: string) => this.vraag(`nv_berichten?id=eq.${id}${extra}`, {
+    const patch = (extra: string, metSignaal = true) => this.vraag(`nv_berichten?id=eq.${id}${extra}`, {
       method: "PATCH", prefer: "return=minimal",
-      body: JSON.stringify({ kop: v.kop, samenvatting: v.samenvatting, tekst: v.tekst, categorie: v.categorie, portemonnee: v.portemonnee, status: v.status, blokkade_redenen: v.blokkadeRedenen, regelversie: v.regelversie, model: process.env.NIEUWS_MODEL_SYNTHESE || null }),
+      body: JSON.stringify({ ...(metSignaal && v.signaalBeoordeeld ? { signaal: leesSignaal(v.signaal), signaal_beoordeeld: true } : {}), kop: v.kop, samenvatting: v.samenvatting, tekst: v.tekst, categorie: v.categorie, portemonnee: v.portemonnee, status: v.status, blokkade_redenen: v.blokkadeRedenen, regelversie: v.regelversie, model: process.env.NIEUWS_MODEL_SYNTHESE || null }),
     });
     // Een handmatig gecorrigeerd bericht wordt nooit overschreven (filter in de database, ook als het tussentijds is bewerkt).
-    await this.metKolommen(() => patch("&handmatig_op=is.null"), () => patch(""));
+    await this.metSignaal(
+      () => this.metKolommen(() => patch("&handmatig_op=is.null"), () => patch("")),
+      () => this.metKolommen(() => patch("&handmatig_op=is.null", false), () => patch("", false))
+    );
+  }
+  async teBeoordelenSignaal(sinds: string, limiet: number) {
+    if (this.signaalWeg()) return [];
+    try {
+      const rijen = await this.lees(`nv_berichten?status=eq.gepubliceerd&signaal_beoordeeld=eq.false&gepubliceerd_op=gte.${encodeURIComponent(sinds)}&order=gepubliceerd_op.desc&limit=${limiet}&select=*,nv_bronnen_per_bericht(*)`);
+      return rijen.map(naarBericht).filter((b) => b.redactie !== "weg");
+    } catch (e) {
+      if (!isSignaalKolomFout(e)) throw e;
+      this.zonderSignaalTot = Date.now() + 5 * 60_000;
+      return [];
+    }
+  }
+  async zetSignaal(id: string, signaal: Signaal | null) {
+    if (!/^[0-9a-f-]{36}$/i.test(id) || this.signaalWeg()) return;
+    try {
+      await this.vraag(`nv_berichten?id=eq.${id}`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ signaal: leesSignaal(signaal), signaal_beoordeeld: true }) });
+    } catch (e) {
+      if (!isSignaalKolomFout(e)) throw e;
+      this.zonderSignaalTot = Date.now() + 5 * 60_000;
+    }
   }
   async lezerszinnen() {
     const rijen = await this.lees("nv_peil_lezerszin?select=parameter_id,bron_hash,zin,titel&limit=2000");
@@ -766,7 +830,7 @@ function naarBericht(r: Rij): OpgeslagenBericht {
     redactie: r.redactie === "weg" ? "weg" : null, redactieOp: r.redactie_op ? String(r.redactie_op) : null, handmatigOp: r.handmatig_op ? String(r.handmatig_op) : null,
     id: String(r.id), kop: String(r.kop), samenvatting: String(r.samenvatting || ""), tekst: String(r.tekst || ""), categorie: r.categorie as OpgeslagenBericht["categorie"],
     score: Number(r.score), regime: r.regime as OpgeslagenBericht["regime"], status: r.status as OpgeslagenBericht["status"],
-    blokkadeRedenen: (r.blokkade_redenen as string[]) || [], beeldUrl: (r.beeld_url as string) || null, beeldCredit: (r.beeld_credit as OpgeslagenBericht["beeldCredit"]) || null, portemonnee: r.portemonnee === true, regelversie: Number(r.regelversie ?? 1), peil, bronnen, gepubliceerdOp: String(r.gepubliceerd_op),
+    blokkadeRedenen: (r.blokkade_redenen as string[]) || [], beeldUrl: (r.beeld_url as string) || null, beeldCredit: (r.beeld_credit as OpgeslagenBericht["beeldCredit"]) || null, portemonnee: r.portemonnee === true, signaal: leesSignaal(r.signaal), signaalBeoordeeld: r.signaal_beoordeeld === true, regelversie: Number(r.regelversie ?? 1), peil, bronnen, gepubliceerdOp: String(r.gepubliceerd_op),
   };
 }
 

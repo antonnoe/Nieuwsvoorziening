@@ -4,7 +4,8 @@
 import { schoneZoektermen } from "./beeld";
 import { haalJson, type ModelClient } from "./ai";
 import { modelSynthese } from "./config";
-import { CATEGORIEEN, type Categorie, type Cluster, type Synthese } from "./types";
+import { CATEGORIEEN, leesSignaal, type Categorie, type Cluster, type Synthese } from "./types";
+import { DEFINITIE_SIGNAAL } from "./signaal";
 
 export const SYSTEEM_SYNTHESE = `Je bent eindredacteur van een Nederlandstalige nieuwsdienst over Frankrijk voor Nederlanders en Belgen die in Frankrijk wonen of er vaak komen. Je schrijft één korte, feitelijke nieuwssynthese in eigen woorden over het onderwerp dat de aangeleverde bronnen delen.
 
@@ -21,7 +22,9 @@ Regels:
 
 9. portemonnee: true alleen bij een concreet financieel gevolg voor de lezer (prijzen, belasting, uitkering, premies, kosten); anders false.
 
-Antwoord uitsluitend met JSON: {"publiceren":true,"kop":"","samenvatting":"","tekst":"","categorie":"","relevantie":0,"portemonnee":false,"beeldZoektermen":["","",""]}`;
+10. signaal: ${DEFINITIE_SIGNAAL}
+
+Antwoord uitsluitend met JSON: {"publiceren":true,"kop":"","samenvatting":"","tekst":"","categorie":"","relevantie":0,"portemonnee":false,"signaal":null,"beeldZoektermen":["","",""]}`;
 
 export function bouwInvoer(c: Cluster): string {
   return c.items
@@ -41,7 +44,7 @@ export function leesSynthese(ruw: string): Synthese | null {
   const categorie = (CATEGORIEEN as readonly string[]).includes(cat) ? cat : "algemeen";
   const relevantie = Math.max(0, Math.min(100, Math.round(Number(j.relevantie))));
   const beeldZoektermen = schoneZoektermen(Array.isArray(j.beeldZoektermen) ? j.beeldZoektermen : [j.beeldZoekterm]);
-  return { kop, samenvatting, tekst, categorie, relevantie: Number.isFinite(relevantie) ? relevantie : 0, portemonnee: j.portemonnee === true || String(j.portemonnee).toLowerCase() === "true", beeldZoekterm: beeldZoektermen[0] || "", beeldZoektermen };
+  return { kop, samenvatting, tekst, categorie, relevantie: Number.isFinite(relevantie) ? relevantie : 0, portemonnee: j.portemonnee === true || String(j.portemonnee).toLowerCase() === "true", signaal: leesSignaal(j.signaal), beeldZoekterm: beeldZoektermen[0] || "", beeldZoektermen };
 }
 
 export async function synthetiseer(c: Cluster, client: ModelClient): Promise<Synthese | null> {

@@ -1,7 +1,7 @@
 // Gedeelde hulpjes voor de API-routes: CORS, JSON, opslag, gepubliceerde vorm.
 import { corsToegestaan } from "./config";
 import { maakOpslag, soortVan, type Opslag, type OpgeslagenBericht } from "./opslag";
-import { CATEGORIEEN, KANALEN, groenePeil, leesKanalen, type Kanaal } from "./types";
+import { CATEGORIEEN, KANALEN, groenePeil, leesKanalen, leesSignaal, type Kanaal } from "./types";
 
 export function corsHeaders(req: Request): Record<string, string> {
   const h: Record<string, string> = { vary: "origin" };
@@ -83,5 +83,7 @@ export function publiekBericht(b: OpgeslagenBericht, metTekst: boolean, wordtNag
     soort: soortVan(b),
     domein: soortVan(b) === "overheid" ? bronDomein(b) : null,
     kanalen: leesKanalen(b.kanalen),
+    // Toegevoegd 27-11-2026 (InfoPoche "Let op"): alleen toevoegen, achteraan. Geen interne toelichting.
+    signaal: leesSignaal(b.signaal),
   };
 }

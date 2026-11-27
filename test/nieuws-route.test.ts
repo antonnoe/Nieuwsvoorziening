@@ -14,7 +14,7 @@ const basis: OpgeslagenBericht = {
 test("publieke vorm: portemonnee erbij, bestaande velden onveranderd, niets intern", () => {
   const p = publiekBericht(basis, false) as Record<string, unknown>;
   assert.equal(p.portemonnee, true);
-  assert.deepEqual(Object.keys(p), ["id", "kop", "samenvatting", "categorie", "portemonnee", "gepubliceerdOp", "beeldUrl", "beeldCredit", "bronnen", "peil", "soort", "domein", "kanalen"]);
+  assert.deepEqual(Object.keys(p), ["id", "kop", "samenvatting", "categorie", "portemonnee", "gepubliceerdOp", "beeldUrl", "beeldCredit", "bronnen", "peil", "soort", "domein", "kanalen", "signaal"]);
   const j = JSON.stringify(p);
   assert.ok(!j.includes("geheime") && !j.includes("score") && !j.includes("blokkade") && !j.includes("github"));
   assert.equal(publiekBericht({ ...basis, portemonnee: undefined as unknown as boolean }, false).portemonnee, false);

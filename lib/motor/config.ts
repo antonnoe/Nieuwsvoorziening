@@ -14,6 +14,10 @@ export const MAX_HERSCHRIJVEN_PER_RUN = 3;
  */
 export const EENMALIGE_PEIL_HERTOETS: string[] = ["55fdeaca-d7e7-4973-bb23-e4086fbbd107"];
 
+/** Nalooprun signaal (27-11-2026): gepubliceerde berichten van de laatste 14 dagen zonder signaal-oordeel, hooguit 15 per run. */
+export const SIGNAAL_NALOOP_DAGEN = 14;
+export const MAX_SIGNAAL_NALOOP_PER_RUN = 15;
+
 export interface MotorConfig {
   publiceerDrempel: number;
   minRelevantie: number;

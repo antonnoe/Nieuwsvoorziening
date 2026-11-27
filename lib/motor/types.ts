@@ -61,6 +61,15 @@ export function leesKanalen(v: unknown): Kanalen {
   return uit;
 }
 
+/** Signaal voor InfoPoche ("Let op"): wetswijziging of kans (besluit 27-11-2026). Alles anders is null. */
+export const SIGNALEN = ["wetswijziging", "kans"] as const;
+export type Signaal = (typeof SIGNALEN)[number];
+/** Leest een signaalwaarde (model of opslag): precies "wetswijziging" of "kans", al het andere is null. */
+export function leesSignaal(v: unknown): Signaal | null {
+  const s = typeof v === "string" ? v.trim().toLowerCase() : "";
+  return (SIGNALEN as readonly string[]).includes(s) ? (s as Signaal) : null;
+}
+
 export interface Cluster {
   sleutel: string;
   items: BronItem[];
@@ -81,6 +90,8 @@ export interface Synthese {
   relevantie: number; // 0..100, oordeel van het model voor de lezer
   /** Concreet financieel gevolg voor de lezer (prijzen, belasting, uitkering, premies, kosten). */
   portemonnee?: boolean;
+  /** Wetswijziging of kans voor het blok "Let op" in InfoPoche; null of ontbrekend = geen signaal. */
+  signaal?: Signaal | null;
   /** Engelse zoekterm voor een foto (2 tot 4 woorden, een plek of situatie, geen personen). */
   beeldZoekterm?: string;
   /** Tot 3 Engelse zoektermen van specifiek naar algemeen. */
@@ -161,6 +172,10 @@ export interface Bericht {
   peil: PeilKoppeling;
   /** Raakt de portemonnee van de lezer (filter "€ Raakt uw portemonnee", naast de PEIL-koppeling). */
   portemonnee?: boolean;
+  /** Signaal voor InfoPoche (null = geen). */
+  signaal?: Signaal | null;
+  /** Is het signaal beoordeeld (door de synthese of de nalooprun)? Onderscheidt "nog niet beoordeeld" van "beoordeeld: null". */
+  signaalBeoordeeld?: boolean;
   bronnen: BerichtBron[];
   gepubliceerdOp: string;
   sleutel: string;

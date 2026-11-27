@@ -2,7 +2,7 @@
 // Elke stap faalt netjes: een fout wordt vastgelegd en de volgende stap gaat door
 // met wat er wel is.
 import { haalJson, type ModelClient } from "./ai";
-import { laadConfig, actieveBronnen, modelSynthese, REGELVERSIE, MAX_HERSCHRIJVEN_PER_RUN, EENMALIGE_PEIL_HERTOETS, type MotorConfig } from "./config";
+import { laadConfig, actieveBronnen, modelSynthese, REGELVERSIE, MAX_HERSCHRIJVEN_PER_RUN, EENMALIGE_PEIL_HERTOETS, SIGNAAL_NALOOP_DAGEN, MAX_SIGNAAL_NALOOP_PER_RUN, type MotorConfig } from "./config";
 import { aantalBronnen, clusterItems } from "./cluster";
 import { oogstBronnen, type OogstBronResultaat } from "./feeds";
 import { schoneZoektermen, beeldResultaat, fotoSleutel, type BeeldGenerator, actieveGenerator } from "./beeld";
@@ -22,7 +22,8 @@ import { overlap, hashId } from "./tekst";
 import { kiesKandidaten } from "./kandidaten";
 import { overheidPoort } from "./overheidpoort";
 import { dagStart } from "./tijd";
-import type { Bericht, Bron, Cluster, PeilParameter, PeilSignaalNieuw, StapResultaat, Synthese } from "./types";
+import { leesSignaal, type Bericht, type Bron, type Cluster, type PeilParameter, type PeilSignaalNieuw, type StapResultaat, type Synthese } from "./types";
+import { beoordeelSignaal } from "./signaal";
 
 export interface RunOpties {
   opslag: Opslag;
@@ -254,7 +255,7 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
         const beeldCredit = beeld?.credit ?? null;
         const bericht: Bericht = {
           soort: regime, kop: s.kop, samenvatting: s.samenvatting, tekst: s.tekst, categorie: s.categorie, score, regime, status,
-          blokkadeRedenen: uitslag.redenen, portemonnee: s.portemonnee === true, beeldUrl, beeldCredit, peil: koppeling, bronnen, gepubliceerdOp: new Date(nu).toISOString(),
+          blokkadeRedenen: uitslag.redenen, portemonnee: s.portemonnee === true, signaal: leesSignaal(s.signaal), signaalBeoordeeld: true, beeldUrl, beeldCredit, peil: koppeling, bronnen, gepubliceerdOp: new Date(nu).toISOString(),
           sleutel: hashId(c.items.map((i) => i.url).sort().join("|")), regelversie: REGELVERSIE,
         };
         const id = await o.opslag.slaBerichtOp(bericht);
@@ -301,7 +302,7 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
             const { s, uitslag } = await poortMetHerkansing(eerste, c, o.client, cfg);
             const goed = uitslag.ok && s.relevantie >= cfg.minRelevantie;
             v = {
-              kop: s.kop, samenvatting: s.samenvatting, tekst: s.tekst, categorie: s.categorie, portemonnee: s.portemonnee === true,
+              kop: s.kop, samenvatting: s.samenvatting, tekst: s.tekst, categorie: s.categorie, portemonnee: s.portemonnee === true, signaal: leesSignaal(s.signaal), signaalBeoordeeld: true,
               status: goed ? "gepubliceerd" : "concept",
               blokkadeRedenen: uitslag.ok ? (goed ? [] : [`herschrijven: relevantie ${s.relevantie} onder ${cfg.minRelevantie}`]) : uitslag.redenen,
               regelversie: REGELVERSIE,
@@ -412,6 +413,29 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
       noteer({ stap: "peil_hertoets", ok: true, aantal: getoetst, detail: { teToetsen: lijst.length, behouden, gewist, uitgesteld, signalen, berichten: perBericht } });
     } catch (e) {
       noteer({ stap: "peil_hertoets", ok: false, fout: fout(e) });
+    }
+  }
+
+  // 6e. Eenmalige nalooprun signaal (27-11-2026): gepubliceerde berichten van de laatste 14 dagen zonder signaal-oordeel
+  // (kolom signaal_beoordeeld) laat het goedkope model beoordelen op kop, samenvatting en tekst; hooguit 15 per run.
+  // Bij een modelfout wordt niets gezet en komt het bericht de volgende run opnieuw aan de beurt. Zonder de signaalkolommen
+  // (migratie nog niet toegepast) levert de opslag een lege lijst en gebeurt er niets.
+  if (o.client) {
+    try {
+      const lijst = await o.opslag.teBeoordelenSignaal(new Date(nu - SIGNAAL_NALOOP_DAGEN * 86400_000).toISOString(), MAX_SIGNAAL_NALOOP_PER_RUN);
+      let beoordeeld = 0, metSignaal = 0, uitgesteld = 0;
+      for (const b of lijst) {
+        if (!tijdOver()) break;
+        const r = await beoordeelSignaal(b, o.client);
+        if (!r) { uitgesteld += 1; continue; }
+        await o.opslag.zetSignaal(b.id, r.signaal);
+        beoordeeld += 1;
+        if (r.signaal) metSignaal += 1;
+      }
+      Object.assign(aantallen, { signaalBeoordeeld: beoordeeld, signaalGezet: metSignaal });
+      if (lijst.length) noteer({ stap: "signaal_naloop", ok: true, aantal: beoordeeld, detail: { teBeoordelen: lijst.length, metSignaal, uitgesteld } });
+    } catch (e) {
+      noteer({ stap: "signaal_naloop", ok: false, fout: fout(e) });
     }
   }
 
