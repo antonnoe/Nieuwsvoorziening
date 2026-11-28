@@ -27,7 +27,7 @@ test("cookie: geldig, verlopen, vervalst; bevat het geheim niet", async () => {
     assert.ok(!w.includes("geheim-waarde"));
     assert.equal(cookieGeldig(w, nu), true);
     assert.equal(cookieGeldig(w, nu + 13 * 3600_000), false);
-    assert.equal(cookieGeldig(w.replace(/.$/, "0"), nu), false);
+    assert.equal(cookieGeldig(w.slice(0, -1) + (w.endsWith("0") ? "1" : "0"), nu), false);
     assert.equal(cookieGeldig("", nu), false);
     assert.equal(bearerGeldig("Bearer geheim-waarde"), true);
     assert.equal(bearerGeldig("Bearer anders"), false);

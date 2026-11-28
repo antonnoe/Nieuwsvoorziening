@@ -2,6 +2,25 @@
  "afkomst": "Illustratie door Communities Abroad",
  "beelden": [
   {
+   "id": "algemeen-ambulance-nacht-fr",
+   "categorie": "algemeen",
+   "naam": "Ambulance in de nacht",
+   "binding": "fr",
+   "trefwoorden": [
+    "ambulance",
+    "spoed",
+    "gewonden",
+    "ongeval",
+    "hulpdiensten",
+    "samu",
+    "ziekenhuis",
+    "slachtoffer",
+    "omgekomen"
+   ],
+   "svg": "/illustraties/algemeen-ambulance-nacht-fr.svg",
+   "png": "/illustraties/algemeen-ambulance-nacht-fr.png"
+  },
+  {
    "id": "algemeen-apotheek-fr",
    "categorie": "algemeen",
    "naam": "Apotheek",
@@ -35,6 +54,41 @@
    ],
    "svg": "/illustraties/algemeen-bakkerij-dorp-fr.svg",
    "png": "/illustraties/algemeen-bakkerij-dorp-fr.png"
+  },
+  {
+   "id": "algemeen-brandweerkazerne-fr",
+   "categorie": "algemeen",
+   "naam": "Brandweerkazerne",
+   "binding": "fr",
+   "trefwoorden": [
+    "brandweer",
+    "pompiers",
+    "brand",
+    "uitruk",
+    "hulpdiensten",
+    "redding",
+    "evacuatie"
+   ],
+   "svg": "/illustraties/algemeen-brandweerkazerne-fr.svg",
+   "png": "/illustraties/algemeen-brandweerkazerne-fr.png"
+  },
+  {
+   "id": "algemeen-collegezaal-studenten-fr",
+   "categorie": "algemeen",
+   "naam": "Collegezaal",
+   "binding": "fr",
+   "trefwoorden": [
+    "studenten",
+    "universiteit",
+    "hoger onderwijs",
+    "tentamens",
+    "faculteit",
+    "studie",
+    "wetenschap",
+    "onderzoek"
+   ],
+   "svg": "/illustraties/algemeen-collegezaal-studenten-fr.svg",
+   "png": "/illustraties/algemeen-collegezaal-studenten-fr.png"
   },
   {
    "id": "algemeen-consulaat-paspoort-nl",
@@ -94,6 +148,62 @@
    "png": "/illustraties/algemeen-gendarmerie-fr.png"
   },
   {
+   "id": "algemeen-geneesmiddelen-doosjes-fr",
+   "categorie": "algemeen",
+   "naam": "Geneesmiddelen",
+   "binding": "fr",
+   "trefwoorden": [
+    "geneesmiddelen",
+    "medicijnen",
+    "ansm",
+    "geneesmiddelenautoriteit",
+    "tekort",
+    "pillen",
+    "keelpastilles",
+    "vergoeding",
+    "sanofi"
+   ],
+   "svg": "/illustraties/algemeen-geneesmiddelen-doosjes-fr.svg",
+   "png": "/illustraties/algemeen-geneesmiddelen-doosjes-fr.png"
+  },
+  {
+   "id": "algemeen-helikopter-fr",
+   "categorie": "algemeen",
+   "naam": "Helikopter",
+   "binding": "fr",
+   "trefwoorden": [
+    "helikopter",
+    "crash",
+    "leger",
+    "militairen",
+    "defensie",
+    "redding",
+    "training"
+   ],
+   "svg": "/illustraties/algemeen-helikopter-fr.svg",
+   "png": "/illustraties/algemeen-helikopter-fr.png"
+  },
+  {
+   "id": "algemeen-herdenking-kaarsen-bloemen-fr",
+   "categorie": "algemeen",
+   "naam": "Herdenking",
+   "binding": "fr",
+   "trefwoorden": [
+    "herdenking",
+    "hulde",
+    "slachtoffers",
+    "aanslag",
+    "rouw",
+    "nationale hulde",
+    "moord",
+    "overleden",
+    "minuut stilte",
+    "doden"
+   ],
+   "svg": "/illustraties/algemeen-herdenking-kaarsen-bloemen-fr.svg",
+   "png": "/illustraties/algemeen-herdenking-kaarsen-bloemen-fr.png"
+  },
+  {
    "id": "algemeen-huisarts-fr",
    "categorie": "algemeen",
    "naam": "Huisarts",
@@ -115,6 +225,123 @@
    "png": "/illustraties/algemeen-huisarts-fr.png"
   },
   {
+   "id": "algemeen-kazerne-fr",
+   "categorie": "algemeen",
+   "naam": "Kazerne",
+   "binding": "fr",
+   "trefwoorden": [
+    "kazerne",
+    "defensie",
+    "militaire dienst",
+    "dienstplicht",
+    "ministerie van defensie",
+    "leger",
+    "soldaten"
+   ],
+   "svg": "/illustraties/algemeen-kazerne-fr.svg",
+   "png": "/illustraties/algemeen-kazerne-fr.png"
+  },
+  {
+   "id": "algemeen-krantenstapel-fr",
+   "categorie": "algemeen",
+   "naam": "Kranten",
+   "binding": "fr",
+   "trefwoorden": [
+    "krant",
+    "kranten",
+    "pers",
+    "media",
+    "publicatie",
+    "onthullingen",
+    "artikel",
+    "uitgeverij",
+    "boek",
+    "persbureau"
+   ],
+   "svg": "/illustraties/algemeen-krantenstapel-fr.svg",
+   "png": "/illustraties/algemeen-krantenstapel-fr.png"
+  },
+  {
+   "id": "algemeen-laptop-slot-cyber-fr",
+   "categorie": "algemeen",
+   "naam": "Cyberveiligheid",
+   "binding": "fr",
+   "trefwoorden": [
+    "cyberaanval",
+    "hack",
+    "hackers",
+    "datalek",
+    "cyber",
+    "ransomware",
+    "phishing",
+    "oplichting online",
+    "wachtwoord",
+    "privacy",
+    "offline",
+    "digitale aanval"
+   ],
+   "svg": "/illustraties/algemeen-laptop-slot-cyber-fr.svg",
+   "png": "/illustraties/algemeen-laptop-slot-cyber-fr.png"
+  },
+  {
+   "id": "algemeen-legertruck-fr",
+   "categorie": "algemeen",
+   "naam": "Legertruck",
+   "binding": "fr",
+   "trefwoorden": [
+    "leger",
+    "militairen",
+    "troepen",
+    "defensie",
+    "oorlog",
+    "oekraine",
+    "rusland",
+    "navo",
+    "mobilisatie"
+   ],
+   "svg": "/illustraties/algemeen-legertruck-fr.svg",
+   "png": "/illustraties/algemeen-legertruck-fr.png"
+  },
+  {
+   "id": "algemeen-marineschip-fr",
+   "categorie": "algemeen",
+   "naam": "Marineschip",
+   "binding": "fr",
+   "trefwoorden": [
+    "marine",
+    "marineschip",
+    "fregat",
+    "defensie",
+    "leger",
+    "zee",
+    "onderschept",
+    "drugs in beslag",
+    "kustwacht"
+   ],
+   "svg": "/illustraties/algemeen-marineschip-fr.svg",
+   "png": "/illustraties/algemeen-marineschip-fr.png"
+  },
+  {
+   "id": "algemeen-politielint-fr",
+   "categorie": "algemeen",
+   "naam": "Politielint",
+   "binding": "fr",
+   "trefwoorden": [
+    "politie-onderzoek",
+    "plaats delict",
+    "aanslag",
+    "geweld",
+    "moord",
+    "schietpartij",
+    "rellen",
+    "ongeluk",
+    "afzetting",
+    "veiligheid"
+   ],
+   "svg": "/illustraties/algemeen-politielint-fr.svg",
+   "png": "/illustraties/algemeen-politielint-fr.png"
+  },
+  {
    "id": "algemeen-postkantoor-dorp-fr",
    "categorie": "algemeen",
    "naam": "Postkantoor in het dorp",
@@ -131,6 +358,43 @@
    ],
    "svg": "/illustraties/algemeen-postkantoor-dorp-fr.svg",
    "png": "/illustraties/algemeen-postkantoor-dorp-fr.png"
+  },
+  {
+   "id": "algemeen-rechtbank-gang-fr",
+   "categorie": "algemeen",
+   "naam": "Gang van de rechtbank",
+   "binding": "fr",
+   "trefwoorden": [
+    "rechtbank",
+    "justitie",
+    "advocaat",
+    "hoorzitting",
+    "getuige",
+    "verhoor",
+    "proces",
+    "zitting"
+   ],
+   "svg": "/illustraties/algemeen-rechtbank-gang-fr.svg",
+   "png": "/illustraties/algemeen-rechtbank-gang-fr.png"
+  },
+  {
+   "id": "algemeen-satelliet-fr",
+   "categorie": "algemeen",
+   "naam": "Satelliet",
+   "binding": "fr",
+   "trefwoorden": [
+    "satelliet",
+    "satellieten",
+    "ruimtevaart",
+    "spacex",
+    "ruimte",
+    "raket",
+    "lancering",
+    "esa",
+    "cnes"
+   ],
+   "svg": "/illustraties/algemeen-satelliet-fr.svg",
+   "png": "/illustraties/algemeen-satelliet-fr.png"
   },
   {
    "id": "algemeen-school-fr",
@@ -150,6 +414,84 @@
    ],
    "svg": "/illustraties/algemeen-school-fr.svg",
    "png": "/illustraties/algemeen-school-fr.png"
+  },
+  {
+   "id": "algemeen-schoolhek-protest-fr",
+   "categorie": "algemeen",
+   "naam": "Protest bij de school",
+   "binding": "fr",
+   "trefwoorden": [
+    "scholieren",
+    "lyceum",
+    "blokkade",
+    "scholierenprotest",
+    "studentenprotest",
+    "actievoeren",
+    "onderwijsstaking",
+    "leerlingen"
+   ],
+   "svg": "/illustraties/algemeen-schoolhek-protest-fr.svg",
+   "png": "/illustraties/algemeen-schoolhek-protest-fr.png"
+  },
+  {
+   "id": "algemeen-serverkast-fr",
+   "categorie": "algemeen",
+   "naam": "Datacenter",
+   "binding": "fr",
+   "trefwoorden": [
+    "datacenter",
+    "ai",
+    "kunstmatige intelligentie",
+    "chatbot",
+    "internet",
+    "cloud",
+    "servers",
+    "technologie",
+    "digitaal",
+    "openai"
+   ],
+   "svg": "/illustraties/algemeen-serverkast-fr.svg",
+   "png": "/illustraties/algemeen-serverkast-fr.png"
+  },
+  {
+   "id": "algemeen-stadion-fr",
+   "categorie": "algemeen",
+   "naam": "Stadion",
+   "binding": "fr",
+   "trefwoorden": [
+    "voetbal",
+    "stadion",
+    "wedstrijd",
+    "supporters",
+    "sport",
+    "champions league",
+    "rugby",
+    "ploeg",
+    "finale",
+    "europa league"
+   ],
+   "svg": "/illustraties/algemeen-stadion-fr.svg",
+   "png": "/illustraties/algemeen-stadion-fr.png"
+  },
+  {
+   "id": "algemeen-tv-camera-pers-fr",
+   "categorie": "algemeen",
+   "naam": "Tv-camera",
+   "binding": "fr",
+   "trefwoorden": [
+    "pers",
+    "media",
+    "journalisten",
+    "televisie",
+    "zender",
+    "arcom",
+    "persvrijheid",
+    "nieuwszender",
+    "omroep",
+    "interview"
+   ],
+   "svg": "/illustraties/algemeen-tv-camera-pers-fr.svg",
+   "png": "/illustraties/algemeen-tv-camera-pers-fr.png"
   },
   {
    "id": "algemeen-verhuisdozen-emigratie-nl",
@@ -188,6 +530,24 @@
    "png": "/illustraties/algemeen-ziekenhuis-fr.png"
   },
   {
+   "id": "economie-autofabriek-lopende-band-fr",
+   "categorie": "economie en ondernemen",
+   "naam": "Autofabriek",
+   "binding": "fr",
+   "trefwoorden": [
+    "autofabriek",
+    "auto-industrie",
+    "renault",
+    "stellantis",
+    "byd",
+    "elektrische auto",
+    "productie",
+    "fabriek"
+   ],
+   "svg": "/illustraties/economie-autofabriek-lopende-band-fr.svg",
+   "png": "/illustraties/economie-autofabriek-lopende-band-fr.png"
+  },
+  {
    "id": "economie-bankzaken-twee-landen-nl",
    "categorie": "economie en ondernemen",
    "naam": "Bankzaken in twee landen",
@@ -223,6 +583,64 @@
    ],
    "svg": "/illustraties/economie-belastingbrief-fr.svg",
    "png": "/illustraties/economie-belastingbrief-fr.png"
+  },
+  {
+   "id": "economie-beursgrafiek-fr",
+   "categorie": "economie en ondernemen",
+   "naam": "Beursgrafiek",
+   "binding": "fr",
+   "trefwoorden": [
+    "beurs",
+    "aandeel",
+    "aandelen",
+    "cac 40",
+    "koers",
+    "beleggers",
+    "nvidia",
+    "wall street",
+    "rente",
+    "markten"
+   ],
+   "svg": "/illustraties/economie-beursgrafiek-fr.svg",
+   "png": "/illustraties/economie-beursgrafiek-fr.png"
+  },
+  {
+   "id": "economie-centrale-bank-fr",
+   "categorie": "economie en ondernemen",
+   "naam": "Centrale bank",
+   "binding": "fr",
+   "trefwoorden": [
+    "ecb",
+    "centrale bank",
+    "banque de france",
+    "lagarde",
+    "rente",
+    "rentebesluit",
+    "inflatie",
+    "euro",
+    "monetair"
+   ],
+   "svg": "/illustraties/economie-centrale-bank-fr.svg",
+   "png": "/illustraties/economie-centrale-bank-fr.png"
+  },
+  {
+   "id": "economie-contract-overname-fr",
+   "categorie": "economie en ondernemen",
+   "naam": "Contract",
+   "binding": "fr",
+   "trefwoorden": [
+    "overname",
+    "fusie",
+    "akkoord",
+    "contract",
+    "koopt",
+    "overnamebod",
+    "miljard",
+    "deal",
+    "handtekening"
+   ],
+   "svg": "/illustraties/economie-contract-overname-fr.svg",
+   "png": "/illustraties/economie-contract-overname-fr.png"
   },
   {
    "id": "economie-energiemeter-fr",
@@ -301,6 +719,25 @@
    "png": "/illustraties/economie-haven-containers-fr.png"
   },
   {
+   "id": "economie-kantoortoren-fr",
+   "categorie": "economie en ondernemen",
+   "naam": "Kantoortorens",
+   "binding": "fr",
+   "trefwoorden": [
+    "bedrijf",
+    "bedrijven",
+    "concern",
+    "multinational",
+    "hoofdkantoor",
+    "la defense",
+    "topman",
+    "ceo",
+    "bestuur"
+   ],
+   "svg": "/illustraties/economie-kantoortoren-fr.svg",
+   "png": "/illustraties/economie-kantoortoren-fr.png"
+  },
+  {
    "id": "economie-markthal-fr",
    "categorie": "economie en ondernemen",
    "naam": "Markthal",
@@ -319,6 +756,27 @@
    "png": "/illustraties/economie-markthal-fr.png"
   },
   {
+   "id": "economie-pakketjes-online-fr",
+   "categorie": "economie en ondernemen",
+   "naam": "Pakketjes",
+   "binding": "fr",
+   "trefwoorden": [
+    "online",
+    "webwinkel",
+    "pakket",
+    "pakketten",
+    "bezorging",
+    "shein",
+    "temu",
+    "amazon",
+    "black friday",
+    "e-commerce",
+    "consumenten"
+   ],
+   "svg": "/illustraties/economie-pakketjes-online-fr.svg",
+   "png": "/illustraties/economie-pakketjes-online-fr.png"
+  },
+  {
    "id": "economie-pensioenbrief-twee-landen-nl",
    "categorie": "economie en ondernemen",
    "naam": "Pensioenbrief uit twee landen",
@@ -335,6 +793,23 @@
    ],
    "svg": "/illustraties/economie-pensioenbrief-twee-landen-nl.svg",
    "png": "/illustraties/economie-pensioenbrief-twee-landen-nl.png"
+  },
+  {
+   "id": "economie-speelgoed-fr",
+   "categorie": "economie en ondernemen",
+   "naam": "Speelgoed",
+   "binding": "fr",
+   "trefwoorden": [
+    "speelgoed",
+    "kerstinkopen",
+    "kinderen",
+    "onveilig",
+    "cadeaus",
+    "sinterklaas",
+    "consumentenbescherming"
+   ],
+   "svg": "/illustraties/economie-speelgoed-fr.svg",
+   "png": "/illustraties/economie-speelgoed-fr.png"
   },
   {
    "id": "economie-tankstation-fr",
@@ -372,6 +847,24 @@
    ],
    "svg": "/illustraties/economie-winkelstraat-rolluiken-fr.svg",
    "png": "/illustraties/economie-winkelstraat-rolluiken-fr.png"
+  },
+  {
+   "id": "economie-zeldzame-metalen-mijn-fr",
+   "categorie": "economie en ondernemen",
+   "naam": "Mijn",
+   "binding": "fr",
+   "trefwoorden": [
+    "zeldzame aardmetalen",
+    "metalen",
+    "grondstoffen",
+    "mijnbouw",
+    "lithium",
+    "strategische voorraad",
+    "china",
+    "afhankelijkheid"
+   ],
+   "svg": "/illustraties/economie-zeldzame-metalen-mijn-fr.svg",
+   "png": "/illustraties/economie-zeldzame-metalen-mijn-fr.png"
   },
   {
    "id": "merkwaardig-baguette-fiets-fr",
@@ -541,6 +1034,39 @@
    "png": "/illustraties/merkwaardig-vuurtoren-fr.png"
   },
   {
+   "id": "natuur-aardbeving-scheur-fr",
+   "categorie": "natuur en rampen",
+   "naam": "Aardbeving",
+   "binding": "fr",
+   "trefwoorden": [
+    "aardbeving",
+    "beving",
+    "schok",
+    "seismisch",
+    "richter",
+    "instorting",
+    "scheur"
+   ],
+   "svg": "/illustraties/natuur-aardbeving-scheur-fr.svg",
+   "png": "/illustraties/natuur-aardbeving-scheur-fr.png"
+  },
+  {
+   "id": "natuur-aardverschuiving-fr",
+   "categorie": "natuur en rampen",
+   "naam": "Aardverschuiving",
+   "binding": "fr",
+   "trefwoorden": [
+    "aardverschuiving",
+    "modderstroom",
+    "grondverschuiving",
+    "lawine",
+    "rotsval",
+    "weg afgesloten"
+   ],
+   "svg": "/illustraties/natuur-aardverschuiving-fr.svg",
+   "png": "/illustraties/natuur-aardverschuiving-fr.png"
+  },
+  {
    "id": "natuur-bosbrand-blusvliegtuig-fr",
    "categorie": "natuur en rampen",
    "naam": "Bosbrand",
@@ -575,6 +1101,43 @@
    "png": "/illustraties/natuur-droogte-akker-fr.png"
   },
   {
+   "id": "natuur-gestrand-schip-fr",
+   "categorie": "natuur en rampen",
+   "naam": "Gestrand schip",
+   "binding": "fr",
+   "trefwoorden": [
+    "schip",
+    "gestrand",
+    "vrachtschip",
+    "tanker",
+    "kapseisd",
+    "vergaan",
+    "scheepsramp",
+    "sleepboot",
+    "gezonken"
+   ],
+   "svg": "/illustraties/natuur-gestrand-schip-fr.svg",
+   "png": "/illustraties/natuur-gestrand-schip-fr.png"
+  },
+  {
+   "id": "natuur-gletsjer-fr",
+   "categorie": "natuur en rampen",
+   "naam": "Gletsjer",
+   "binding": "fr",
+   "trefwoorden": [
+    "gletsjer",
+    "klimaat",
+    "opwarming",
+    "ijs",
+    "bergen",
+    "alpen",
+    "mont blanc",
+    "klimaatverandering"
+   ],
+   "svg": "/illustraties/natuur-gletsjer-fr.svg",
+   "png": "/illustraties/natuur-gletsjer-fr.png"
+  },
+  {
    "id": "natuur-hagel-wijngaard-fr",
    "categorie": "natuur en rampen",
    "naam": "Hagel in de wijngaard",
@@ -607,6 +1170,43 @@
    ],
    "svg": "/illustraties/natuur-hittegolf-fr.svg",
    "png": "/illustraties/natuur-hittegolf-fr.png"
+  },
+  {
+   "id": "natuur-lege-kom-droog-land-fr",
+   "categorie": "natuur en rampen",
+   "naam": "Lege kom",
+   "binding": "fr",
+   "trefwoorden": [
+    "honger",
+    "el nino",
+    "droogte",
+    "ondervoeding",
+    "voedseltekort",
+    "afrika",
+    "klimaat",
+    "misoogst"
+   ],
+   "svg": "/illustraties/natuur-lege-kom-droog-land-fr.svg",
+   "png": "/illustraties/natuur-lege-kom-droog-land-fr.png"
+  },
+  {
+   "id": "natuur-olievlek-strand-fr",
+   "categorie": "natuur en rampen",
+   "naam": "Olievlek",
+   "binding": "fr",
+   "trefwoorden": [
+    "olievlek",
+    "vervuiling",
+    "olie",
+    "lekkage",
+    "milieuramp",
+    "tanker",
+    "diesel",
+    "strand",
+    "zeevogels"
+   ],
+   "svg": "/illustraties/natuur-olievlek-strand-fr.svg",
+   "png": "/illustraties/natuur-olievlek-strand-fr.png"
   },
   {
    "id": "natuur-overstroming-dorp-fr",
@@ -644,6 +1244,23 @@
    ],
    "svg": "/illustraties/natuur-rivier-hoogwater-fr.svg",
    "png": "/illustraties/natuur-rivier-hoogwater-fr.png"
+  },
+  {
+   "id": "natuur-smog-stad-fr",
+   "categorie": "natuur en rampen",
+   "naam": "Smog",
+   "binding": "fr",
+   "trefwoorden": [
+    "smog",
+    "luchtvervuiling",
+    "fijnstof",
+    "vervuiling",
+    "luchtkwaliteit",
+    "crit air",
+    "uitstoot"
+   ],
+   "svg": "/illustraties/natuur-smog-stad-fr.svg",
+   "png": "/illustraties/natuur-smog-stad-fr.png"
   },
   {
    "id": "natuur-sneeuw-bergpas-fr",
@@ -700,6 +1317,26 @@
    "png": "/illustraties/natuur-stormschade-landhuis-nl.png"
   },
   {
+   "id": "natuur-voedselhulp-zakken-fr",
+   "categorie": "natuur en rampen",
+   "naam": "Voedselhulp",
+   "binding": "fr",
+   "trefwoorden": [
+    "voedselhulp",
+    "honger",
+    "hongersnood",
+    "vn",
+    "wfp",
+    "fao",
+    "humanitair",
+    "hulp",
+    "ngo",
+    "vluchtelingen"
+   ],
+   "svg": "/illustraties/natuur-voedselhulp-zakken-fr.svg",
+   "png": "/illustraties/natuur-voedselhulp-zakken-fr.png"
+  },
+  {
    "id": "natuur-zwembad-leeg-droogte-nl",
    "categorie": "natuur en rampen",
    "naam": "Leeg zwembad",
@@ -747,6 +1384,63 @@
    ],
    "svg": "/illustraties/politiek-burgemeester-sjerp-fr.svg",
    "png": "/illustraties/politiek-burgemeester-sjerp-fr.png"
+  },
+  {
+   "id": "politiek-campagnepodium-fr",
+   "categorie": "politiek",
+   "naam": "Campagnepodium",
+   "binding": "fr",
+   "trefwoorden": [
+    "campagne",
+    "kandidaat",
+    "kandidatuur",
+    "presidentskandidaat",
+    "meeting",
+    "toespraak",
+    "partij",
+    "presidentsverkiezing",
+    "verkiezingsstrijd",
+    "2027"
+   ],
+   "svg": "/illustraties/politiek-campagnepodium-fr.svg",
+   "png": "/illustraties/politiek-campagnepodium-fr.png"
+  },
+  {
+   "id": "politiek-congreszaal-burgemeesters-fr",
+   "categorie": "politiek",
+   "naam": "Congres",
+   "binding": "fr",
+   "trefwoorden": [
+    "congres",
+    "burgemeesters",
+    "vereniging",
+    "partijcongres",
+    "bijeenkomst",
+    "top",
+    "conferentie",
+    "choose france"
+   ],
+   "svg": "/illustraties/politiek-congreszaal-burgemeesters-fr.svg",
+   "png": "/illustraties/politiek-congreszaal-burgemeesters-fr.png"
+  },
+  {
+   "id": "politiek-debatstudio-fr",
+   "categorie": "politiek",
+   "naam": "Debat",
+   "binding": "fr",
+   "trefwoorden": [
+    "debat",
+    "tv-debat",
+    "televisie",
+    "studio",
+    "interview",
+    "uitspraken",
+    "kritiek",
+    "botsen",
+    "discussie"
+   ],
+   "svg": "/illustraties/politiek-debatstudio-fr.svg",
+   "png": "/illustraties/politiek-debatstudio-fr.png"
   },
   {
    "id": "politiek-demonstratie-fr",
@@ -802,6 +1496,106 @@
    "png": "/illustraties/politiek-eu-gebouw-fr.png"
   },
   {
+   "id": "politiek-eu-top-vlaggenrij-fr",
+   "categorie": "politiek",
+   "naam": "Europese top",
+   "binding": "fr",
+   "trefwoorden": [
+    "europese top",
+    "eu-top",
+    "brussel",
+    "europese raad",
+    "lidstaten",
+    "meerjarenbegroting",
+    "eu-begroting",
+    "commissie",
+    "europees"
+   ],
+   "svg": "/illustraties/politiek-eu-top-vlaggenrij-fr.svg",
+   "png": "/illustraties/politiek-eu-top-vlaggenrij-fr.png"
+  },
+  {
+   "id": "politiek-gerechtshof-trappen-fr",
+   "categorie": "politiek",
+   "naam": "Gerechtshof",
+   "binding": "fr",
+   "trefwoorden": [
+    "hof",
+    "hooggerechtshof",
+    "cassatie",
+    "hof van beroep",
+    "beroep",
+    "uitspraak",
+    "grondwettelijk hof",
+    "conseil constitutionnel",
+    "conseil d'etat",
+    "raad van state"
+   ],
+   "svg": "/illustraties/politiek-gerechtshof-trappen-fr.svg",
+   "png": "/illustraties/politiek-gerechtshof-trappen-fr.png"
+  },
+  {
+   "id": "politiek-grondwet-boek-fr",
+   "categorie": "politiek",
+   "naam": "Grondwet",
+   "binding": "fr",
+   "trefwoorden": [
+    "grondwet",
+    "constitutie",
+    "grondwetswijziging",
+    "begrotingsregel",
+    "regle d'or",
+    "artikel 49.3",
+    "49.3",
+    "institutie",
+    "referendum"
+   ],
+   "svg": "/illustraties/politiek-grondwet-boek-fr.svg",
+   "png": "/illustraties/politiek-grondwet-boek-fr.png"
+  },
+  {
+   "id": "politiek-huiszoeking-dossiers-fr",
+   "categorie": "politiek",
+   "naam": "Huiszoeking en dossiers",
+   "binding": "fr",
+   "trefwoorden": [
+    "huiszoeking",
+    "onderzoek",
+    "parket",
+    "openbaar ministerie",
+    "lekken",
+    "lekaffaire",
+    "verdenking",
+    "justitie",
+    "dossier",
+    "geseponeerd",
+    "fraude",
+    "verduistering"
+   ],
+   "svg": "/illustraties/politiek-huiszoeking-dossiers-fr.svg",
+   "png": "/illustraties/politiek-huiszoeking-dossiers-fr.png"
+  },
+  {
+   "id": "politiek-onderhandelingstafel-fr",
+   "categorie": "politiek",
+   "naam": "Onderhandelingstafel",
+   "binding": "fr",
+   "trefwoorden": [
+    "onderhandelingen",
+    "akkoord",
+    "compromis",
+    "overleg",
+    "sociale partners",
+    "vakbonden",
+    "top",
+    "gesprekken",
+    "diplomatie",
+    "verdrag"
+   ],
+   "svg": "/illustraties/politiek-onderhandelingstafel-fr.svg",
+   "png": "/illustraties/politiek-onderhandelingstafel-fr.png"
+  },
+  {
    "id": "politiek-parlement-fr",
    "categorie": "politiek",
    "naam": "Parlement",
@@ -822,6 +1616,24 @@
    "png": "/illustraties/politiek-parlement-fr.png"
   },
   {
+   "id": "politiek-peilingsgrafiek-fr",
+   "categorie": "politiek",
+   "naam": "Peiling",
+   "binding": "fr",
+   "trefwoorden": [
+    "peiling",
+    "peilingen",
+    "sondage",
+    "opiniepeiling",
+    "enquete",
+    "kiezers",
+    "procent",
+    "stijgt in peilingen"
+   ],
+   "svg": "/illustraties/politiek-peilingsgrafiek-fr.svg",
+   "png": "/illustraties/politiek-peilingsgrafiek-fr.png"
+  },
+  {
    "id": "politiek-prefectuur-fr",
    "categorie": "politiek",
    "naam": "Prefectuur",
@@ -840,6 +1652,54 @@
    "png": "/illustraties/politiek-prefectuur-fr.png"
   },
   {
+   "id": "politiek-presidentsvliegtuig-rode-loper-fr",
+   "categorie": "politiek",
+   "naam": "Staatsbezoek",
+   "binding": "fr",
+   "trefwoorden": [
+    "staatsbezoek",
+    "bezoek",
+    "reis",
+    "buitenland",
+    "macron naar",
+    "president reist",
+    "china",
+    "amerika",
+    "verenigde staten",
+    "washington",
+    "peking",
+    "diplomatie",
+    "ambassadeur"
+   ],
+   "svg": "/illustraties/politiek-presidentsvliegtuig-rode-loper-fr.svg",
+   "png": "/illustraties/politiek-presidentsvliegtuig-rode-loper-fr.png"
+  },
+  {
+   "id": "politiek-rechtszaal-fr",
+   "categorie": "politiek",
+   "naam": "Rechtszaal",
+   "binding": "fr",
+   "trefwoorden": [
+    "rechter",
+    "rechtbank",
+    "proces",
+    "rechtszaak",
+    "veroordeeld",
+    "veroordeling",
+    "strafrechter",
+    "assisen",
+    "vonnis",
+    "celstraf",
+    "aanklacht",
+    "berecht",
+    "terechtstaan",
+    "advocaat",
+    "voor de rechter"
+   ],
+   "svg": "/illustraties/politiek-rechtszaal-fr.svg",
+   "png": "/illustraties/politiek-rechtszaal-fr.png"
+  },
+  {
    "id": "politiek-senaat-fr",
    "categorie": "politiek",
    "naam": "Senaat",
@@ -854,6 +1714,24 @@
    ],
    "svg": "/illustraties/politiek-senaat-fr.svg",
    "png": "/illustraties/politiek-senaat-fr.png"
+  },
+  {
+   "id": "politiek-spanje-parlement-fr",
+   "categorie": "politiek",
+   "naam": "Spaans parlement",
+   "binding": "fr",
+   "trefwoorden": [
+    "spanje",
+    "spaanse",
+    "madrid",
+    "sanchez",
+    "spaanse verkiezingen",
+    "catalonie",
+    "puigdemont",
+    "iberisch"
+   ],
+   "svg": "/illustraties/politiek-spanje-parlement-fr.svg",
+   "png": "/illustraties/politiek-spanje-parlement-fr.png"
   },
   {
    "id": "politiek-stembus-fr",
@@ -892,6 +1770,44 @@
    ],
    "svg": "/illustraties/politiek-wetboek-fr.svg",
    "png": "/illustraties/politiek-wetboek-fr.png"
+  },
+  {
+   "id": "toerisme-bioscoopzaal-fr",
+   "categorie": "toerisme en evenementen",
+   "naam": "Bioscoop",
+   "binding": "fr",
+   "trefwoorden": [
+    "film",
+    "bioscoop",
+    "cinema",
+    "disney",
+    "premiere",
+    "cannes",
+    "acteur",
+    "regisseur",
+    "animatiefilm"
+   ],
+   "svg": "/illustraties/toerisme-bioscoopzaal-fr.svg",
+   "png": "/illustraties/toerisme-bioscoopzaal-fr.png"
+  },
+  {
+   "id": "toerisme-boekenprijs-stapel-fr",
+   "categorie": "toerisme en evenementen",
+   "naam": "Boekenprijs",
+   "binding": "fr",
+   "trefwoorden": [
+    "boek",
+    "roman",
+    "literatuur",
+    "prijs",
+    "goncourt",
+    "schrijver",
+    "schrijfster",
+    "uitgeverij",
+    "dagboek"
+   ],
+   "svg": "/illustraties/toerisme-boekenprijs-stapel-fr.svg",
+   "png": "/illustraties/toerisme-boekenprijs-stapel-fr.png"
   },
   {
    "id": "toerisme-brocante-fr",
@@ -962,6 +1878,25 @@
    ],
    "svg": "/illustraties/toerisme-dorpsfeest-fr.svg",
    "png": "/illustraties/toerisme-dorpsfeest-fr.png"
+  },
+  {
+   "id": "toerisme-festivalpodium-fr",
+   "categorie": "toerisme en evenementen",
+   "naam": "Festivalpodium",
+   "binding": "fr",
+   "trefwoorden": [
+    "festival",
+    "concert",
+    "muziek",
+    "hellfest",
+    "podium",
+    "optreden",
+    "band",
+    "popmuziek",
+    "lied"
+   ],
+   "svg": "/illustraties/toerisme-festivalpodium-fr.svg",
+   "png": "/illustraties/toerisme-festivalpodium-fr.png"
   },
   {
    "id": "toerisme-kasteel-loire-fr",
@@ -1048,6 +1983,24 @@
    ],
    "svg": "/illustraties/toerisme-strand-fr.svg",
    "png": "/illustraties/toerisme-strand-fr.png"
+  },
+  {
+   "id": "toerisme-theatergordijn-fr",
+   "categorie": "toerisme en evenementen",
+   "naam": "Theater",
+   "binding": "fr",
+   "trefwoorden": [
+    "theater",
+    "voorstelling",
+    "toneel",
+    "opera",
+    "show",
+    "miss france",
+    "gala",
+    "podium"
+   ],
+   "svg": "/illustraties/toerisme-theatergordijn-fr.svg",
+   "png": "/illustraties/toerisme-theatergordijn-fr.png"
   },
   {
    "id": "toerisme-wijnoogst-fr",

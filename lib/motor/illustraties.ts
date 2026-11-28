@@ -73,10 +73,10 @@ export interface IllustratieInvoer {
 }
 
 /**
- * Kiest een illustratie: eerst de categorie van het bericht; heeft de beste daarin 0 trefwoordtreffers, dan de hoogste score over de hele set (blijft alles 0, dan de keuze in de eigen categorie);
- * bij Nederland-onderwerpen eerst binding nl, anders eerst fr; daarbinnen de meeste trefwoorden in
- * kop en samenvatting; bij gelijke stand het langst niet gebruikte beeld (`recent` = beeld-urls,
- * nieuwste eerst; nooit gebruikt telt als het langst geleden), daarna de vaste volgorde.
+ * Kiest een illustratie (besluit 28-11-2026): trefwoord in de kop 2 punten, in de samenvatting 1 (per trefwoord hooguit één keer);
+ * de hoogste score over de hele set wint; bij gelijke score de eigen categorie, dan binding nl bij Nederland-onderwerpen (anders fr),
+ * dan het langst niet gebruikt (`recent` = beeld-urls, nieuwste eerst; nooit gebruikt telt als het langst geleden), dan de vaste volgorde.
+ * Is de hoogste score 0, dan de keuze in de eigen categorie.
  */
 export function kiesIllustratie(b: IllustratieInvoer, recent: string[] = [], lijst: IllustratieLijst = ILLUSTRATIES): Illustratie | null {
   try {
@@ -84,36 +84,37 @@ export function kiesIllustratie(b: IllustratieInvoer, recent: string[] = [], lij
     if (!alle.length) return null;
     const tekst = `${b.kop || ""} ${b.samenvatting || ""}`;
     const voorkeur = gaatOverNederland(tekst) ? "nl" : "fr";
-    const haystack = ` ${normaal(tekst).replace(/[^a-z0-9]+/g, " ")} `;
-    const score = (i: Illustratie) => i.trefwoorden.filter((t) => {
-      const n = normaal(t).replace(/[^a-z0-9]+/g, " ").trim();
-      return n.length > 0 && haystack.includes(` ${n}`);
-    }).length;
+    const schoon = (t: string) => ` ${normaal(t).replace(/[^a-z0-9]+/g, " ")} `;
+    const kopTekst = schoon(b.kop || "");
+    const samTekst = schoon(b.samenvatting || "");
+    // Trefwoord in de kop 2 punten, in de samenvatting 1; elk trefwoord telt hooguit één keer, met het hoogste gewicht.
+    const score = (i: Illustratie) => {
+      let s = 0;
+      for (const t of i.trefwoorden) {
+        const n = normaal(t).replace(/[^a-z0-9]+/g, " ").trim();
+        if (!n) continue;
+        if (kopTekst.includes(` ${n}`)) s += 2;
+        else if (samTekst.includes(` ${n}`)) s += 1;
+      }
+      return s;
+    };
     const gebruikPlek = new Map<string, number>(); // pad -> plaats in `recent` (0 = nieuwste)
     recent.forEach((u, n) => {
       const p = pad(u);
       if (!gebruikPlek.has(p)) gebruikPlek.set(p, n);
     });
     const geleden = (i: Illustratie) => gebruikPlek.get(pad(i.svg)) ?? Infinity;
-    const beste = (pool: Illustratie[]): { i: Illustratie; s: number } | null => {
-      const metVoorkeur = pool.filter((i) => i.binding === voorkeur);
-      const kand = metVoorkeur.length ? metVoorkeur : pool;
-      let uit: { i: Illustratie; s: number } | null = null;
-      let bg = -1;
-      for (const i of kand) {
-        const s = score(i);
-        const g = geleden(i);
-        if (!uit || s > uit.s || (s === uit.s && g > bg)) ((uit = { i, s }), (bg = g));
-      }
-      return uit;
-    };
-    const inCat = alle.filter((i) => i.categorie === b.categorie);
-    const eigen = inCat.length ? beste(inCat) : null;
-    if (eigen && eigen.s > 0) return eigen.i;
-    // Geen treffer in de eigen categorie: de hoogste trefwoordscore over de hele set, zo die er is.
-    const overal = beste(alle);
-    if (overal && overal.s > 0) return overal.i;
-    return (eigen ?? overal)?.i ?? null;
+    // Volgorde: hoogste score, eigen categorie, nl-voorrang (binding), langst niet gebruikt; daarna de vaste volgorde (eerste wint).
+    const kandidaten = alle.map((i) => ({ i, s: score(i), eigen: i.categorie === b.categorie ? 1 : 0, bind: i.binding === voorkeur ? 1 : 0, g: geleden(i) }));
+    const beter = (x: (typeof kandidaten)[number], y: (typeof kandidaten)[number]) =>
+      x.s !== y.s ? x.s > y.s : x.eigen !== y.eigen ? x.eigen > y.eigen : x.bind !== y.bind ? x.bind > y.bind : x.g > y.g;
+    const pak = (pool: typeof kandidaten) => pool.reduce<(typeof kandidaten)[number] | null>((m, k) => (!m || beter(k, m) ? k : m), null);
+    const top = pak(kandidaten);
+    if (top && top.s > 0) return top.i;
+    // Alles 0: de bestaande keuze in de eigen categorie (heeft die geen beelden, dan de hele set).
+    const eigenPool = kandidaten.filter((k) => k.eigen === 1);
+    const metVoorkeur = (eigenPool.length ? eigenPool : kandidaten).filter((k) => k.bind === 1);
+    return (pak(metVoorkeur.length ? metVoorkeur : eigenPool.length ? eigenPool : kandidaten) ?? top)?.i ?? null;
   } catch {
     return null;
   }

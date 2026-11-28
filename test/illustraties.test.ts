@@ -34,7 +34,7 @@ test("nl-voorrang bij Nederland, Nederlander, Nederlandse en NL; anders fr-voorr
   for (const kop of ["Nederlanders in Frankrijk krijgen een brief", "Nederlandse pensioenen", "Nieuws over Nederland", "Regels voor NL-inwoners"]) {
     assert.equal(kiesIllustratie(b(kop), [], lijst)?.binding, "nl", kop);
   }
-  assert.equal(kiesIllustratie(b("De bus rijdt weer"), [], lijst)?.binding, "fr");
+  assert.equal(kiesIllustratie(b("Het verkeer rijdt weer"), [], lijst)?.binding, "fr");
   assert.ok(!gaatOverNederland("Senegal en Anjou"));
 });
 
@@ -144,7 +144,7 @@ test("0 treffers in de eigen categorie: hoogste trefwoordscore over de hele set 
   const a9 = kiesIllustratie({ kop: "Vrachtwagen belandt op middenberm A9 bij Gigean, verkeer richting Montpellier verstoord", samenvatting: "", categorie: "algemeen" });
   assert.equal(a9?.id, "verkeer-snelweg-file-fr");
   const tanker = kiesIllustratie({ kop: "Gekapseisde tanker bij Ibiza wordt naar Cartagena gesleept", samenvatting: "De tanker wordt naar de Spaanse haven Cartagena gesleept.", categorie: "natuur en rampen" });
-  assert.equal(tanker?.id, "economie-haven-containers-fr");
+  assert.equal(tanker?.id, "natuur-gestrand-schip-fr");
   // alles 0: blijft in de eigen categorie
   assert.equal(kiesIllustratie({ kop: "Qqqq", samenvatting: "", categorie: "politiek" })?.categorie, "politiek");
 });
@@ -155,4 +155,36 @@ test("onderschrift: illustratie zonder categorie en link, Unsplash met fotograaf
   assert.deepEqual(onderschrift({ bron: "Illustratie" }), { soort: "illustratie", tekst: "illustratie Communities Abroad" });
   assert.deepEqual(onderschrift({ bron: "Unsplash", maker: "Marie Dupont" }), { soort: "foto", maker: "Marie Dupont", bron: "Unsplash" });
   assert.equal(onderschrift(null), null);
+});
+
+test("scoreregel: kop telt 2, samenvatting 1, trefwoord hooguit één keer; hoogste score over de hele set, dan eigen categorie", () => {
+  const l: IllustratieLijst = { afkomst: "x", beelden: [
+    beeld("a-fr", "algemeen", "fr", ["oorlog"]),
+    beeld("n-fr", "natuur en rampen", "fr", ["honger", "droogte"]),
+  ] };
+  assert.equal(kiesIllustratie(b("Honger door oorlog", "droogte", "algemeen"), [], l)?.id, "n-fr"); // 2+1 tegen 2
+  assert.equal(kiesIllustratie(b("Honger en honger", "honger", "algemeen"), [], l)?.id, "n-fr"); // niet dubbel geteld
+  // gelijke score: eigen categorie gaat voor
+  assert.equal(kiesIllustratie(b("Oorlog en honger", "", "algemeen"), [], l)?.id, "a-fr");
+  assert.equal(kiesIllustratie(b("Oorlog en honger", "", "natuur en rampen"), [], l)?.id, "n-fr");
+});
+
+test("echte koppen kiezen de passende illustratie", () => {
+  const k = (kop: string, categorie: string, samenvatting = "") => kiesIllustratie({ kop, samenvatting, categorie })?.id;
+  assert.ok(["natuur-voedselhulp-zakken-fr", "natuur-lege-kom-droog-land-fr"].includes(k("VN-organisaties waarschuwen voor toenemende honger in 16 regio's door oorlog en El Niño", "algemeen", "Honger neemt toe.")!));
+  assert.equal(k("Sarkozy, Bruni en Marchand in 2027 voor de rechter", "politiek"), "politiek-rechtszaal-fr");
+  assert.equal(k("Macron reist naar China voor staatsbezoek", "politiek"), "politiek-presidentsvliegtuig-rode-loper-fr");
+  assert.equal(k("Cyberaanval treft Frans persbureau, platform voor foto's en video's offline", "algemeen"), "algemeen-laptop-slot-cyber-fr");
+  assert.equal(k("Gestrand vrachtschip bij Lit-et-Mixe moet dinsdag vlot worden getrokken", "natuur en rampen"), "natuur-gestrand-schip-fr");
+});
+
+test("alle illustraties in de index hebben een bestaand svg- en png-bestand", async () => {
+  const { existsSync } = await import("node:fs");
+  const { join } = await import("node:path");
+  assert.equal(ILLUSTRATIES.beelden.length, 120);
+  assert.equal(new Set(ILLUSTRATIES.beelden.map((i) => i.id)).size, 120);
+  for (const i of ILLUSTRATIES.beelden) {
+    assert.ok(existsSync(join(process.cwd(), "public", i.svg)), i.svg);
+    assert.ok(existsSync(join(process.cwd(), "public", i.png)), i.png);
+  }
 });
