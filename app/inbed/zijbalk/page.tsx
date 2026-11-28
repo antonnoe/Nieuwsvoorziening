@@ -24,7 +24,7 @@ export default async function InbedZijbalk({ searchParams }: { searchParams: Pro
   const [items, bijgewerkt, aankondigingen] = await Promise.all([
     laadZijbalkItems(opslag, kanaal, categorieNaam),
     laadBijgewerkt(opslag),
-    laadAankondigingen(3).catch(() => ({ lijst: [], totaal: 0 })), // PEIL-storing: blok weg, de rest blijft
+    laadAankondigingen(2).catch(() => ({ lijst: [], totaal: 0 })), // PEIL-storing: blok weg, de rest blijft
   ]);
   return (
     <main className="ib zb" id="inhoud">

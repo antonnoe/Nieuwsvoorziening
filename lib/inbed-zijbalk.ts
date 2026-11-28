@@ -1,12 +1,12 @@
-// Inbedvenster /inbed/zijbalk (28-11-2026): smalle zijbalk (300 tot 360 px) voor Nederlanders.fr en Infofrankrijk, vervangt nlfr-menu /sidebar-nieuws.
+// Inbedvenster /inbed/zijbalk (28-11-2026): smalle zijbalk (173 px, 160 tot 200 px moet ook) voor Nederlanders.fr en Infofrankrijk, vervangt nlfr-menu /sidebar-nieuws.
 // PEIL streng: alleen groene koppelingen. Links gaan naar ons eigen bericht, nooit naar een krant.
 import type { Opslag, OpgeslagenBericht } from "@/lib/motor/opslag";
 import type { Aankondiging } from "@/lib/peilvak";
 import { groenePeil, leesKanalen, type Kanaal } from "@/lib/motor/types";
 import { BASIS_URL, PEIL_URL, veiligeUrl } from "@/lib/site";
 
-export const ZIJBALK_BERICHTEN = 6;
-export const ZIJBALK_PEIL = 3;
+export const ZIJBALK_BERICHTEN = 4;
+export const ZIJBALK_PEIL = 2;
 export const ZIJBALK_LEEG = "Er is nu geen nieuws.";
 export const MEER_NIEUWS_URL = "https://nieuws.infofrankrijk.com";
 export const PORTEMONNEE_CHIP = "€ raakt uw portemonnee";

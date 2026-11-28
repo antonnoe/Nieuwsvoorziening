@@ -14,22 +14,6 @@ export default function Zijbalk({ items, peil, bijgewerkt }: { items: ZijbalkIte
         <h1>Nieuws over Frankrijk</h1>
         {bijgewerkt && <span className="ib-tijd">{bijgewerkt}</span>}
       </header>
-      {peil && peil.length > 0 && (
-        <section className="zb-peil" aria-label="Wat verandert er voor u">
-          <h2>Wat verandert er voor u</h2>
-          <ol>
-            {peil.map((r) => (
-              <li key={r.id}>
-                <span className="zb-datum">{peilDatum(r)}</span>
-                <b>{r.titel}</b>
-                <span className="zb-zin">{r.zin}</span>
-                {r.tool && <span className="zb-tool">Reken het uit met: {r.tool.url ? <a href={r.tool.url} target="_blank" rel="noopener">{r.tool.naam}</a> : r.tool.naam}</span>}
-              </li>
-            ))}
-          </ol>
-          <p className="zb-peilalles"><a href={PEIL_URL} target="_blank" rel="noopener">Alles in PEIL →</a></p>
-        </section>
-      )}
       {items === null ? (
         <p className="ib-leeg">Even niet beschikbaar.</p>
       ) : items.length === 0 ? (
@@ -53,7 +37,22 @@ export default function Zijbalk({ items, peil, bijgewerkt }: { items: ZijbalkIte
           ))}
         </ul>
       )}
-      <p className="zb-meer"><a href={MEER_NIEUWS_URL} target="_blank" rel="noopener">Meer nieuws over Frankrijk →</a></p>
+      <p className="zb-meer"><a href={MEER_NIEUWS_URL} target="_blank" rel="noopener">Lees meer nieuws →</a></p>
+      {peil && peil.length > 0 && (
+        <section className="zb-peil" aria-label="Wat verandert er voor u">
+          <h2>Wat verandert er voor u</h2>
+          <ol>
+            {peil.map((r) => (
+              <li key={r.id}>
+                <span className="zb-datum">{peilDatum(r)}</span>
+                <b>{r.titel}</b>
+                {r.tool && <span className="zb-tool">Reken het uit met {r.tool.url ? <a href={r.tool.url} target="_blank" rel="noopener">{r.tool.naam}</a> : r.tool.naam}</span>}
+              </li>
+            ))}
+          </ol>
+          <p className="zb-peilalles"><a href={PEIL_URL} target="_blank" rel="noopener">Alles in PEIL →</a></p>
+        </section>
+      )}
     </>
   );
 }

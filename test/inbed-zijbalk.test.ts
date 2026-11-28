@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { GeheugenOpslag, type OpgeslagenBericht } from "../lib/motor/opslag";
-import { MEER_NIEUWS_URL, PORTEMONNEE_CHIP, ZIJBALK_BERICHTEN, ZIJBALK_LEEG, laadZijbalkItems, peilRegels, zijbalkKanaal } from "../lib/inbed-zijbalk";
+import { MEER_NIEUWS_URL, PORTEMONNEE_CHIP, ZIJBALK_BERICHTEN, ZIJBALK_LEEG, chipsVan, laadZijbalkItems, peilRegels, zijbalkKanaal } from "../lib/inbed-zijbalk";
 import type { Aankondiging } from "../lib/peilvak";
 import Zijbalk from "../app/inbed/zijbalk/Zijbalk";
 import nextConfig from "../next.config.mjs";
@@ -31,12 +31,13 @@ test("kanaal: standaard zijbalk, ?kanaal=infofrankrijk geeft infofrankrijk, onbe
   assert.equal(zijbalkKanaal("nieuwsbrief"), "zijbalk");
 });
 
-test("kanaalfilter, weg en status; nieuwste eerst, hooguit 6", async () => {
+test("kanaalfilter, weg en status; nieuwste eerst, hooguit 4", async () => {
   const o = new GeheugenOpslag();
   for (let n = 0; n < 9; n++) o.berichtenLijst.push(bericht(n));
   o.berichtenLijst.push(bericht(20, { kanalen: { ...alle, zijbalk: false } }), bericht(21, { kanalen: { ...alle, infofrankrijk: false } }), bericht(22, { redactie: "weg" }), bericht(23, { status: "concept" }));
   const z = (await laadZijbalkItems(o, "zijbalk", naam))!;
-  assert.equal(z.length, ZIJBALK_BERICHTEN);
+  assert.equal(ZIJBALK_BERICHTEN, 4);
+  assert.equal(z.length, 4);
   assert.ok(!z.some((i) => ["Kop 20", "Kop 22", "Kop 23"].includes(i.titel)));
   assert.ok(z.some((i) => i.titel === "Kop 21"), "kanaal infofrankrijk uit raakt de zijbalk niet");
   const f = (await laadZijbalkItems(o, "infofrankrijk", naam))!;
@@ -56,7 +57,7 @@ test("PEIL-chip alleen bij een groene koppeling met lezerstitel; oranje of zonde
     bericht(5, { portemonnee: true, peil: { raakt: [koppeling("groen")], mogelijkGewijzigd: [] } }),
     bericht(6, { peil: { raakt: [{ id: "p.zonder.titel", naam: "Jargonnaam", zekerheid: "groen" as const }], mogelijkGewijzigd: [] } }),
   );
-  const z = (await laadZijbalkItems(o, "zijbalk", naam))!;
+  const z = o.berichtenLijst.map((b) => ({ titel: b.kop, chips: chipsVan(b, zinnen) }));
   const chips = (t: string) => z.find((i) => i.titel === t)!.chips.map((c) => c.tekst);
   assert.deepEqual(chips("Kop 1"), ["PEIL: Uw AOW-leeftijd"]);
   assert.deepEqual(chips("Kop 2"), []);
@@ -69,23 +70,23 @@ test("PEIL-chip alleen bij een groene koppeling met lezerstitel; oranje of zonde
 
 const aank = (n: number): Aankondiging => ({ id: `a${n}`, naam: `Titel ${n}`, peilNaam: "x", datum: n === 2 ? null : `2027-0${n}-01`, omschrijving: `Zin ${n}.`, voorlopig: false, tools: n === 1 ? [{ naam: "Financieel Kompas", url: "https://www.infofrankrijk.com/kompas" }] : [], nieuws: [], inDiscussie: n === 2 });
 
-test("PEIL-blok: 3 regels met datum of In discussie, tool en Alles in PEIL; bij storing (leeg of null) geen blok maar wel de rest", async () => {
+test("PEIL-blok: 2 regels met datum of In discussie, tool en Alles in PEIL; bij storing (leeg of null) geen blok maar wel de rest", async () => {
   const regels = peilRegels([1, 2, 3, 4].map(aank));
-  assert.equal(regels.length, 3);
+  assert.equal(regels.length, 2);
   const o = await opslagMet([bericht(1)]);
   const items = (await laadZijbalkItems(o, "zijbalk", naam))!;
   const html = renderToStaticMarkup(React.createElement(Zijbalk, { items, peil: regels, bijgewerkt: "Bijgewerkt vandaag 14.46 uur" }));
   assert.match(html, /Nieuws over Frankrijk/);
   assert.match(html, /Wat verandert er voor u/);
   assert.match(html, /In discussie/);
-  assert.match(html, /Reken het uit met: <a href="https:\/\/www\.infofrankrijk\.com\/kompas"/);
+  assert.match(html, /Reken het uit met <a href="https:\/\/www\.infofrankrijk\.com\/kompas"/);
   assert.match(html, /Alles in PEIL/);
   assert.match(html, /Bijgewerkt vandaag 14\.46 uur/);
   for (const peil of [[], null]) {
     const h = renderToStaticMarkup(React.createElement(Zijbalk, { items, peil, bijgewerkt: null }));
     assert.ok(!/Wat verandert er voor u|Alles in PEIL/.test(h));
     assert.match(h, /Kop 1/);
-    assert.match(h, /Meer nieuws over Frankrijk/);
+    assert.match(h, /Lees meer nieuws/);
   }
 });
 
@@ -101,6 +102,8 @@ test("geen perslink in de HTML: alleen eigen sites en PEIL; lege staat en onderl
   for (const h of hrefs) for (const b of bronnen) assert.ok(!h.endsWith(b.domein) || ["infofrankrijk.com"].includes(b.domein), `bron ${b.domein}`);
   assert.ok(!/Le Monde|lemonde/i.test(html));
   assert.ok(html.includes(`href="${MEER_NIEUWS_URL}"`));
+  assert.ok(html.indexOf("Lees meer nieuws") < html.indexOf("Wat verandert er voor u"), "Lees meer staat vóór het PEIL-blok");
+  assert.ok(!html.includes("Zin 1."), "de lange zin staat er niet in");
   const leeg = renderToStaticMarkup(React.createElement(Zijbalk, { items: [], peil: null, bijgewerkt: null }));
   assert.ok(leeg.includes(ZIJBALK_LEEG) && ZIJBALK_LEEG === "Er is nu geen nieuws.");
 });
