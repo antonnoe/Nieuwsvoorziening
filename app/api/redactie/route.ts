@@ -1,5 +1,7 @@
 import { geenOpslag, leesOpslag } from "@/lib/motor/api";
 import { MigratieOntbreekt } from "@/lib/motor/opslag";
+import { RadarOntbreekt } from "@/lib/motor/radar";
+import { radarVorm } from "@/lib/motor/radar";
 import { controleerToegang, leesOpdracht, peilVorm, poortBlokkade, redactieAntwoord, redactieCors, redactieVorm, toegangFout } from "@/lib/redactie";
 
 export const dynamic = "force-dynamic";
@@ -22,6 +24,8 @@ export async function GET(req: Request) {
     const run = await opslag.laatsteRun().catch(() => null);
     // Open PEIL-signalen (groen en oranje) voor de redactie; een storing of ontbrekende migratie laat de lijst niet falen.
     const peil = (await opslag.peilSignalen(200).catch(() => [])).map(peilVorm);
+    // Radar (28-11-2026): open onderwerpsignalen, nieuwste eerst, hooguit 50; alleen voor de redactie. Zonder tabel nv_radar: leeg.
+    const radar = (await opslag.radarOpen(50).catch(() => [])).map(radarVorm);
     return redactieAntwoord(req, {
       dagen,
       aantal: lijst.length,
@@ -29,13 +33,14 @@ export async function GET(req: Request) {
       laatsteRun: run ? { gestartOp: run.gestartOp, klaarOp: run.klaarOp ?? null, droog: run.droog, aantallen: run.aantallen, fouten: run.fouten.slice(0, 5) } : null,
       berichten: lijst.map(redactieVorm),
       peil,
+      radar,
     });
   } catch {
     return redactieAntwoord(req, { fout: "Berichten konden niet worden gelezen." }, 502);
   }
 }
 
-/** Body: {id, actie: "weg"|"terug"|"kanaal"|..., kanaal?, aan?} of {actie: "peil", id: signaal-id, keuze}. Geeft het bijgewerkte bericht (of het signaal) terug. */
+/** Body: {id, actie: "weg"|"terug"|"kanaal"|..., kanaal?, aan?}, {actie: "peil", id: signaal-id, keuze} of {actie: "radar", id: radar-id, keuze: "geaccepteerd"|"afgewezen"}. Geeft het bijgewerkte bericht (of het signaal) terug. */
 export async function POST(req: Request) {
   const t = controleerToegang(req);
   if (t !== "ok") return toegangFout(req, t);
@@ -63,6 +68,13 @@ export async function POST(req: Request) {
       }
       return redactieAntwoord(req, { signaal: { id: sig.id, status: opdracht.keuze } });
     }
+    if (opdracht.actie === "radar") {
+      const rij = await opslag.radarRij(opdracht.id);
+      if (!rij) return redactieAntwoord(req, { fout: "Radarsignaal niet gevonden." }, 404);
+      if (rij.besluit) return redactieAntwoord(req, { fout: `Dit radarsignaal is al afgehandeld (${rij.besluit}).` }, 409);
+      await opslag.zetRadarBesluit(opdracht.id, opdracht.radarKeuze!);
+      return redactieAntwoord(req, { radar: { id: rij.id, besluit: opdracht.radarKeuze } });
+    }
     const bestaat = await opslag.redactieBericht(opdracht.id);
     if (!bestaat) return redactieAntwoord(req, { fout: "Bericht niet gevonden." }, 404);
     if (opdracht.actie === "plaats") {
@@ -80,7 +92,7 @@ export async function POST(req: Request) {
     const nu = await opslag.redactieBericht(opdracht.id);
     return redactieAntwoord(req, { bericht: nu ? redactieVorm(nu) : null });
   } catch (e) {
-    if (e instanceof MigratieOntbreekt) return redactieAntwoord(req, GEEN_MIGRATIE, 503);
+    if (e instanceof MigratieOntbreekt || e instanceof RadarOntbreekt) return redactieAntwoord(req, GEEN_MIGRATIE, 503);
     return redactieAntwoord(req, { fout: "De wijziging kon niet worden bewaard." }, 502);
   }
 }

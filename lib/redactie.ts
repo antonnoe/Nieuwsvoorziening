@@ -5,7 +5,7 @@ import { timingSafeEqual } from "node:crypto";
 import { geheim } from "@/lib/beheer";
 import { bronDomein } from "@/lib/motor/api";
 import { soortVan, type OpgeslagenBericht } from "@/lib/motor/opslag";
-import { CATEGORIEEN, KANALEN, PEIL_BESLUITEN, leesKanalen, type Bericht, type Kanaal, type PeilBesluit, type PeilSignaalRij } from "@/lib/motor/types";
+import { CATEGORIEEN, KANALEN, PEIL_BESLUITEN, RADAR_BESLUITEN, leesKanalen, type Bericht, type Kanaal, type PeilBesluit, type PeilSignaalRij, type RadarBesluit } from "@/lib/motor/types";
 import { laadConfig } from "@/lib/motor/config";
 
 export const REDACTIE_ORIGIN = "https://nlfr-menu.vercel.app";
@@ -151,15 +151,17 @@ export function peilVorm(x: PeilSignaalRij) {
 
 export interface RedactieOpdracht {
   id: string;
-  actie: "weg" | "terug" | "kanaal" | "plaats" | "herschrijf" | "bewerk" | "peil";
+  actie: "weg" | "terug" | "kanaal" | "plaats" | "herschrijf" | "bewerk" | "peil" | "radar";
   /** Alleen bij actie "peil": het besluit over het signaal (id is dan het signaal-id). */
   keuze?: PeilBesluit;
+  /** Alleen bij actie "radar": het besluit over het radarsignaal (id is dan het radar-id). */
+  radarKeuze?: RadarBesluit;
   kanaal?: Kanaal;
   aan?: boolean;
   bewerk?: { kop?: string; samenvatting?: string; tekst?: string; categorie?: Bericht["categorie"] };
 }
 
-const ACTIES = ["weg", "terug", "kanaal", "plaats", "herschrijf", "bewerk", "peil"];
+const ACTIES = ["weg", "terug", "kanaal", "plaats", "herschrijf", "bewerk", "peil", "radar"];
 
 /** Leest en valideert de body. Geeft de opdracht of een foutmelding. */
 export function leesOpdracht(body: unknown): { opdracht: RedactieOpdracht } | { fout: string } {
@@ -171,6 +173,10 @@ export function leesOpdracht(body: unknown): { opdracht: RedactieOpdracht } | { 
   if (b.actie === "peil") {
     if (typeof b.keuze !== "string" || !(PEIL_BESLUITEN as readonly string[]).includes(b.keuze)) return { fout: `Keuze moet een van ${PEIL_BESLUITEN.join(", ")} zijn.` };
     return { opdracht: { id, actie: "peil", keuze: b.keuze as PeilBesluit } };
+  }
+  if (b.actie === "radar") {
+    if (typeof b.keuze !== "string" || !(RADAR_BESLUITEN as readonly string[]).includes(b.keuze)) return { fout: `Keuze moet een van ${RADAR_BESLUITEN.join(", ")} zijn.` };
+    return { opdracht: { id, actie: "radar", radarKeuze: b.keuze as RadarBesluit } };
   }
   if (b.actie === "bewerk") {
     const v: NonNullable<RedactieOpdracht["bewerk"]> = {};

@@ -1,5 +1,5 @@
 // Gedeelde hulpjes voor de API-routes: CORS, JSON, opslag, gepubliceerde vorm.
-import { corsToegestaan } from "./config";
+import { corsToegestaan, isVerbodenBron } from "./config";
 import { maakOpslag, soortVan, type Opslag, type OpgeslagenBericht } from "./opslag";
 import { CATEGORIEEN, KANALEN, groenePeil, leesKanalen, leesSignaal, type Kanaal } from "./types";
 
@@ -75,7 +75,7 @@ export function publiekBericht(b: OpgeslagenBericht, metTekst: boolean, wordtNag
     gepubliceerdOp: b.gepubliceerdOp,
     beeldUrl: b.beeldUrl,
     beeldCredit: b.beeldCredit ?? null,
-    bronnen: b.bronnen,
+    bronnen: b.bronnen.filter((x) => !isVerbodenBron(x.url)),
     peil: {
       raakt: groenePeil(b.peil.raakt).map(({ zekerheid: _z, ...p }) => ({ ...p, wordtNagelopen: wordtNagelopen.includes(p.id) || b.peil.mogelijkGewijzigd.some((g) => g.id === p.id) })),
     },

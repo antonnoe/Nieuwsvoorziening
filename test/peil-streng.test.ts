@@ -301,7 +301,8 @@ test("GET /api/redactie levert het veld peil achteraan, in gewone taal zonder PE
     const r = await redGET(new Request("https://x.test/api/redactie?dagen=2", { headers: bearer }));
     const j = (await r.json()) as Record<string, unknown> & { peil: Record<string, unknown>[] };
     assert.equal(r.status, 200);
-    assert.equal(Object.keys(j).at(-1), "peil", "achteraan toegevoegd");
+    assert.equal(Object.keys(j).at(-2), "peil", "peil staat voor het laatst toegevoegde veld");
+    assert.equal(Object.keys(j).at(-1), "radar", "radar (28-11-2026) staat achteraan");
     assert.equal(j.peil.length, 1);
     assert.deepEqual(j.peil[0], { id: SIG, soort: "wijziging", zekerheid: "oranje", titel: "Sociale heffing", huidige: "9,2 procent", nieuw: "1,5 procent", vanaf: "2027-01-01", twijfel: "Nog niet zeker.", berichtId: BER, berichtKop: "CSG gaat omhoog", bronUrl: "https://bron.test/1", aantal: 1, advies: "verwacht" });
     assert.ok(!JSON.stringify(j.peil).includes("p.fr"));

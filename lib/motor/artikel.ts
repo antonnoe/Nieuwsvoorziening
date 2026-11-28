@@ -3,6 +3,7 @@
 // de kwaliteitspoort blokkeert lange letterlijke reeksen. Faalt altijd netjes:
 // bij een fout, betaalmuur of time-out blijft alleen kop en omschrijving over.
 import { ontsnap } from "./tekst";
+import { isVerbodenBron } from "./config";
 import type { Cluster } from "./types";
 
 const MAX_TEKENS = 4000;
@@ -27,6 +28,7 @@ export function haalTekstUitHtml(html: string): string {
 }
 
 export async function haalArtikelTekst(url: string, fetchFn: typeof fetch = fetch, timeoutMs = 7000): Promise<string> {
+  if (isVerbodenBron(url)) return "";
   try {
     const r = await fetchFn(url, {
       signal: AbortSignal.timeout(timeoutMs),
@@ -44,7 +46,7 @@ export async function haalArtikelTekst(url: string, fetchFn: typeof fetch = fetc
 
 /** Vult artikelTekst voor hooguit `max` bronnen per cluster, parallel. Geeft het aantal gelukte terug. */
 export async function verrijkMetArtikelen(c: Cluster, fetchFn: typeof fetch = fetch, max = 4): Promise<number> {
-  const items = c.items.slice(0, max);
+  const items = c.items.filter((i) => !isVerbodenBron(i.url)).slice(0, max);
   const teksten = await Promise.all(items.map((i) => haalArtikelTekst(i.url, fetchFn)));
   let n = 0;
   items.forEach((i, k) => {

@@ -52,9 +52,12 @@ export function verwachteRelevantie(c: Cluster): number {
  * Kies de kandidaten: volgorde op verwachte relevantie (hoogste eerst), dan aantal bronnen, dan nieuwste.
  * Afgekapt op `max` en de ruimte die vandaag nog over is.
  */
-export function kiesKandidaten(clusters: Cluster[], max: number, ruimte: number): Cluster[] {
+export function kiesKandidaten(clusters: Cluster[], max: number, ruimte: number, voorrang?: ReadonlySet<string>): Cluster[] {
   const nieuwste = (c: Cluster) => c.items.reduce((m, i) => (i.gepubliceerdOp > m ? i.gepubliceerdOp : m), "");
-  const rij = clusters.map((c) => ({ c, v: verwachteRelevantie(c) }));
-  rij.sort((a, b) => b.v - a.v || aantalBronnen(b.c) - aantalBronnen(a.c) || nieuwste(b.c).localeCompare(nieuwste(a.c)));
+  // Radar (28-11-2026): een overheidsonderwerp dat bij een radarsignaal past gaat voor. Alleen een cluster dat volledig uit
+  // overheidsbronnen bestaat telt; de volgorde is het enige dat verandert (bronnen, synthese en poort blijven gelijk).
+  const eerst = (c: Cluster) => (voorrang && voorrang.size && c.items.length > 0 && c.items.every((i) => i.regime === "overheid") && c.items.some((i) => voorrang.has(i.url)) ? 1 : 0);
+  const rij = clusters.map((c) => ({ c, v: verwachteRelevantie(c), r: eerst(c) }));
+  rij.sort((a, b) => b.r - a.r || b.v - a.v || aantalBronnen(b.c) - aantalBronnen(a.c) || nieuwste(b.c).localeCompare(nieuwste(a.c)));
   return rij.slice(0, Math.max(0, Math.min(max, ruimte))).map((x) => x.c);
 }

@@ -1,6 +1,7 @@
 // RSS 2.0 en Atom lezen en normaliseren naar BronItem. Eigen lichte lezer,
 // zonder afhankelijkheid; faalt per bron zonder de rest te breken.
 import { ontsnap } from "./tekst";
+import { isVerbodenBron } from "./config";
 import type { Bron, BronItem } from "./types";
 import { zeef } from "./zeef";
 
@@ -91,6 +92,7 @@ export async function oogstBronnen(
   bronnen: Bron[],
   opties: { nu?: number; maxPerBron?: number; fetchFn?: typeof fetch } = {}
 ): Promise<{ items: BronItem[]; resultaten: OogstBronResultaat[] }> {
+  bronnen = bronnen.filter((b) => !isVerbodenBron(b.feed) && !isVerbodenBron(b.domein)); // harde regel: een verboden brondomein wordt nooit opgehaald
   const nu = opties.nu ?? Date.now();
   const max = opties.maxPerBron ?? 25;
   const items: BronItem[] = [];
@@ -108,6 +110,7 @@ export async function oogstBronnen(
             .slice(0, max);
           res.gelezen = alle.length;
           for (const it of alle) {
+            if (isVerbodenBron(it.url)) { res.geweerd.verboden_bron = (res.geweerd.verboden_bron || 0) + 1; continue; }
             const u = zeef(it, bron);
             if (!u.door) {
               res.geweerd[u.reden as string] = (res.geweerd[u.reden as string] || 0) + 1;

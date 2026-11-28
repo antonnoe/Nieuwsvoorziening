@@ -71,8 +71,26 @@ export function laadBronnen(): Bron[] {
   return Array.isArray(d.bronnen) ? d.bronnen : [];
 }
 
+/**
+ * Harde regel (besluit 28-11-2026): deze domeinen zijn NOOIT bron. The Connexion is uitsluitend onderwerpsignaal voor de
+ * radar (lib/motor/radar.ts) en komt nergens in bronnen, bronnenblok, nv_bron_items, clustering, synthese, artikelophaling,
+ * beeld of publicatie. Deze controle staat op elke plek waar een bron-url de motor in komt of eruit gaat.
+ */
+export const VERBODEN_BRONDOMEINEN = ["connexionfrance.com"];
+export function isVerbodenBron(url: string | null | undefined): boolean {
+  const s = String(url || "").trim();
+  if (!s) return false;
+  let h = "";
+  try {
+    h = new URL(s).hostname.toLowerCase();
+  } catch {
+    h = s.toLowerCase();
+  }
+  return VERBODEN_BRONDOMEINEN.some((d) => h === d || h.endsWith(`.${d}`) || h.includes(d));
+}
+
 export function actieveBronnen(): Bron[] {
-  return laadBronnen().filter((b) => b.status === "ACTIVE");
+  return laadBronnen().filter((b) => b.status === "ACTIVE" && !isVerbodenBron(b.feed) && !isVerbodenBron(b.domein));
 }
 
 // ---- Modellen (via env, met veilige standaard) --------------------------------

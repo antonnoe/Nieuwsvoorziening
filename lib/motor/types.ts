@@ -213,3 +213,32 @@ export interface StapResultaat {
   fout?: string;
   detail?: Record<string, unknown>;
 }
+
+// ---- Radar (besluit 28-11-2026): onderwerpsignalen, nooit bron ----------------------------------------
+export const RADAR_CATEGORIEEN = ["Vastgoed", "Belastingen", "Zorg", "Verkeer", "Energie", "Consumentenrecht", "Overig"] as const;
+export type RadarCategorie = (typeof RADAR_CATEGORIEEN)[number];
+export const RADAR_STATUSSEN = ["klaar voor redactie", "handmatige broncheck vereist", "al gepubliceerd"] as const;
+export type RadarStatus = (typeof RADAR_STATUSSEN)[number];
+export const RADAR_BESLUITEN = ["geaccepteerd", "afgewezen"] as const;
+export type RadarBesluit = (typeof RADAR_BESLUITEN)[number];
+/** Een Franse overheidsbron bij een radarsignaal (nooit de signaalbron zelf). */
+export interface RadarBron {
+  naam: string;
+  url: string;
+  datum: string;
+}
+export interface RadarRij {
+  id: string;
+  signaalUrl: string;
+  signaalDatum: string;
+  werktitel: string;
+  categorie: RadarCategorie;
+  relevantie: string;
+  status: RadarStatus;
+  primaireBron: RadarBron[] | null;
+  berichtId: string | null;
+  beoordeeldOp: string;
+  besluit: RadarBesluit | null;
+  besluitOp: string | null;
+}
+export type RadarNieuw = Omit<RadarRij, "id" | "besluit" | "besluitOp">;

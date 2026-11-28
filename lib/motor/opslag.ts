@@ -4,7 +4,9 @@
 import { leesKanalen, leesSignaal, groenePeil, type Signaal, type BeeldCredit, type Bericht, type BronItem, type Kanaal, type PeilBesluit, type PeilKoppeling, type PeilSignaalIn, type PeilSignaalRij } from "./types";
 import { zoekSamenvoeging } from "./peilbeoordeling";
 import { dagStart } from "./tijd";
-import { REGELVERSIE } from "./config";
+import { REGELVERSIE, isVerbodenBron } from "./config";
+import { RadarOntbreekt, isRadarFout } from "./radar";
+import type { RadarBesluit, RadarNieuw, RadarRij, RadarBron } from "./types";
 
 export interface RunRecord {
   id?: string;
@@ -149,6 +151,20 @@ export interface Opslag {
   /** Beheer: de laatste oogstruns, nieuwste eerst. */
   recenteRuns(limiet: number): Promise<RunRecord[]>;
   aantallen(): Promise<{ berichtenTotaal: number; gepubliceerdTotaal: number; gepubliceerdVandaag: number; openItems: number; signalenGesignaleerd: number }>;
+  // ---- Radar (28-11-2026): onderwerpsignalen in nv_radar; nooit bron. Ontbreekt de tabel, dan gooien radarBekend, radarOpslaan en
+  // zetRadarBesluit RadarOntbreekt; radarOpen en radarOpruimen geven dan leeg/0.
+  /** Signaal-urls sinds `sindsIso` (dedup: al beoordeeld). */
+  radarBekend(sindsIso: string): Promise<string[]>;
+  /** Overheidsitems (regime overheid, ook verwerkte) sinds `sindsIso`, nieuwste eerst, voor de bronkoppeling. */
+  radarOverheidItems(sindsIso: string): Promise<BronItem[]>;
+  /** Slaat signalen op, ontdubbeld op signaal_url; geeft het aantal nieuw bewaarde rijen. */
+  radarOpslaan(rijen: RadarNieuw[]): Promise<number>;
+  /** Open signalen (zonder besluit), nieuwste eerst. */
+  radarOpen(limiet: number): Promise<RadarRij[]>;
+  radarRij(id: string): Promise<RadarRij | null>;
+  zetRadarBesluit(id: string, keuze: RadarBesluit, nu?: number): Promise<void>;
+  /** Ruimt signalen op die voor `oudIso` zijn beoordeeld. */
+  radarOpruimen(oudIso: string): Promise<number>;
 }
 
 // ---- Geheugen -----------------------------------------------------------------
@@ -158,10 +174,52 @@ export class GeheugenOpslag implements Opslag {
   berichtenLijst: OpgeslagenBericht[] = [];
   signalen: PeilSignaalRij[] = [];
   runs: RunRecord[] = [];
+  radarRijen: RadarRij[] = [];
+  /** Voor tests: doet alsof de tabel nv_radar ontbreekt. */
+  radarTabelOntbreekt = false;
   private n = 0;
+  private radarCheck() {
+    if (this.radarTabelOntbreekt) throw new RadarOntbreekt();
+  }
+  async radarBekend(sinds: string) {
+    this.radarCheck();
+    return this.radarRijen.filter((r) => r.beoordeeldOp >= sinds).map((r) => r.signaalUrl);
+  }
+  async radarOverheidItems(sinds: string) {
+    return [...this.items.values()].filter((i) => i.regime === "overheid" && i.gepubliceerdOp >= sinds).sort((a, b) => b.gepubliceerdOp.localeCompare(a.gepubliceerdOp));
+  }
+  async radarOpslaan(rijen: RadarNieuw[]) {
+    this.radarCheck();
+    let n = 0;
+    for (const r of rijen) {
+      if (this.radarRijen.some((x) => x.signaalUrl === r.signaalUrl)) continue;
+      this.radarRijen.push({ ...r, id: `radar-${(this.n += 1)}`, besluit: null, besluitOp: null });
+      n += 1;
+    }
+    return n;
+  }
+  async radarOpen(limiet: number) {
+    if (this.radarTabelOntbreekt) return [];
+    return this.radarRijen.filter((r) => !r.besluit).sort((a, b) => b.signaalDatum.localeCompare(a.signaalDatum)).slice(0, limiet);
+  }
+  async radarRij(id: string) {
+    if (this.radarTabelOntbreekt) throw new RadarOntbreekt();
+    return this.radarRijen.find((r) => r.id === id) || null;
+  }
+  async zetRadarBesluit(id: string, keuze: RadarBesluit, nu = Date.now()) {
+    this.radarCheck();
+    const r = this.radarRijen.find((x) => x.id === id);
+    if (r) Object.assign(r, { besluit: keuze, besluitOp: new Date(nu).toISOString() });
+  }
+  async radarOpruimen(oud: string) {
+    if (this.radarTabelOntbreekt) return 0;
+    const voor = this.radarRijen.length;
+    this.radarRijen = this.radarRijen.filter((r) => r.beoordeeldOp >= oud);
+    return voor - this.radarRijen.length;
+  }
   async upsertItems(items: BronItem[]) {
     let nieuw = 0;
-    for (const it of items) if (!this.items.has(it.url)) (this.items.set(it.url, { ...it, opgehaaldOp: new Date().toISOString() }), (nieuw += 1));
+    for (const it of items) if (!isVerbodenBron(it.url) && !this.items.has(it.url)) (this.items.set(it.url, { ...it, opgehaaldOp: new Date().toISOString() }), (nieuw += 1));
     return nieuw;
   }
   async openItems(sinds: string) {
@@ -427,8 +485,78 @@ export class SupabaseOpslag implements Opslag {
     return m ? Number(m[1]) : 0;
   }
 
+  // ---- Radar: tabel nv_radar (migratie 20261128120000_nv_radar.sql, door de regisseur toe te passen) ----
+  private async radarVraag<T>(f: () => Promise<T>): Promise<T> {
+    try {
+      return await f();
+    } catch (e) {
+      if (isRadarFout(e)) throw new RadarOntbreekt();
+      throw e;
+    }
+  }
+  private naarRadar(r: Rij): RadarRij {
+    const t = (v: unknown) => (v == null ? null : String(v));
+    const pb = r.primaire_bron;
+    const lijst = (Array.isArray(pb) ? pb : pb && typeof pb === "object" ? [pb] : []) as Rij[];
+    const bronnen: RadarBron[] = lijst.filter((x) => x && x.url).map((x) => ({ naam: String(x.naam || ""), url: String(x.url), datum: String(x.datum || "") }));
+    return {
+      id: String(r.id), signaalUrl: String(r.signaal_url), signaalDatum: String(r.signaal_datum), werktitel: String(r.werktitel), categorie: r.categorie as RadarRij["categorie"],
+      relevantie: String(r.relevantie || ""), status: r.status as RadarRij["status"], primaireBron: bronnen.length ? bronnen : null, berichtId: t(r.bericht_id),
+      beoordeeldOp: String(r.beoordeeld_op), besluit: r.besluit === "geaccepteerd" || r.besluit === "afgewezen" ? r.besluit : null, besluitOp: t(r.besluit_op),
+    };
+  }
+  async radarBekend(sinds: string) {
+    return this.radarVraag(async () => (await this.lees(`nv_radar?beoordeeld_op=gte.${encodeURIComponent(sinds)}&select=signaal_url&limit=5000`)).map((r) => String(r.signaal_url)));
+  }
+  async radarOverheidItems(sinds: string) {
+    const rijen = await this.lees(`nv_bron_items?regime=eq.overheid&gepubliceerd_op=gte.${encodeURIComponent(sinds)}&order=gepubliceerd_op.desc&limit=2000`);
+    return rijen.map(naarItem);
+  }
+  async radarOpslaan(rijen: RadarNieuw[]) {
+    if (!rijen.length) return 0;
+    return this.radarVraag(async () => {
+      const r = await this.vraag("nv_radar?on_conflict=signaal_url", {
+        method: "POST", prefer: "resolution=ignore-duplicates,return=representation",
+        body: JSON.stringify(rijen.map((x) => ({
+          signaal_url: x.signaalUrl, signaal_datum: x.signaalDatum, werktitel: x.werktitel, categorie: x.categorie, relevantie: x.relevantie, status: x.status,
+          primaire_bron: x.primaireBron, bericht_id: x.berichtId && /^[0-9a-f-]{36}$/i.test(x.berichtId) ? x.berichtId : null, beoordeeld_op: x.beoordeeldOp,
+        }))),
+      });
+      return ((await r.json()) as Rij[]).length;
+    });
+  }
+  async radarOpen(limiet: number) {
+    try {
+      return (await this.lees(`nv_radar?besluit=is.null&order=signaal_datum.desc&limit=${Math.max(1, Math.min(200, limiet))}`)).map((r) => this.naarRadar(r));
+    } catch (e) {
+      if (isRadarFout(e)) return [];
+      throw e;
+    }
+  }
+  async radarRij(id: string) {
+    if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
+    return this.radarVraag(async () => {
+      const r = (await this.lees(`nv_radar?id=eq.${id}&limit=1`))[0];
+      return r ? this.naarRadar(r) : null;
+    });
+  }
+  async zetRadarBesluit(id: string, keuze: RadarBesluit, nu = Date.now()) {
+    if (!/^[0-9a-f-]{36}$/i.test(id)) return;
+    await this.radarVraag(() => this.vraag(`nv_radar?id=eq.${id}`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ besluit: keuze, besluit_op: new Date(nu).toISOString() }) }));
+  }
+  async radarOpruimen(oud: string) {
+    try {
+      const r = await this.vraag(`nv_radar?beoordeeld_op=lt.${encodeURIComponent(oud)}`, { method: "DELETE", prefer: "return=representation" });
+      return ((await r.json()) as Rij[]).length;
+    } catch (e) {
+      if (isRadarFout(e)) return 0;
+      throw e;
+    }
+  }
+
   async upsertItems(items: BronItem[]) {
     let nieuw = 0;
+    items = items.filter((x) => !isVerbodenBron(x.url)); // harde regel: een verboden brondomein komt nooit in nv_bron_items
     for (let i = 0; i < items.length; i += 100) {
       const rijen = items.slice(i, i + 100).map((x) => ({
         url: x.url, bron_id: x.bronId, bron_naam: x.bronNaam, regime: x.regime, groep: x.groep, taal: x.taal, land: x.land,

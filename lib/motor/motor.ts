@@ -29,6 +29,8 @@ import { overheidPoort } from "./overheidpoort";
 import { dagStart } from "./tijd";
 import { leesSignaal, type Bericht, type Bron, type Cluster, type PeilParameter, type PeilSignaalNieuw, type StapResultaat, type Synthese } from "./types";
 import { beoordeelSignaal } from "./signaal";
+import { draaiRadar, RADAR_BEWAAR_DAGEN } from "./radar";
+import { isVerbodenBron } from "./config";
 
 export interface RunOpties {
   opslag: Opslag;
@@ -144,6 +146,20 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
     noteer({ stap: "bewaar_items", ok: false, fout: fout(e) });
   }
 
+  // 2b. Radar (28-11-2026): onderwerpsignalen uit de nieuws-sitemap van een Engelstalig medium. UITSLUITEND signaal, nooit bron:
+  // alleen titels gaan naar het goedkope model, er wordt geen artikel opgehaald, niets komt in items, bronnen of publicaties.
+  // Een signaal dat bij een Franse overheidsbron in onze eigen opslag past, geeft dat overheidsonderwerp voorrang in stap 5.
+  // Faalt de radar (of ontbreekt de tabel nv_radar), dan gaat de motor gewoon door.
+  const voorrang = new Set<string>();
+  try {
+    const r = await draaiRadar({ opslag: o.opslag, client: o.client, fetchFn: o.fetchFn, nu });
+    for (const u of r.voorrangUrls) voorrang.add(u);
+    aantallen.radarNieuw = r.nieuw;
+    noteer({ stap: "radar", ok: r.ok, aantal: r.nieuw, fout: r.fout, detail: r.detail });
+  } catch (e) {
+    noteer({ stap: "radar", ok: false, fout: fout(e) });
+  }
+
   // 3. Open pool binnen het venster
   const sinds = new Date(nu - cfg.venstersUren * 3600_000).toISOString();
   let pool = items;
@@ -192,7 +208,8 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
     const vandaag = await o.opslag.telGepubliceerdSinds(dagStart(nu)).catch(() => 0);
     const ruimte = Math.max(0, cfg.maxBerichtenPerDag - vandaag);
     // Volgorde op verwachte relevantie (niet meer alleen op aantal bronnen), binnen de ruimte van vandaag.
-    kandidaten = kiesKandidaten(nietDubbel, cfg.maxSynthesesPerRun, ruimte);
+    kandidaten = kiesKandidaten(nietDubbel, cfg.maxSynthesesPerRun, ruimte, voorrang);
+    aantallen.radarVoorrang = kandidaten.filter((c) => c.items.some((i) => voorrang.has(i.url))).length;
     aantallen.kandidaten = kandidaten.length;
     noteer({ stap: "selecteer", ok: true, aantal: kandidaten.length, detail: { vandaagGepubliceerd: vandaag, ruimte } });
   } catch (e) {
@@ -244,6 +261,7 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
         const score = berekenScore(c, s.relevantie, nu);
         const bronnen = [...new Map(c.items.map((i) => [i.url, i])).values()]
           .sort((a, b) => a.gepubliceerdOp.localeCompare(b.gepubliceerdOp))
+          .filter((i) => !isVerbodenBron(i.url)) // harde regel: een verboden brondomein staat nooit in het bronnenblok
           .map((i) => ({ naam: i.bronNaam, origineleKop: i.titel, datum: i.gepubliceerdOp, url: i.url }));
         const status: Bericht["status"] = !uitslag.ok ? "geblokkeerd" : score >= cfg.publiceerDrempel && s.relevantie >= cfg.minRelevantie ? "gepubliceerd" : "concept";
         let koppeling = { raakt: [], mogelijkGewijzigd: [] } as Bericht["peil"];
@@ -468,6 +486,8 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
     const n = await o.opslag.opruimen(new Date(nu - cfg.ruweItemsBewaarDagen * 86400_000).toISOString());
     aantallen.opgeruimd = n;
     noteer({ stap: "opruimen", ok: true, aantal: n });
+    // Radarsignalen ouder dan 30 dagen (ontbreekt de tabel, dan 0).
+    aantallen.radarOpgeruimd = await o.opslag.radarOpruimen(new Date(nu - RADAR_BEWAAR_DAGEN * 86400_000).toISOString()).catch(() => 0);
   } catch (e) {
     noteer({ stap: "opruimen", ok: false, fout: fout(e) });
   }
