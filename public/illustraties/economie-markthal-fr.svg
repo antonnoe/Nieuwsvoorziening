@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
-<rect width="1600" height="900" fill="#faf7f4"/>
+<rect width="1600" height="900" fill="#faf7f4"/><g stroke="#1f1a18" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round">
 <rect y="640" width="1600" height="260" fill="#efe8e1"/>
 <!-- dak en spanten -->
 <path d="M120 300 L800 90 L1480 300 Z" fill="#e7dfd8"/>
@@ -30,4 +30,4 @@
 <g fill="#1f1a18"><circle cx="760" cy="560" r="22"/><path d="M730 590 q30 -18 60 0 l10 140 h-80 z"/>
 <circle cx="860" cy="575" r="18"/><path d="M836 600 q24 -14 48 0 l8 120 h-64 z" fill="#6f6660"/></g>
 <path d="M790 640 h40 l-6 40 h-28 z" fill="#800000"/>
-</svg>
+</g></svg>

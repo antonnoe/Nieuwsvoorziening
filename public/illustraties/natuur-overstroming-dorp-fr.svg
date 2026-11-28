@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
-<rect width="1600" height="900" fill="#e9e4df"/>
+<rect width="1600" height="900" fill="#e9e4df"/><g stroke="#1f1a18" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round">
 <g fill="#b9b1aa"><ellipse cx="350" cy="140" rx="260" ry="70"/><ellipse cx="620" cy="120" rx="220" ry="60"/><ellipse cx="1200" cy="150" rx="300" ry="75"/></g>
 <g stroke="#9c948d" stroke-width="5"><path d="M300 230 l-20 60 M420 220 l-20 60 M560 240 l-20 60 M1100 230 l-20 60 M1240 240 l-20 60 M1380 225 l-20 60"/></g>
 <!-- huizen -->
@@ -18,4 +18,4 @@
 <path d="M100 620 q40 -14 80 0 t80 0"/><path d="M700 680 q40 -14 80 0 t80 0"/><path d="M1200 640 q40 -14 80 0 t80 0"/><path d="M400 780 q40 -14 80 0 t80 0"/><path d="M1000 820 q40 -14 80 0 t80 0"/></g>
 <!-- auto half onder water -->
 <path d="M700 560 q10 -50 60 -55 h120 q40 5 60 55 z" fill="#1f1a18"/><rect x="740" y="520" width="60" height="30" fill="#e9e4df"/><rect x="820" y="520" width="60" height="30" fill="#e9e4df"/>
-</svg>
+</g></svg>
