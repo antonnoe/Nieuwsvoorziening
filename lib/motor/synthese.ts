@@ -7,6 +7,7 @@ import { modelSynthese } from "./config";
 import { CATEGORIEEN, leesSignaal, type Categorie, type Cluster, type Synthese } from "./types";
 import { DEFINITIE_SIGNAAL } from "./signaal";
 import { namenVoorOpeningszin } from "./poort";
+import { heeftNlBeBron } from "./kanttekening";
 
 export const SYSTEEM_SYNTHESE = `Je bent eindredacteur van een Nederlandstalige nieuwsdienst over Frankrijk voor Nederlanders en Belgen die in Frankrijk wonen of er vaak komen. Je schrijft één korte, feitelijke nieuwssynthese in eigen woorden over het onderwerp dat de aangeleverde bronnen delen.
 
@@ -27,9 +28,22 @@ Regels:
 
 Antwoord uitsluitend met JSON: {"publiceren":true,"kop":"","samenvatting":"","tekst":"","categorie":"","relevantie":0,"portemonnee":false,"signaal":null,"beeldZoektermen":["","",""]}`;
 
+/**
+ * NL/BE-kijk (28-11-2026): alleen in de opdracht als het cluster een Nederlandse of Belgische bron heeft. Het model MAG (hoeft niet) een korte
+ * alinea toevoegen die begint met "In Nederland", "In België" of "In Nederland en België" en alleen noemt wat die bronnen anders benadrukken of
+ * wat het besluit daar betekent. Nooit een eigen mening; staat er niets wezenlijk anders, dan geen alinea.
+ */
+export const REGEL_NL_BE = `11. Onder de bronnen staan ook Nederlandse of Belgische bronnen (herkenbaar aan "Nederlandse bron" of "Belgische bron"). Staat daar iets wezenlijks anders in dan in de Franse bronnen, of zegt het wat het besluit voor Nederland of België betekent, dan MAG je (je hoeft niet) één korte alinea toevoegen die begint met "In Nederland", "In België" of "In Nederland en België" en alleen benoemt wat die Nederlandse of Belgische bronnen anders benadrukken of wat het besluit daar betekent. Gebruik alleen wat in die bronnen staat, nooit een eigen mening of eigen duiding, en schrijf niet "volgens de bronnen" of een krantennaam. Bedragen in die alinea moeten letterlijk in een bron staan. Staat er niets wezenlijk anders, schrijf dan geen alinea over Nederland of België. De alinea telt mee in de lengte en komt vóór een eventuele slotalinea "Wat betekent dit voor u:".`;
+
+/** De systeemopdracht voor dit cluster: de vaste opdracht, met de NL/BE-regel alleen als er een Nederlandse of Belgische bron is. */
+export function systeemSynthese(c: Cluster | null | undefined): string {
+  if (!heeftNlBeBron(c)) return SYSTEEM_SYNTHESE;
+  return SYSTEEM_SYNTHESE.replace("\n\nAntwoord uitsluitend met JSON:", `\n\n${REGEL_NL_BE}\n\nAntwoord uitsluitend met JSON:`);
+}
+
 export function bouwInvoer(c: Cluster): string {
   return c.items
-    .map((i, n) => `Bron ${n + 1} (${[i.taal, i.gepubliceerdOp.slice(0, 10)].filter(Boolean).join(", ")})\nKop: ${i.titel}\nOmschrijving: ${i.samenvatting || "(geen)"}${i.artikelTekst ? `\nArtikeltekst:\n${i.artikelTekst}` : ""}`)
+    .map((i, n) => `Bron ${n + 1} (${[i.taal, i.gepubliceerdOp.slice(0, 10), i.land === "NL" ? "Nederlandse bron" : i.land === "BE" ? "Belgische bron" : ""].filter(Boolean).join(", ")})\nKop: ${i.titel}\nOmschrijving: ${i.samenvatting || "(geen)"}${i.artikelTekst ? `\nArtikeltekst:\n${i.artikelTekst}` : ""}`)
     .join("\n\n");
 }
 
@@ -62,6 +76,6 @@ export const ONDERWERP_AANWIJZING = "Onderwerp van het bericht (alleen een aanwi
 
 export async function synthetiseer(c: Cluster, client: ModelClient, onderwerp?: string): Promise<Synthese | null> {
   const aanwijzing = onderwerp && onderwerp.trim() ? `\n\n${ONDERWERP_AANWIJZING}: ${onderwerp.trim().slice(0, 200)}` : "";
-  const antw = await client.tekst({ model: modelSynthese(), system: SYSTEEM_SYNTHESE, user: `${bouwInvoer(c)}${namenRegel(c)}${aanwijzing}`, maxTokens: 2200 });
+  const antw = await client.tekst({ model: modelSynthese(), system: systeemSynthese(c), user: `${bouwInvoer(c)}${namenRegel(c)}${aanwijzing}`, maxTokens: 2200 });
   return leesSynthese(antw);
 }

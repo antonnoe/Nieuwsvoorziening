@@ -4,6 +4,7 @@
 import { haalJson, type ModelClient } from "./ai";
 import { modelGoedkoop } from "./config";
 import { hashId, overlap } from "./tekst";
+import { isKanttekeningItem } from "./kanttekening";
 import type { BronItem, Cluster } from "./types";
 
 class Unie {
@@ -81,5 +82,6 @@ export async function clusterItems(
 
 /** Aantal onafhankelijke bronnen (verschillende bron-id's) in een cluster. */
 export function aantalBronnen(c: Cluster): number {
-  return new Set(c.items.map((i) => i.bronId)).size;
+  // Een kanttekening (NL/BE-item zonder Frankrijk-link) is geen onafhankelijke bron en telt niet mee.
+  return new Set(c.items.filter((i) => !isKanttekeningItem(i)).map((i) => i.bronId)).size;
 }

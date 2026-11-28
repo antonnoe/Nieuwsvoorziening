@@ -4,6 +4,7 @@ import { ontsnap } from "./tekst";
 import { isVerbodenBron } from "./config";
 import type { Bron, BronItem } from "./types";
 import { zeef } from "./zeef";
+import { kanttekeningToegestaan } from "./kanttekening";
 
 function tag(blok: string, naam: string): string {
   const m = blok.match(new RegExp(`<${naam}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${naam}>`, "i"));
@@ -69,6 +70,8 @@ export interface OogstBronResultaat {
   door: number;
   fout?: string;
   geweerd: Record<string, number>;
+  /** Aantal NL/BE-items zonder Frankrijk-link die als kanttekening zijn bewaard (alleen over de EU of de grens). */
+  kanttekening?: number;
 }
 
 export async function haalFeed(bron: Bron, fetchFn: typeof fetch = fetch, timeoutMs = 9000): Promise<string> {
@@ -112,6 +115,12 @@ export async function oogstBronnen(
           for (const it of alle) {
             if (isVerbodenBron(it.url)) { res.geweerd.verboden_bron = (res.geweerd.verboden_bron || 0) + 1; continue; }
             const u = zeef(it, bron);
+            // NL/BE-persitem over de EU of de grens zonder Frankrijk te noemen: bewaren als kanttekening (geen eigen onderwerp, geen onafhankelijke bron).
+            if (!u.door && u.reden === "geen_frankrijk" && kanttekeningToegestaan(it, bron)) {
+              items.push(it);
+              res.kanttekening = (res.kanttekening || 0) + 1;
+              continue;
+            }
             if (!u.door) {
               res.geweerd[u.reden as string] = (res.geweerd[u.reden as string] || 0) + 1;
               continue;

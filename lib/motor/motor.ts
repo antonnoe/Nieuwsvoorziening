@@ -4,6 +4,7 @@
 import { haalJson, type ModelClient } from "./ai";
 import { laadConfig, modelSynthese, REGELVERSIE, MAX_HERSCHRIJVEN_PER_RUN, EENMALIGE_PEIL_HERTOETS, SIGNAAL_NALOOP_DAGEN, MAX_SIGNAAL_NALOOP_PER_RUN, type MotorConfig } from "./config";
 import { aantalBronnen, clusterItems } from "./cluster";
+import { koppelKanttekeningen, splitsKanttekeningen } from "./kanttekening";
 import { oogstBronnen, type OogstBronResultaat } from "./feeds";
 import { schoneZoektermen, beeldResultaat, fotoSleutel, type BeeldGenerator, actieveGenerator } from "./beeld";
 import "./beeld-unsplash";
@@ -18,7 +19,7 @@ import type { Opslag, RunRecord, PeilSignaalIn, OpgeslagenBericht, BerichtHersch
 import { laadPeil, peilKoppeling, type PeilOordeelLog } from "./peil";
 import { kwaliteitsPoort, type PoortUitslag } from "./poort";
 import { berekenScore, clusterRegime } from "./score";
-import { synthetiseer, SYSTEEM_SYNTHESE, bouwInvoer, leesSynthese } from "./synthese";
+import { synthetiseer, systeemSynthese, bouwInvoer, leesSynthese } from "./synthese";
 import { verrijkMetArtikelen } from "./artikel";
 import { modelGoedkoop } from "./config";
 import { GEEN_ZIN, hashOmschrijving, maakLezerszin } from "./lezerszin";
@@ -64,7 +65,7 @@ export async function poortMetHerkansing(s: Synthese, c: Cluster, client: ModelC
   if (!uitslag.ok) {
     try {
       const antw = await client.tekst({
-        model: modelSynthese(), system: SYSTEEM_SYNTHESE, maxTokens: 2200,
+        model: modelSynthese(), system: systeemSynthese(c), maxTokens: 2200,
         user: `${bouwInvoer(c)}\n\nJe vorige versie werd afgekeurd om deze redenen: ${uitslag.redenen.join("; ")}. Schrijf opnieuw en vermijd precies deze fouten.`,
       });
       const s2 = leesSynthese(antw);
@@ -78,12 +79,15 @@ export async function poortMetHerkansing(s: Synthese, c: Cluster, client: ModelC
 }
 
 /** De opgeslagen bronnen van een bericht als cluster (naam, originele kop, url, datum); de omschrijving is niet bewaard. */
+/** Het land van een bron uit de url, voor een herschreven bericht (de opgeslagen bronnen hebben geen land): .nl en .be, anders onbekend. */
+const landVanUrl = (url: string) => (/^https?:\/\/[^/]*\.nl(?:[:/]|$)/i.test(url) ? "NL" : /^https?:\/\/[^/]*\.be(?:[:/]|$)/i.test(url) ? "BE" : "");
+
 export function clusterUitBericht(b: OpgeslagenBericht): Cluster {
   return {
     sleutel: b.id,
     items: b.bronnen.map((x) => ({
       url: x.url, bronId: x.naam, bronNaam: x.naam, regime: b.regime, groep: b.regime === "overheid" ? "overheid" : "fr_pers",
-      taal: "", land: "", titel: x.origineleKop, samenvatting: "", gepubliceerdOp: x.datum || b.gepubliceerdOp,
+      taal: "", land: landVanUrl(x.url), titel: x.origineleKop, samenvatting: "", gepubliceerdOp: x.datum || b.gepubliceerdOp,
     })),
   };
 }
@@ -187,7 +191,12 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
   } catch (e) {
     noteer({ stap: "lees_pool", ok: false, fout: `${fout(e)} (terugval: alleen items van deze run)` });
   }
-  pool = pool.slice(0, cfg.maxClusterItems);
+  // Kanttekeningen (NL/BE-items over de EU of de grens zonder Frankrijk-link) zijn geen eigen onderwerp: ze blijven buiten de clustering
+  // en worden na stap 4 alleen aan een passend cluster gekoppeld.
+  const gesplitst = splitsKanttekeningen(pool);
+  pool = gesplitst.hoofd.slice(0, cfg.maxClusterItems);
+  const kanttekeningen = gesplitst.kanttekeningen;
+  aantallen.kanttekeningenOpen = kanttekeningen.length;
 
   // 4. Groeperen
   let clusters: Cluster[] = [];
@@ -195,6 +204,15 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
     const r = await clusterItems(pool, o.client);
     clusters = r.clusters;
     aantallen.clusters = clusters.length;
+    // NL/BE-kijk: alleen bij clusters met minstens 2 Franse of overheidsbronnen en een Europees of grensoverschrijdend onderwerp.
+    try {
+      const k = await koppelKanttekeningen(clusters, kanttekeningen, o.client);
+      clusters = k.clusters;
+      aantallen.kanttekeningGekoppeld = k.gekoppeld;
+      if (kanttekeningen.length) noteer({ stap: "kanttekening", ok: true, aantal: k.gekoppeld, detail: { open: kanttekeningen.length, clustersInAanmerking: k.inAanmerking, modelAanroepen: k.aanroepen } });
+    } catch (e) {
+      noteer({ stap: "kanttekening", ok: false, fout: fout(e) });
+    }
     noteer({ stap: "clusteren", ok: !r.fout, aantal: clusters.length, fout: r.fout, detail: { model: r.gebruiktModel } });
   } catch (e) {
     noteer({ stap: "clusteren", ok: false, fout: fout(e) });

@@ -2,6 +2,7 @@
 import { normaliseer } from "./tekst";
 import { letterlijkeReeksen } from "./artikel";
 import type { Cluster, Synthese } from "./types";
+import { heeftNlBeBron } from "./kanttekening";
 import type { MotorConfig } from "./config";
 
 /** Zinnen waarmee het model over zijn eigen invoer praat. */
@@ -168,6 +169,9 @@ export function kwaliteitsPoort(s: Synthese, c: Cluster | null, cfg: Pick<MotorC
   }
   if (bronvermeldingen > 1) redenen.push("krantennaam buiten bronnenblok: meer dan één bronvermeldingszin");
   if (/https?:\/\/|www\.|\b[a-z0-9-]+\.(?:fr|nl|be|com|org|info|eu)\b/i.test(`${kop} ${samenvatting} ${tekst}`)) redenen.push("link of domeinnaam in tekst");
+
+  // NL/BE-kijk: een alinea die begint met "In Nederland" of "In België" mag alleen bij een Nederlandse of Belgische bron in het cluster.
+  if (!heeftNlBeBron(c) && tekst.split(/\n\s*\n/).some((a) => /^in (?:nederland|belgie)(?![a-z0-9])/.test(normaliseer(a.trim())))) redenen.push("alinea over Nederland of België zonder Nederlandse of Belgische bron");
 
   // Verzonnen bedragen: elk bedrag in de tekst moet in een bron voorkomen.
   const bronTekst = c ? c.items.map((i) => `${i.titel} ${i.samenvatting} ${i.artikelTekst || ""}`).join(" ") : "";
