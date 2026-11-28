@@ -8,7 +8,7 @@ import { TabelOntbreekt, type Opslag } from "@/lib/motor/opslag";
 import { TIJDELIJK_MELDING, logReden } from "@/lib/redactie-melding";
 import type { BronRij, BronSoort } from "@/lib/motor/types";
 
-export const MELDING_GEEN_FEED = "Geen feed gevonden op dit adres. Probeer het adres van de nieuwspagina zelf, of vraag Anton.";
+export const MELDING_GEEN_FEED = "Op dit adres vonden we geen nieuws om te lezen. Probeer het adres van de nieuwspagina zelf, of vraag Anton.";
 /** De echte reden (tabel nv_bronnen ontbreekt) gaat naar het serverlog; de redacteur ziet alleen deze zin. */
 export const MELDING_GEEN_TABEL = TIJDELIJK_MELDING;
 export const MELDING_RADAR_NIET_NIEUWS = "Deze site gebruiken we alleen als tipgever. Van een tipgever nemen we nooit iets over, dus hij kan geen nieuwsbron zijn.";

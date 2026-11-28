@@ -6,6 +6,7 @@ import Uitklap from "../../_componenten/Uitklap";
 import TekenKnop from "./TekenKnop";
 import { ID_VORM, beeldbankKeuzes } from "@/lib/redactie-acties";
 import { eisToegang, leesMelding } from "@/lib/redactie-pagina";
+import { UITLEG_NIET_GEPLAATST, magTochPlaatsen } from "@/lib/redactie-vandaag";
 import { CATEGORIE_VOL, aantalBronnen } from "@/lib/site";
 
 type SP = Promise<{ m?: string; ok?: string }>;
@@ -27,8 +28,8 @@ export default async function BerichtScherm({ params, searchParams }: { params: 
       <Melding melding={melding} />
       <Beeld b={b} />
       <p className="stil">
+        {weg ? <span className="label weg">weg</span> : b.status !== "gepubliceerd" ? <span className="label">{b.status === "geblokkeerd" ? "tegengehouden" : "niet geplaatst"}</span> : null}
         {CATEGORIE_VOL[b.categorie]} · {aantalBronnen(b.bronnen.length)}
-        {weg ? <span className="label weg">weg</span> : b.status !== "gepubliceerd" ? <span className="label">concept</span> : null}
       </p>
       <h1>{b.kop}</h1>
       <p className="samenvatting">{b.samenvatting}</p>
@@ -37,6 +38,13 @@ export default async function BerichtScherm({ params, searchParams }: { params: 
         {alinea.map((a, n) => <p key={n}>{a}</p>)}
       </details>
 
+      {magTochPlaatsen(b) && (
+        <form method="post" action="/redactie/actie">
+          <Terugvelden actie="plaats" id={id} terug="/redactie" />
+          <p className="stil">{UITLEG_NIET_GEPLAATST}</p>
+          <button type="submit" className="rd-knop hoofd">Toch plaatsen</button>
+        </form>
+      )}
       <div className="knop-rij">
         <Uitklap titel="Ander beeld uit de beeldbank">
           {keuzes.length === 0 ? (

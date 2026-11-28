@@ -283,7 +283,7 @@ test("bronnen via de handelingen: toevoegen met melding, redacteur mag, weghalen
   opslag.bronnenRijen.push({ id: "a", naam: "A", feed: "https://a.test/f", domein: "a.test", taal: "fr", land: "FR", groep: "fr_pers", regime: "pers", status: "ACTIVE", prioriteit: 1, frankrijkFilter: false, vensterUren: 48, soort: "nieuws", actief: true, toegevoegdOp: null, toegevoegdDoor: null, laatstGelezen: null, laatstItems: null, laatsteFout: null });
   const geenFeed = (async () => new Response("nee", { status: 404 })) as unknown as typeof fetch;
   const u = await voerActieUit(opslag, redacteur, { actie: "bron-toevoegen", adres: "krant.test", soort: "nieuws", terug: "/redactie/bronnen" }, geenFeed);
-  assert.deepEqual([u.ok, u.melding], [false, "Geen feed gevonden op dit adres. Probeer het adres van de nieuwspagina zelf, of vraag Anton."]);
+  assert.deepEqual([u.ok, u.melding], [false, "Op dit adres vonden we geen nieuws om te lezen. Probeer het adres van de nieuwspagina zelf, of vraag Anton."]);
   assert.equal(u.terugExtra?.adres, "krant.test", "het geplakte adres blijft in het veld staan");
   assert.equal((await voerActieUit(opslag, redacteur, { actie: "bron-wijzig", id: "a", naam: "Krant A", soort: "NL-BE" })).ok, true);
   assert.equal(opslag.bronnenRijen[0].naam, "Krant A");

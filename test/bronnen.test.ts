@@ -289,7 +289,7 @@ test("toevoegen: geen feed gevonden slaat niets op en meldt dat", async () => {
   const opslag = metTabel();
   const voor = opslag.bronnenRijen.length;
   assert.deepEqual(await voegBronToe(opslag, "krant.test", "nieuws", "Anna", nepFetch({}).f, nu), { ok: false, melding: MELDING_GEEN_FEED });
-  assert.equal(MELDING_GEEN_FEED, "Geen feed gevonden op dit adres. Probeer het adres van de nieuwspagina zelf, of vraag Anton.");
+  assert.equal(MELDING_GEEN_FEED, "Op dit adres vonden we geen nieuws om te lezen. Probeer het adres van de nieuwspagina zelf, of vraag Anton.");
   assert.equal((await voegBronToe(opslag, "http://127.0.0.1", "nieuws", "Anna", nepFetch({}).f, nu)).ok, false);
   assert.equal(opslag.bronnenRijen.length, voor);
 });

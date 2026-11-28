@@ -10,6 +10,7 @@ import { voegBronToe, verwijderBron, wijzigBron } from "@/lib/bronbeheer";
 import { TIJDELIJK_MELDING, logReden } from "@/lib/redactie-melding";
 import { maakBerichtUitTip, type MaakOpties } from "@/lib/redactie-maak-bericht";
 import { radarBesluitUitvoeren } from "@/lib/redactie";
+import { magTochPlaatsen } from "@/lib/redactie-vandaag";
 import type { Toegang } from "@/lib/redactie-toegang";
 import { TEKEN_MELDING, controleerSvg, maakTekening, schoneNaam } from "@/lib/redactie-tekenen";
 import { bewaarSvg, storageUitOmgeving, type StorageInstellingen } from "@/lib/tekeningen";
@@ -121,6 +122,16 @@ export async function voerActieUit(opslag: Opslag, toegang: Toegang, f: Record<s
         await opslag.zetRedactie(id, f.actie === "weg" ? "weg" : null);
         // Na weghalen of terugzetten terug naar de lijst Vandaag, met de melding bovenaan.
         return klaar(true, f.actie === "weg" ? "Weggehaald: het bericht staat nergens meer." : "Teruggezet: het bericht staat er weer.", "/redactie");
+      }
+      case "plaats": {
+        // "Toch plaatsen": alleen een concept dat de kwaliteitspoort niet tegenhield en niet weg is. Een geblokkeerd bericht wordt hier nooit geplaatst.
+        const b = ID_VORM.test(id) ? await opslag.redactieBericht(id) : null;
+        if (!b) return klaar(false, "Dit bericht bestaat niet.");
+        if (b.status === "gepubliceerd") return klaar(false, "Dit bericht staat al live.", "/redactie");
+        if (b.redactie === "weg") return klaar(false, "Dit bericht is weggehaald. Zet het eerst terug.");
+        if (!magTochPlaatsen(b)) return klaar(false, "De kwaliteitscontrole heeft dit bericht tegengehouden. Het kan hier niet worden geplaatst.");
+        await opslag.zetStatus(id, "gepubliceerd");
+        return klaar(true, "Geplaatst: het bericht staat nu live.", "/redactie");
       }
       case "beeld": {
         const u = await kiesBeeldUitBeeldbank(opslag, id, String(f.illustratie || ""));

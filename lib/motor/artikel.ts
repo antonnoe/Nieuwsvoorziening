@@ -58,7 +58,7 @@ const omschrijvingUit = (html: string): string => {
  * Haalt één pagina op als bronmateriaal (redactie: geplakte link van een overheidspagina): kop, korte omschrijving en artikeltekst.
  * De tekst wordt nooit opgeslagen. Null bij een fout, een verboden bron of een pagina zonder bruikbare tekst.
  */
-export async function haalPagina(url: string, fetchFn: typeof fetch = fetch, timeoutMs = 9000): Promise<{ titel: string; omschrijving: string; tekst: string } | null> {
+export async function haalPagina(url: string, fetchFn: typeof fetch = fetch, timeoutMs = 9000): Promise<{ titel: string; omschrijving: string; tekst: string; url: string } | null> {
   if (isVerbodenBron(url)) return null;
   try {
     const r = await fetchFn(url, {
@@ -72,7 +72,8 @@ export async function haalPagina(url: string, fetchFn: typeof fetch = fetch, tim
     const html = await r.text();
     const tekst = haalTekstUitHtml(html);
     const titel = titelUit(html);
-    return titel && tekst ? { titel, omschrijving: omschrijvingUit(html), tekst } : null;
+    // `url` is het adres na eventuele redirects (zo kan de aanroeper het eindadres opnieuw toetsen).
+    return titel && tekst ? { titel, omschrijving: omschrijvingUit(html), tekst, url: r.url || url } : null;
   } catch {
     return null;
   }

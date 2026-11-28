@@ -30,6 +30,15 @@ export const MELDING_GEEN_BERICHT = "Er is geen bericht van te maken: de bronnen
 const OVERHEID_ITEMS_DAGEN = 35;
 const MAX_EXTRA_ITEMS = 3;
 
+/**
+ * Moet bij een tip MET overheidsbron ook het veld "Plak de link van een overheidspagina" staan? Ja zodra een poging met die bron
+ * is mislukt omdat de pagina niet te lezen was (of een geplakte link niet deugde): anders zit de redacteur vast.
+ */
+export function toonLinkVeld(aantalBronnen: number, isDezeTip: boolean, meldingTekst?: string | null, linkIngevuld?: string | null): boolean {
+  if (aantalBronnen <= 0) return true;
+  return isDezeTip && (meldingTekst === MELDING_LINK_ONLEESBAAR || !!(linkIngevuld && linkIngevuld.trim()));
+}
+
 export interface MaakOpties {
   opslag: Opslag;
   client: ModelClient | null;
@@ -63,12 +72,18 @@ async function itemUitLink(invoer: string, fetchFn: typeof fetch, nu: number): P
   if (!isOverheidsLink(u)) return { fout: MELDING_GEEN_OVERHEIDSLINK };
   const p = await haalPagina(u.toString(), fetchFn);
   if (!p) return { fout: MELDING_LINK_ONLEESBAAR };
-  const host = bronNaamVan(u.hostname);
+  // Het eindadres na redirects wordt opnieuw getoetst: een overheidslink mag niet bij een tipgever of een gewone site uitkomen.
+  let eind: URL;
+  try { eind = new URL(p.url || u.toString()); } catch { return { fout: MELDING_LINK_ONLEESBAAR }; }
+  eind.hash = "";
+  if (isVerbodenBron(eind.toString())) return { fout: "Dit is een tipgever. Van een tipgever nemen we nooit iets over." };
+  if (!isOverheidsLink(eind)) return { fout: MELDING_GEEN_OVERHEIDSLINK };
+  const host = bronNaamVan(eind.hostname);
   const nl = host === "overheid.nl" || host.endsWith(".overheid.nl") || host === "rijksoverheid.nl" || host.endsWith(".rijksoverheid.nl");
   return {
     tekst: p.tekst,
     item: {
-      url: u.toString(), bronId: `overheid-${host}`, bronNaam: host, regime: "overheid", groep: "overheid", taal: nl ? "nl" : "fr", land: nl ? "NL" : "FR",
+      url: eind.toString(), bronId: `overheid-${host}`, bronNaam: host, regime: "overheid", groep: "overheid", taal: nl ? "nl" : "fr", land: nl ? "NL" : "FR",
       titel: p.titel, samenvatting: p.omschrijving, gepubliceerdOp: new Date(nu).toISOString(), opgehaaldOp: new Date(nu).toISOString(), prioriteit: 1,
     },
   };
@@ -104,11 +119,6 @@ export async function maakBerichtUitTip(o: MaakOpties, tipId: string, link?: str
     await opslag.zetRadarBesluit(tipId, "geaccepteerd", nu);
     return { ok: true, berichtId: tip.berichtId, status: "gepubliceerd", melding: "Dit onderwerp staat al in het nieuws." };
   }
-  if (!o.client) {
-    logReden("maak bericht", "geen ANTHROPIC_API_KEY");
-    return { ok: false, melding: TIJDELIJK_MELDING };
-  }
-
   // 1. De overheidsbron: uit onze eigen opslag (de tip noemt de url), anders de geplakte link.
   let primair: BronItem[] = [];
   const nieuweItems: BronItem[] = [];
@@ -125,16 +135,23 @@ export async function maakBerichtUitTip(o: MaakOpties, tipId: string, link?: str
         if (!("fout" in r)) { primair.push(r.item); nieuweItems.push(r.item); linkTeksten.set(r.item.url, r.tekst); }
       }
     }
-  } else if (link && link.trim()) {
+  }
+  if (!primair.length && link && link.trim()) {
+    // Geen (leesbare) overheidsbron bij de tip: de geplakte link neemt het over.
     const r = await itemUitLink(link, fetchFn, nu);
     if ("fout" in r) return { ok: false, melding: r.fout };
     primair = [r.item];
     nieuweItems.push(r.item);
     linkTeksten.set(r.item.url, r.tekst);
-  } else {
+  } else if (!bekend.length) {
     return { ok: false, melding: MELDING_GEEN_BRON };
   }
   if (!primair.length) return { ok: false, melding: MELDING_LINK_ONLEESBAAR };
+  // Eerst de link, dan pas het model: een foute link krijgt altijd zijn eigen melding, ook als het model even niet beschikbaar is.
+  if (!o.client) {
+    logReden("maak bericht", "geen ANTHROPIC_API_KEY");
+    return { ok: false, melding: TIJDELIJK_MELDING };
+  }
 
   // 2. Een gelezen pagina wordt als bronitem bewaard (alleen kop, omschrijving en url; de tekst nooit).
   if (nieuweItems.length) await opslag.upsertItems(nieuweItems).catch((e) => logReden("bronitem bewaren", e));

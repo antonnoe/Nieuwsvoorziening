@@ -5,6 +5,7 @@ import Terugvelden from "../_componenten/Terugvelden";
 import { laadBronnenLijst } from "@/lib/motor/bronnenlijst";
 import { kaleHost } from "@/lib/motor/config";
 import { eisToegang, leesMelding } from "@/lib/redactie-pagina";
+import { toonLinkVeld } from "@/lib/redactie-maak-bericht";
 import { TIJDELIJK_MELDING } from "@/lib/redactie-melding";
 import { veiligeUrl } from "@/lib/site";
 
@@ -61,6 +62,13 @@ export default async function Radar({ searchParams }: { searchParams: SP }) {
                 {bronnen.slice(0, 3).map((b) => <a key={b.url} className="rd-knop" href={veiligeUrl(b.url) || undefined} target="_blank" rel="noopener noreferrer">Bekijk de overheidsbron{bronnen.length > 1 ? ` (${domeinVan(b.url) || b.naam})` : ""}</a>)}
                 <BezigFormulier actie="/redactie/actie" knop="Maak bericht" bezigTekst="Bezig, dit duurt een minuut…">
                   <Terugvelden actie="maak-bericht" id={t.id} terug="/redactie/radar" extra={{ tip: t.id }} />
+                  {toonLinkVeld(bronnen.length, hier, melding?.tekst, sp.link) && (
+                    <>
+                      <p>Deze overheidsbron kon niet worden gelezen. Plak de link van een andere overheidspagina over hetzelfde onderwerp.</p>
+                      <label htmlFor={`link-${t.id}`}>Plak de link van een overheidspagina</label>
+                      <input id={`link-${t.id}`} type="text" name="link" inputMode="url" autoComplete="off" autoCapitalize="none" placeholder="bijvoorbeeld service-public.fr/…" defaultValue={sp.link || ""} required />
+                    </>
+                  )}
                 </BezigFormulier>
               </>
             ) : (
