@@ -291,3 +291,30 @@ export interface TekeningRij {
   naam: string;
   gemaaktOp: string;
 }
+
+// ---- Overheidskort (28-11-2026): één korte kaart per overheidsitem (Nederlandse titel, één of twee zinnen), tabel nv_overheid_kort ----
+export const OVERHEID_THEMAS = ["geld-belasting", "praktisch", "ondernemen", "sociale-zekerheid", "douane", "economie", "wetgeving", "natuur-milieu"] as const;
+export type OverheidThema = (typeof OVERHEID_THEMAS)[number];
+export const OVERHEID_THEMA_NAAM: Record<OverheidThema, string> = {
+  "geld-belasting": "Geld en belasting", praktisch: "Praktisch", ondernemen: "Ondernemen", "sociale-zekerheid": "Sociale zekerheid",
+  douane: "Douane", economie: "Economie", wetgeving: "Wetgeving en beleid", "natuur-milieu": "Natuur en milieu",
+};
+export const isOverheidThema = (t: unknown): t is OverheidThema => (OVERHEID_THEMAS as readonly string[]).includes(String(t));
+
+export interface OverheidKortNieuw {
+  itemUrl: string;
+  bronNaam: string;
+  bronDomein: string;
+  datum: string; // ISO, publicatiedatum van het item
+  titel: string;
+  samenvatting: string;
+  thema: OverheidThema | null;
+  relevant: boolean;
+  /** Waarom een item niet relevant is of is afgekeurd (r17, caribisch, model, controle); null bij een getoond kort. Zo komt het item niet steeds terug. */
+  reden: string | null;
+  gemaaktOp: string; // ISO
+}
+export interface OverheidKortRij extends OverheidKortNieuw {
+  id: string;
+  redactie: "weg" | null;
+}

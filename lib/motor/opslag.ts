@@ -1,12 +1,12 @@
 // Opslag: Supabase via de REST-interface (geen extra afhankelijkheid), met een
 // geheugenvariant voor tests en droge runs. Elke methode gooit bij een storing;
 // de motor vangt dat per stap op.
-import { leesKanalen, leesSignaal, groenePeil, type Signaal, type BeeldCredit, type Bericht, type BronItem, type Kanaal, type PeilBesluit, type PeilKoppeling, type PeilSignaalIn, type PeilSignaalRij } from "./types";
+import { leesKanalen, leesSignaal, groenePeil, isOverheidThema, type Signaal, type BeeldCredit, type Bericht, type BronItem, type Kanaal, type PeilBesluit, type PeilKoppeling, type PeilSignaalIn, type PeilSignaalRij } from "./types";
 import { zoekSamenvoeging } from "./peilbeoordeling";
 import { dagStart } from "./tijd";
 import { REGELVERSIE, isVerbodenBron } from "./config";
 import { RadarOntbreekt, isRadarFout } from "./radar";
-import type { RadarBesluit, RadarNieuw, RadarRij, RadarBron, BronRij, Redacteur, RedacteurRol, TekeningRij, Regime, Groep } from "./types";
+import type { OverheidKortNieuw, OverheidKortRij, RadarBesluit, RadarNieuw, RadarRij, RadarBron, BronRij, Redacteur, RedacteurRol, TekeningRij, Regime, Groep } from "./types";
 
 export interface RunRecord {
   id?: string;
@@ -198,6 +198,16 @@ export interface Opslag {
   redacteurIntrekken(id: string, nu?: number): Promise<void>;
   // ---- Getekende beelden (28-11-2026, tabel nv_tekeningen): lijst voor een latere stap naar de beeldbank.
   tekeningNoteer(t: TekeningRij): Promise<void>;
+  // ---- Overheidskort (28-11-2026, tabel nv_overheid_kort). Ontbreekt de tabel: overheidKortTeMaken, overheidKortOpslaan en zetOverheidKortRedactie
+  // gooien TabelOntbreekt; overheidKortLijst en overheidKortOpruimen geven dan leeg/0.
+  /** Items van overheidsbronnen (`bronIds`) sinds `sindsIso` zonder kort (ook geen afgekeurd of niet-relevant kort), nieuwste eerst. */
+  overheidKortTeMaken(sindsIso: string, limiet: number, bronIds: string[]): Promise<BronItem[]>;
+  /** Bewaart korten (ontdubbeld op item_url); geeft het aantal nieuwe rijen. */
+  overheidKortOpslaan(rijen: OverheidKortNieuw[]): Promise<number>;
+  /** Relevante korten (nieuwste eerst op datum); standaard zonder weggehaalde, met `metWeg` ook de weggehaalde (voor de redactie). */
+  overheidKortLijst(o: { limiet: number; sindsIso?: string; metWeg?: boolean }): Promise<OverheidKortRij[]>;
+  zetOverheidKortRedactie(id: string, waarde: "weg" | null): Promise<boolean>;
+  overheidKortOpruimen(oudIso: string): Promise<number>;
 }
 
 // ---- Geheugen -----------------------------------------------------------------
@@ -326,6 +336,47 @@ export class GeheugenOpslag implements Opslag {
   }
   async tekeningNoteer(t: TekeningRij) {
     this.tekeningen.push({ ...t, id: `tek-${(this.n += 1)}` });
+  }
+  // ---- overheidskort (geheugen)
+  overheidKorten: OverheidKortRij[] = [];
+  /** Voor tests: doet alsof de tabel nv_overheid_kort ontbreekt. */
+  overheidKortTabelOntbreekt = false;
+  private kortCheck() {
+    if (this.overheidKortTabelOntbreekt) throw new TabelOntbreekt("nv_overheid_kort");
+  }
+  async overheidKortTeMaken(sinds: string, limiet: number, bronIds: string[]) {
+    this.kortCheck();
+    const bekend = new Set(this.overheidKorten.map((k) => k.itemUrl));
+    return [...this.items.values()]
+      .filter((i) => i.regime === "overheid" && bronIds.includes(i.bronId) && i.gepubliceerdOp >= sinds && !bekend.has(i.url))
+      .sort((a, b) => b.gepubliceerdOp.localeCompare(a.gepubliceerdOp))
+      .slice(0, limiet);
+  }
+  async overheidKortOpslaan(rijen: OverheidKortNieuw[]) {
+    this.kortCheck();
+    let n = 0;
+    for (const r of rijen) if (!this.overheidKorten.some((k) => k.itemUrl === r.itemUrl)) (this.overheidKorten.push({ ...r, id: `kort-${(this.n += 1)}`, redactie: null }), (n += 1));
+    return n;
+  }
+  async overheidKortLijst(o: { limiet: number; sindsIso?: string; metWeg?: boolean }) {
+    if (this.overheidKortTabelOntbreekt) return [];
+    return this.overheidKorten
+      .filter((k) => k.relevant && (o.metWeg || k.redactie !== "weg") && (!o.sindsIso || k.gemaaktOp >= o.sindsIso))
+      .sort((a, b) => b.datum.localeCompare(a.datum))
+      .slice(0, o.limiet);
+  }
+  async zetOverheidKortRedactie(id: string, waarde: "weg" | null) {
+    this.kortCheck();
+    const k = this.overheidKorten.find((x) => x.id === id);
+    if (!k) return false;
+    k.redactie = waarde;
+    return true;
+  }
+  async overheidKortOpruimen(oud: string) {
+    if (this.overheidKortTabelOntbreekt) return 0;
+    const voor = this.overheidKorten.length;
+    this.overheidKorten = this.overheidKorten.filter((k) => k.gemaaktOp >= oud);
+    return voor - this.overheidKorten.length;
   }
   async upsertItems(items: BronItem[]) {
     let nieuw = 0;
@@ -764,6 +815,60 @@ export class SupabaseOpslag implements Opslag {
       method: "POST", prefer: "return=minimal",
       body: JSON.stringify({ bericht_id: t.berichtId && /^[0-9a-f-]{36}$/i.test(t.berichtId) ? t.berichtId : null, url: t.url, naam: t.naam, gemaakt_op: t.gemaaktOp }),
     }));
+  }
+
+  // ---- Overheidskort: tabel nv_overheid_kort (migratie 20261128170000_nv_overheid_kort.sql, door de regisseur toe te passen)
+  private naarKort(r: Rij): OverheidKortRij {
+    const thema = isOverheidThema(r.thema) ? r.thema : null;
+    return {
+      id: String(r.id), itemUrl: String(r.item_url), bronNaam: String(r.bron_naam || ""), bronDomein: String(r.bron_domein || ""), datum: String(r.datum),
+      titel: String(r.titel), samenvatting: String(r.samenvatting || ""), thema, relevant: r.relevant === true, reden: r.reden == null ? null : String(r.reden),
+      gemaaktOp: String(r.gemaakt_op), redactie: r.redactie === "weg" ? "weg" : null,
+    };
+  }
+  async overheidKortTeMaken(sinds: string, limiet: number, bronIds: string[]) {
+    const bekend = await this.metTabel("nv_overheid_kort", async () =>
+      new Set((await this.lees(`nv_overheid_kort?datum=gte.${encodeURIComponent(sinds)}&select=item_url&limit=5000`)).map((r) => String(r.item_url))));
+    const rijen = await this.lees(`nv_bron_items?regime=eq.overheid&gepubliceerd_op=gte.${encodeURIComponent(sinds)}&order=gepubliceerd_op.desc&limit=2000`);
+    return rijen.map(naarItem).filter((i) => bronIds.includes(i.bronId) && !bekend.has(i.url) && !isVerbodenBron(i.url)).slice(0, limiet);
+  }
+  async overheidKortOpslaan(rijen: OverheidKortNieuw[]) {
+    if (!rijen.length) return 0;
+    return this.metTabel("nv_overheid_kort", async () => {
+      const r = await this.vraag("nv_overheid_kort?on_conflict=item_url", {
+        method: "POST", prefer: "resolution=ignore-duplicates,return=representation",
+        body: JSON.stringify(rijen.map((x) => ({
+          item_url: x.itemUrl, bron_naam: x.bronNaam, bron_domein: x.bronDomein, datum: x.datum, titel: x.titel, samenvatting: x.samenvatting,
+          thema: x.thema, relevant: x.relevant, reden: x.reden, gemaakt_op: x.gemaaktOp,
+        }))),
+      });
+      return ((await r.json()) as Rij[]).length;
+    });
+  }
+  async overheidKortLijst(o: { limiet: number; sindsIso?: string; metWeg?: boolean }) {
+    try {
+      const f = [`relevant=eq.true`, ...(o.metWeg ? [] : [`or=(redactie.is.null,redactie.neq.weg)`]), ...(o.sindsIso ? [`gemaakt_op=gte.${encodeURIComponent(o.sindsIso)}`] : [])];
+      return (await this.lees(`nv_overheid_kort?${f.join("&")}&order=datum.desc&limit=${Math.max(1, Math.min(500, o.limiet))}`)).map((r) => this.naarKort(r));
+    } catch (e) {
+      if (isTabelFout(e, "nv_overheid_kort")) return [];
+      throw e;
+    }
+  }
+  async zetOverheidKortRedactie(id: string, waarde: "weg" | null) {
+    if (!/^[0-9a-f-]{36}$/i.test(id)) return false;
+    return this.metTabel("nv_overheid_kort", async () => {
+      const r = await this.vraag(`nv_overheid_kort?id=eq.${id}`, { method: "PATCH", prefer: "return=representation", body: JSON.stringify({ redactie: waarde }) });
+      return ((await r.json()) as Rij[]).length > 0;
+    });
+  }
+  async overheidKortOpruimen(oud: string) {
+    try {
+      const r = await this.vraag(`nv_overheid_kort?gemaakt_op=lt.${encodeURIComponent(oud)}`, { method: "DELETE", prefer: "return=representation" });
+      return ((await r.json()) as Rij[]).length;
+    } catch (e) {
+      if (isTabelFout(e, "nv_overheid_kort")) return 0;
+      throw e;
+    }
   }
 
   async upsertItems(items: BronItem[]) {

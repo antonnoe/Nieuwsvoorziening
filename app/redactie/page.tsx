@@ -1,6 +1,7 @@
 import Melding from "./_componenten/Melding";
 import Onderbalk from "./_componenten/Onderbalk";
 import Rij from "./_componenten/Rij";
+import KortRij from "./_componenten/KortRij";
 import { eisToegang, leesMelding } from "@/lib/redactie-pagina";
 import { TIJDELIJK_MELDING } from "@/lib/redactie-melding";
 import { laadPeilVragen } from "@/lib/redactie-peil";
@@ -16,6 +17,8 @@ export default async function Vandaag({ searchParams }: { searchParams: SP }) {
   const lijst = await opslag.berichtenVoorRedactie(new Date(Date.now() - VANDAAG_DAGEN * 86400_000).toISOString(), 500).catch(() => null);
   const tips = (await opslag.radarOpen(50).catch(() => [])).length;
   const peilVragen = toegang.rol === "beheerder" ? ((await laadPeilVragen(opslag)) || []).length : 0;
+  const korten = await opslag.overheidKortLijst({ limiet: 100, sindsIso: new Date(Date.now() - VANDAAG_DAGEN * 86400_000).toISOString(), metWeg: true }).catch(() => []);
+  const kortenLive = korten.filter((k) => k.redactie !== "weg");
   const { live, voorstellen, tegengehouden, weg } = verdeelVandaag(lijst || []);
   return (
     <>
@@ -34,6 +37,13 @@ export default async function Vandaag({ searchParams }: { searchParams: SP }) {
           <p className="stil">{UITLEG_VOORSTELLEN}</p>
           <div className="lijst">{voorstellen.map((b) => <Rij key={b.id} b={b} plaatsKnop />)}</div>
         </section>
+      )}
+      {korten.length > 0 && (
+        <details className="weggehaald overheidkort">
+          <summary>Overheidsberichtjes vandaag ({kortenLive.length})</summary>
+          <p className="stil">Korte berichtjes van overheidssites. Ze staan al live op het tabblad Overheid. Haal weg wat niet deugt.</p>
+          <div className="lijst">{korten.map((k) => <KortRij key={k.id} k={k} />)}</div>
+        </details>
       )}
       {tips > 0 && (
         <a className="tips" href="/redactie/radar">

@@ -35,6 +35,7 @@ import { beoordeelSignaal } from "./signaal";
 import { draaiRadar, RADAR_BEWAAR_DAGEN } from "./radar";
 import { laadBronnenLijst, kiesOogstBronnen, actieveRadarBronnen, GEEN_ACTIEVE_BRONNEN_MELDING } from "./bronnenlijst";
 import { isVerbodenBron } from "./config";
+import { draaiOverheidKort, OVERHEIDKORT_BEWAAR_DAGEN } from "./overheidkort";
 
 export interface RunOpties {
   opslag: Opslag;
@@ -180,6 +181,17 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
     noteer({ stap: "radar", ok: r.ok, aantal: r.nieuw, fout: r.fout, detail: r.detail });
   } catch (e) {
     noteer({ stap: "radar", ok: false, fout: fout(e) });
+  }
+
+  // 2c. Overheidskort (28-11-2026): per nieuw item van een actieve overheidsbron een korte Nederlandse kaart (goedkoop model, eigen
+  // tijdbudget van 60 s, hooguit 20 per run). Zonder de tabel nv_overheid_kort of zonder modelsleutel slaat de stap over.
+  try {
+    const actief = o.bronnen ?? kiesOogstBronnen(lijst).bronnen;
+    const r = await draaiOverheidKort({ opslag: o.opslag, client: o.client, bronIds: actief.filter((b) => b.regime === "overheid").map((b) => b.id), nu });
+    aantallen.overheidKorten = r.gemaakt;
+    noteer({ stap: "overheidkort", ok: r.ok, aantal: r.gemaakt, fout: r.fout, detail: r.detail });
+  } catch (e) {
+    noteer({ stap: "overheidkort", ok: false, fout: fout(e) });
   }
 
   // 3. Open pool binnen het venster
@@ -542,6 +554,8 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
     noteer({ stap: "opruimen", ok: true, aantal: n });
     // Radarsignalen ouder dan 30 dagen (ontbreekt de tabel, dan 0).
     aantallen.radarOpgeruimd = await o.opslag.radarOpruimen(new Date(nu - RADAR_BEWAAR_DAGEN * 86400_000).toISOString()).catch(() => 0);
+    // Overheidskorten ouder dan 60 dagen (ontbreekt de tabel, dan 0).
+    aantallen.overheidKortOpgeruimd = await o.opslag.overheidKortOpruimen(new Date(nu - OVERHEIDKORT_BEWAAR_DAGEN * 86400_000).toISOString()).catch(() => 0);
   } catch (e) {
     noteer({ stap: "opruimen", ok: false, fout: fout(e) });
   }

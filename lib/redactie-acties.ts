@@ -153,6 +153,14 @@ export async function voerActieUit(opslag: Opslag, toegang: Toegang, f: Record<s
         // Na weghalen of terugzetten terug naar de lijst Vandaag, met de melding bovenaan.
         return klaar(true, f.actie === "weg" ? "Weggehaald: het bericht staat nergens meer." : "Teruggezet: het bericht staat er weer.", "/redactie");
       }
+      case "kort-weg":
+      case "kort-terug": {
+        // Overheidsberichtje (nv_overheid_kort) weghalen of terugzetten; blijft op dezelfde pagina.
+        if (!ID_VORM.test(id)) return klaar(false, "Dit berichtje bestaat niet.");
+        const gelukt = await opslag.zetOverheidKortRedactie(id, f.actie === "kort-weg" ? "weg" : null);
+        if (!gelukt) return klaar(false, "Dit berichtje bestaat niet meer.", "/redactie");
+        return klaar(true, f.actie === "kort-weg" ? "Weggehaald: het berichtje staat nergens meer." : "Teruggezet: het berichtje staat er weer.", "/redactie");
+      }
       case "plaats": {
         // "Toch plaatsen": alleen een concept dat de kwaliteitspoort niet tegenhield en niet weg is. Een geblokkeerd bericht wordt hier nooit geplaatst.
         const b = ID_VORM.test(id) ? await opslag.redactieBericht(id) : null;

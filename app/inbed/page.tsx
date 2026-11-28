@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./inbed.css";
 import Hoogte from "./Hoogte";
 import { leesOpslag } from "@/lib/motor/api";
-import { AANTAL, LEEG, NLFR_FOUT, TABS, TAB_NAAM, bijgewerktTekst, datumItem, laadBerichtItems, laadBijgewerkt, laadNlfr, leesTab, type InbedItem } from "@/lib/inbed";
+import { AANTAL, LEEG, NLFR_FOUT, TABS, TAB_NAAM, bijgewerktTekst, datumItem, laadBerichtItems, laadBijgewerkt, laadOverheidItems, OVERHEID_MAX, laadNlfr, leesTab, type InbedItem } from "@/lib/inbed";
 import { BASIS_URL, CATEGORIE_VOL } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +19,7 @@ export default async function Inbed({ searchParams }: { searchParams: Promise<{ 
   const tab = leesTab((await searchParams).tab);
   const opslag = leesOpslag();
   const [items, bijgewerkt] = await Promise.all([
-    tab === "nlfr" ? laadNlfr() : laadBerichtItems(opslag, tab === "overheid" ? "overheid" : "pers", categorieNaam),
+    tab === "nlfr" ? laadNlfr() : tab === "overheid" ? laadOverheidItems(opslag, categorieNaam) : laadBerichtItems(opslag, "pers", categorieNaam),
     laadBijgewerkt(opslag),
   ]);
   const tekst = bijgewerktTekst(bijgewerkt);
@@ -40,7 +40,7 @@ export default async function Inbed({ searchParams }: { searchParams: Promise<{ 
         <p className="ib-leeg">{LEEG}</p>
       ) : (
         <ul className="ib-lijst">
-          {items.slice(0, AANTAL).map((i: InbedItem) => (
+          {items.slice(0, tab === "overheid" ? OVERHEID_MAX : AANTAL).map((i: InbedItem) => (
             <li key={i.sleutel}>
               <a href={i.url} target="_blank" rel="noopener">
                 {i.beeld && (

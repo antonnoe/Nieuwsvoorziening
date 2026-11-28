@@ -4,6 +4,7 @@
 import type { Opslag, OpgeslagenBericht } from "@/lib/motor/opslag";
 import { soortVan } from "@/lib/motor/opslag";
 import { BASIS_URL, TZ, veiligeUrl } from "@/lib/site";
+import { OVERHEID_THEMA_NAAM } from "@/lib/motor/types";
 
 export const TABS = ["nieuws", "overheid", "nlfr"] as const;
 export type Tab = (typeof TABS)[number];
@@ -14,6 +15,9 @@ export const NLFR_TEGELS = ["infofrankrijk", "verenigingen"];
 export const NLFR_CACHE_MS = 15 * 60_000;
 export const NLFR_TIMEOUT_MS = 8000;
 export const NLFR_FOUT = "Even niet beschikbaar.";
+/** Tab Overheid: de 20 nieuwste korten en de berichten met soort overheid, gemengd; zoveel items tonen we hooguit. */
+export const OVERHEID_KORTEN = 20;
+export const OVERHEID_MAX = 35;
 export const LEEG = "Er is nu geen nieuws in dit onderdeel.";
 /** Hoeveel berichten we ophalen om na het filteren op soort er AANTAL over te houden. */
 const RUIM = 200;
@@ -40,6 +44,36 @@ export async function laadBerichtItems(opslag: Opslag | null, soort: "pers" | "o
   } catch {
     return null;
   }
+}
+
+/**
+ * Tab Overheid (28-11-2026): de nieuwste relevante, niet weggehaalde overheidskorten (link naar de officiële pagina) en de gepubliceerde
+ * berichten met soort overheid, gemengd op datum. Een kort waarvan de url al als bron onder een getoond bericht staat, valt af.
+ * Faalt (of ontbreekt) de tabel van de korten, dan blijven de berichten; faalt het lezen van de berichten, dan blijven de korten;
+ * faalt beide, dan null.
+ */
+export async function laadOverheidItems(opslag: Opslag | null, categorieNaam: (c: string) => string): Promise<InbedItem[] | null> {
+  if (!opslag) return null;
+  let berichten: OpgeslagenBericht[] | null = null;
+  let korten: Awaited<ReturnType<Opslag["overheidKortLijst"]>> | null = null;
+  try {
+    berichten = filterBerichten(await opslag.berichten({ limiet: RUIM, kanaal: "actueel" }), "overheid");
+  } catch { /* alleen de korten */ }
+  try {
+    korten = await opslag.overheidKortLijst({ limiet: OVERHEID_KORTEN });
+  } catch { /* alleen de berichten */ }
+  if (berichten === null && korten === null) return null;
+  const bronUrls = new Set((berichten || []).flatMap((b) => b.bronnen.map((x) => x.url)));
+  const uitBerichten: InbedItem[] = (berichten || []).map((b) => ({
+    sleutel: b.id, titel: b.kop, samenvatting: b.samenvatting, url: `${BASIS_URL}/bericht/${b.id}`, datum: b.gepubliceerdOp, label: categorieNaam(b.categorie), beeld: b.beeldUrl ? veiligeUrl(b.beeldUrl) : null,
+  }));
+  const uitKorten: InbedItem[] = [];
+  for (const k of korten || []) {
+    const url = veiligeUrl(k.itemUrl);
+    if (!url || k.redactie === "weg" || !k.relevant || bronUrls.has(k.itemUrl)) continue;
+    uitKorten.push({ sleutel: `kort-${k.id}`, titel: k.titel, samenvatting: k.samenvatting, url, datum: k.datum, label: [k.bronNaam, k.thema ? OVERHEID_THEMA_NAAM[k.thema] : ""].filter(Boolean).join(" · ") });
+  }
+  return [...uitBerichten, ...uitKorten].sort((a, b) => b.datum.localeCompare(a.datum)).slice(0, OVERHEID_MAX);
 }
 
 interface NlfrArtikel { url?: unknown; titel?: unknown; summary?: unknown; bronMeta?: { naam?: unknown; datum?: unknown } }

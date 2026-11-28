@@ -113,3 +113,7 @@ body:has(.rd) .net, body:has(.rd) footer, body:has(.rd) .sla-over { display: non
 .rd .peilblok p { margin: 0; }
 .rd .peilblok .peil-oranje { color: var(--grijs); }
 .rd .rij-kop + .meta .label { margin-left: 0; margin-right: 6px; }
+
+/* Overheidsberichtjes (28-11-2026) */
+.rd details.overheidkort { margin-top: 12px; }
+.rd .kort .rij { min-height: 56px; }
