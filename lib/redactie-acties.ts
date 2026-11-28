@@ -1,7 +1,7 @@
 // De handelingen van de redactie-app (28-11-2026), los van de pagina's zodat ze getest kunnen worden: weg en terugzetten, ander beeld
 // uit de beeldbank, een beeld laten tekenen, radartips afhandelen en bronnen beheren. Elke handeling geeft een melding in gewoon Nederlands.
 import { maakModelClient, type ModelClient } from "@/lib/motor/ai";
-import { illustratieKeuzeRedactie, illustratieMetId, modelKandidaten, type Illustratie } from "@/lib/motor/illustraties";
+import { HARDE_UITSLUITING, illustratieKeuzeRedactie, illustratieMetId, illustratieResultaatMetModel, modelKandidaten, type Illustratie } from "@/lib/motor/illustraties";
 import { MigratieOntbreekt, type Opslag, type OpgeslagenBericht } from "@/lib/motor/opslag";
 import { RadarOntbreekt } from "@/lib/motor/radar";
 import { MELDING_AL_AFGEHANDELD } from "@/lib/redactie-maak-bericht";
@@ -109,6 +109,34 @@ export async function gebruikTekening(opslag: Opslag, id: string, svgRuw: unknow
   return { ok: true, url, lijstBewaard };
 }
 
+/**
+ * Plaatst een concept: heeft het geen beeld, dan eerst automatisch een illustratie (zelfde keuze als stap 6b: modelkeuze met terugval op
+ * trefwoorden, de 13 nieuwste zichtbare berichten hard uitgesloten); mislukt dat, dan wordt het bericht toch geplaatst. Daarna status
+ * gepubliceerd met `gepubliceerd_op` op nu, zodat het bovenaan de lijst Vandaag staat.
+ */
+export async function plaatsBericht(opslag: Opslag, b: OpgeslagenBericht, opties: ActieOpties = {}): Promise<{ melding: string }> {
+  let beeldNaam: string | null = null;
+  const hadBeeld = !!b.beeldUrl;
+  if (!hadBeeld) {
+    try {
+      const client = opties.client !== undefined ? opties.client : maakModelClient(45_000);
+      const recent = await opslag.recenteBeeldUrls(100).catch(() => [] as string[]);
+      const nieuwste = await opslag.berichten({ limiet: HARDE_UITSLUITING }).catch(() => [] as OpgeslagenBericht[]);
+      const uitsluit = nieuwste.filter((x) => x.id !== b.id && x.beeldUrl).map((x) => x.beeldUrl as string);
+      const r = await illustratieResultaatMetModel({ kop: b.kop, samenvatting: b.samenvatting, categorie: b.categorie }, client, recent, undefined, uitsluit);
+      if (r) {
+        await opslag.zetBeeld(b.id, r.url, r.credit);
+        beeldNaam = r.credit.naam || "illustratie";
+      }
+    } catch (e) {
+      logReden("beeld bij plaatsen", e); // het beeld kan later nog
+    }
+  }
+  await opslag.zetStatus(b.id, "gepubliceerd", new Date(opties.nu ?? Date.now()).toISOString());
+  if (hadBeeld) return { melding: "Geplaatst." };
+  return { melding: beeldNaam ? `Geplaatst, met beeld ${beeldNaam}. Ander beeld nodig? Tik op het bericht.` : "Geplaatst. Er is nog geen beeld, tik op het bericht om er een te kiezen." };
+}
+
 /** Eén handeling uit een formulier. `f` bevat de velden als tekst. */
 export async function voerActieUit(opslag: Opslag, toegang: Toegang, f: Record<string, string>, fetchFn: typeof fetch = fetch, opties: ActieOpties = {}): Promise<ActieUitkomst> {
   const terug = veiligTerug(f.terug);
@@ -130,8 +158,8 @@ export async function voerActieUit(opslag: Opslag, toegang: Toegang, f: Record<s
         if (b.status === "gepubliceerd") return klaar(false, "Dit bericht staat al live.", "/redactie");
         if (b.redactie === "weg") return klaar(false, "Dit bericht is weggehaald. Zet het eerst terug.");
         if (!magTochPlaatsen(b)) return klaar(false, "De kwaliteitscontrole heeft dit bericht tegengehouden. Het kan hier niet worden geplaatst.");
-        await opslag.zetStatus(id, "gepubliceerd");
-        return klaar(true, "Geplaatst: het bericht staat nu live.", "/redactie");
+        const p = await plaatsBericht(opslag, b, opties);
+        return klaar(true, p.melding, "/redactie");
       }
       case "beeld": {
         const u = await kiesBeeldUitBeeldbank(opslag, id, String(f.illustratie || ""));

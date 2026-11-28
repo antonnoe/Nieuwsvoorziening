@@ -100,3 +100,6 @@ body:has(.rd) .net, body:has(.rd) footer, body:has(.rd) .sla-over { display: non
 .rd .rij .meta.reden { font-style: italic; }
 .rd details.nietgeplaatst { margin-top: 8px; }
 .rd .label { margin-left: 0; margin-right: 8px; }
+.rd .rij-blok { display: flex; flex-direction: column; gap: 6px; }
+.rd .rij-blok form { margin: 0; }
+.rd .rij-blok .plaats-knop { width: 100%; min-height: 48px; }

@@ -150,7 +150,7 @@ export interface Opslag {
   /** Redactie: één kanaal aan of uit. Gooit MigratieOntbreekt zolang de migratie niet is toegepast. */
   zetKanaal(id: string, kanaal: Kanaal, aan: boolean): Promise<void>;
   /** Redactie: status op gepubliceerd zetten (alleen na controle op poortblokkade door de aanroeper). */
-  zetStatus(id: string, status: "gepubliceerd"): Promise<void>;
+  zetStatus(id: string, status: "gepubliceerd", gepubliceerdOp?: string): Promise<void>;
   /** Redactie: markeer voor herschrijven door stap 6a van de volgende oogst (regelversie 0). Gooit niets weg. */
   markeerHerschrijven(id: string): Promise<void>;
   /** Redactie: handmatige correctie; zet `handmatig_op`. Gooit MigratieOntbreekt zolang de migratie niet is toegepast. */
@@ -475,9 +475,9 @@ export class GeheugenOpslag implements Opslag {
     const b = this.berichtenLijst.find((x) => x.id === id);
     if (b) b.kanalen = { ...leesKanalen(b.kanalen), [kanaal]: aan };
   }
-  async zetStatus(id: string, status: "gepubliceerd") {
+  async zetStatus(id: string, status: "gepubliceerd", gepubliceerdOp?: string) {
     const b = this.berichtenLijst.find((x) => x.id === id);
-    if (b) b.status = status;
+    if (b) ((b.status = status), gepubliceerdOp && (b.gepubliceerdOp = gepubliceerdOp));
   }
   async markeerHerschrijven(id: string) {
     const b = this.berichtenLijst.find((x) => x.id === id);
@@ -1020,9 +1020,9 @@ export class SupabaseOpslag implements Opslag {
     const rijen = await this.metKolommen(() => zoek("&handmatig_op=is.null&redactie=is.null"), () => zoek(""));
     return rijen.map(naarBericht);
   }
-  async zetStatus(id: string, status: "gepubliceerd") {
+  async zetStatus(id: string, status: "gepubliceerd", gepubliceerdOp?: string) {
     if (!/^[0-9a-f-]{36}$/i.test(id)) return;
-    await this.vraag(`nv_berichten?id=eq.${id}`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ status }) });
+    await this.vraag(`nv_berichten?id=eq.${id}`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify(gepubliceerdOp ? { status, gepubliceerd_op: gepubliceerdOp } : { status }) });
   }
   async markeerHerschrijven(id: string) {
     if (!/^[0-9a-f-]{36}$/i.test(id)) return;

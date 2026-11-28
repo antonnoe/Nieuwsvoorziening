@@ -159,3 +159,55 @@ test("5c: eerst de link, dan het model: een foute link krijgt zijn eigen melding
   assert.equal(opslag.berichtenLijst.length, 0);
 });
 
+
+// ---- 6. plaatsen met automatisch beeld (28-11-2026, na de telefoonkeuring) ----
+test("plaatsen zonder beeld kiest eerst een illustratie met het model, zet de plaatsing op nu en meldt de beeldnaam", async () => {
+  const opslag = new GeheugenOpslag();
+  const oud = new Date(nu - 30 * 3600_000).toISOString();
+  opslag.berichtenLijst.push(bericht(1, { status: "concept", gepubliceerdOp: oud, beeldUrl: null, kop: "Drukte op het vliegveld door staking", samenvatting: "Reizigers wachten op het vliegveld." }), bericht(2));
+  const gevraagd: string[] = [];
+  const client = { aanroepen: gevraagd, async tekst(a: { user: string }) { gevraagd.push(a.user); const m = a.user.match(/id: ([^ |]+)/); return JSON.stringify({ id: m ? m[1] : "" }); } };
+  const u = await voerActieUit(opslag, redacteur, { actie: "plaats", id: id(1), terug: "/redactie" }, fetch, { client: client as never, nu });
+  const b = opslag.berichtenLijst[0];
+  assert.equal(u.ok, true);
+  assert.equal(b.status, "gepubliceerd");
+  assert.ok(b.beeldUrl && b.beeldCredit?.bron === "Illustratie", "beeld gekozen");
+  assert.equal(b.beeldCredit?.keuze, "model");
+  assert.equal(gevraagd.length, 1, "één modelaanroep");
+  assert.equal(u.melding, `Geplaatst, met beeld ${b.beeldCredit?.naam}. Ander beeld nodig? Tik op het bericht.`);
+  assert.equal(b.gepubliceerdOp, new Date(nu).toISOString(), "gepubliceerd_op is nu");
+  const v = verdeelVandaag(opslag.berichtenLijst);
+  assert.equal(v.live[0].id, id(1), "bovenaan de live-lijst");
+});
+
+test("plaatsen zonder model valt terug op de trefwoordkeuze; een bericht met beeld houdt zijn beeld", async () => {
+  const opslag = new GeheugenOpslag();
+  opslag.berichtenLijst.push(bericht(1, { status: "concept" }), bericht(2, { status: "concept", beeldUrl: SVG }));
+  const a = await voerActieUit(opslag, redacteur, { actie: "plaats", id: id(1), terug: "/redactie" }, fetch, { client: null, nu });
+  assert.equal(a.ok, true);
+  assert.equal(opslag.berichtenLijst[0].beeldCredit?.keuze, "trefwoord");
+  const b = await voerActieUit(opslag, redacteur, { actie: "plaats", id: id(2), terug: "/redactie" }, fetch, { client: null, nu });
+  assert.equal(opslag.berichtenLijst[1].beeldUrl, SVG);
+  assert.equal(b.melding, "Geplaatst.");
+});
+
+test("mislukt de beeldkeuze, dan wordt het bericht toch geplaatst, met de melding dat er nog geen beeld is", async () => {
+  const opslag = new GeheugenOpslag();
+  opslag.berichtenLijst.push(bericht(1, { status: "concept" }));
+  opslag.recenteBeeldUrls = async () => { throw new Error("stuk"); };
+  opslag.zetBeeld = async () => { throw new Error("stuk"); };
+  const u = await voerActieUit(opslag, redacteur, { actie: "plaats", id: id(1), terug: "/redactie" }, fetch, { client: null, nu });
+  assert.equal(u.ok, true);
+  assert.equal(opslag.berichtenLijst[0].status, "gepubliceerd");
+  assert.equal(u.melding, "Geplaatst. Er is nog geen beeld, tik op het bericht om er een te kiezen.");
+});
+
+test("de rij in 'Niet geplaatst' heeft een eigen knop Plaatsen alleen als het mag; de rij zelf blijft een link naar het bericht", () => {
+  const knop = (b: OpgeslagenBericht) => renderToStaticMarkup(createElement(Rij, { b, plaatsKnop: true }));
+  const mag = knop(bericht(1, { status: "concept" }));
+  assert.ok(mag.includes('value="plaats"') && mag.includes("Plaatsen") && mag.includes('action="/redactie/actie"'), mag);
+  assert.ok(mag.includes(`href="/redactie/bericht/${id(1)}"`));
+  assert.ok(!knop(bericht(2, { status: "geblokkeerd", blokkadeRedenen: ["x"] })).includes("Plaatsen"));
+  assert.ok(!knop(bericht(3, { status: "concept", redactie: "weg" })).includes("Plaatsen"));
+  assert.ok(!html(bericht(4, { status: "concept" })).includes("Plaatsen"), "zonder plaatsKnop geen knop");
+});

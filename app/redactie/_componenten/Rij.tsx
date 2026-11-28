@@ -1,11 +1,12 @@
 import MiniBeeld from "./MiniBeeld";
 import { CATEGORIE_VOL, aantalBronnen } from "@/lib/site";
-import { miniBeeldUrl } from "@/lib/redactie-vandaag";
+import Terugvelden from "./Terugvelden";
+import { magTochPlaatsen, miniBeeldUrl } from "@/lib/redactie-vandaag";
 import type { OpgeslagenBericht } from "@/lib/motor/opslag";
 
 /** Eén rij in de lijst: mini-beeld, kop, categorie en aantal bronnen, en eventueel een extra regel (bijvoorbeeld waarom iets niet is geplaatst). */
-export default function Rij({ b, extra }: { b: OpgeslagenBericht; extra?: string | null }) {
-  return (
+export default function Rij({ b, extra, plaatsKnop }: { b: OpgeslagenBericht; extra?: string | null; plaatsKnop?: boolean }) {
+  const rij = (
     <a className="rij" href={`/redactie/bericht/${b.id}`}>
       <span className="mini"><MiniBeeld url={miniBeeldUrl(b)} /></span>
       <span className="info">
@@ -14,5 +15,16 @@ export default function Rij({ b, extra }: { b: OpgeslagenBericht; extra?: string
         {extra && <span className="meta reden">{extra}</span>}
       </span>
     </a>
+  );
+  if (!plaatsKnop || !magTochPlaatsen(b)) return rij;
+  // Eigen knop onder de rij (POST-formulier, geen JavaScript); tik op de rij zelf opent nog steeds het bericht.
+  return (
+    <div className="rij-blok">
+      {rij}
+      <form method="post" action="/redactie/actie">
+        <Terugvelden actie="plaats" id={b.id} terug="/redactie" />
+        <button type="submit" className="rd-knop hoofd plaats-knop">Plaatsen</button>
+      </form>
+    </div>
   );
 }

@@ -36,7 +36,7 @@ export default async function Vandaag({ searchParams }: { searchParams: SP }) {
         <details className="weggehaald nietgeplaatst">
           <summary>Niet geplaatst door de machine ({nietGeplaatst.length})</summary>
           <p className="stil">{UITLEG_NIET_GEPLAATST}</p>
-          <div className="lijst">{nietGeplaatst.map((b) => <Rij key={b.id} b={b} extra={redenTekst(b)} />)}</div>
+          <div className="lijst">{nietGeplaatst.map((b) => <Rij key={b.id} b={b} extra={redenTekst(b)} plaatsKnop />)}</div>
         </details>
       )}
       {weg.length > 0 && (
