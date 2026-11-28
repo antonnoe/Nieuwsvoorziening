@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { Beeld } from "../../../_componenten/Kaart";
 import Melding from "../../_componenten/Melding";
 import Terugvelden from "../../_componenten/Terugvelden";
+import Uitklap from "../../_componenten/Uitklap";
 import TekenKnop from "./TekenKnop";
 import { ID_VORM, beeldbankKeuzes } from "@/lib/redactie-acties";
 import { eisToegang, leesMelding } from "@/lib/redactie-pagina";
@@ -37,8 +38,7 @@ export default async function BerichtScherm({ params, searchParams }: { params: 
       </details>
 
       <div className="knop-rij">
-        <details>
-          <summary className="rd-knop">Ander beeld uit de beeldbank</summary>
+        <Uitklap titel="Ander beeld uit de beeldbank">
           {keuzes.length === 0 ? (
             <p className="stil">De beeldbank is nu niet beschikbaar.</p>
           ) : (
@@ -55,13 +55,14 @@ export default async function BerichtScherm({ params, searchParams }: { params: 
               ))}
             </div>
           )}
-        </details>
+        </Uitklap>
         <TekenKnop id={id} />
         <form method="post" action="/redactie/actie">
           <Terugvelden actie={weg ? "terug" : "weg"} id={id} terug={pad} />
           {weg ? <button type="submit" className="rd-knop hoofd">Terugzetten</button> : <button type="submit" className="rd-knop gevaar">Weg, nergens tonen</button>}
         </form>
       </div>
+      <a className="terug" href="/redactie">‹ Terug naar de lijst</a>
     </>
   );
 }

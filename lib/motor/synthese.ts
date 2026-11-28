@@ -47,7 +47,14 @@ export function leesSynthese(ruw: string): Synthese | null {
   return { kop, samenvatting, tekst, categorie, relevantie: Number.isFinite(relevantie) ? relevantie : 0, portemonnee: j.portemonnee === true || String(j.portemonnee).toLowerCase() === "true", signaal: leesSignaal(j.signaal), beeldZoekterm: beeldZoektermen[0] || "", beeldZoektermen };
 }
 
-export async function synthetiseer(c: Cluster, client: ModelClient): Promise<Synthese | null> {
-  const antw = await client.tekst({ model: modelSynthese(), system: SYSTEEM_SYNTHESE, user: bouwInvoer(c), maxTokens: 2200 });
+/**
+ * `onderwerp` (alleen voor een bericht dat de redactie bij een tip maakt) is een korte werktitel als aanwijzing waar het bericht over gaat.
+ * Het is nadrukkelijk geen bron: het model mag er niets uit overnemen dat niet in de bronnen staat.
+ */
+export const ONDERWERP_AANWIJZING = "Onderwerp van het bericht (alleen een aanwijzing waar het over gaat, geen bron: neem er niets uit over dat niet in de bronnen hierboven staat en noem het niet)";
+
+export async function synthetiseer(c: Cluster, client: ModelClient, onderwerp?: string): Promise<Synthese | null> {
+  const aanwijzing = onderwerp && onderwerp.trim() ? `\n\n${ONDERWERP_AANWIJZING}: ${onderwerp.trim().slice(0, 200)}` : "";
+  const antw = await client.tekst({ model: modelSynthese(), system: SYSTEEM_SYNTHESE, user: `${bouwInvoer(c)}${aanwijzing}`, maxTokens: 2200 });
   return leesSynthese(antw);
 }

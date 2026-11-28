@@ -44,6 +44,40 @@ export async function haalArtikelTekst(url: string, fetchFn: typeof fetch = fetc
   }
 }
 
+const titelUit = (html: string): string => {
+  const og = html.match(/<meta[^>]+property=["']og:title["'][^>]*content=["']([^"']+)["']/i) || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]*property=["']og:title["']/i);
+  const t = og ? og[1] : (html.match(/<title[^>]*>([\s\S]*?)<\/title>/i) || [])[1] || "";
+  return ontsnap(t).replace(/\s+/g, " ").trim().slice(0, 200);
+};
+const omschrijvingUit = (html: string): string => {
+  const m = html.match(/<meta[^>]+(?:name|property)=["'](?:description|og:description)["'][^>]*content=["']([^"']+)["']/i) || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]*(?:name|property)=["'](?:description|og:description)["']/i);
+  return m ? ontsnap(m[1]).replace(/\s+/g, " ").trim().slice(0, 300) : "";
+};
+
+/**
+ * Haalt één pagina op als bronmateriaal (redactie: geplakte link van een overheidspagina): kop, korte omschrijving en artikeltekst.
+ * De tekst wordt nooit opgeslagen. Null bij een fout, een verboden bron of een pagina zonder bruikbare tekst.
+ */
+export async function haalPagina(url: string, fetchFn: typeof fetch = fetch, timeoutMs = 9000): Promise<{ titel: string; omschrijving: string; tekst: string } | null> {
+  if (isVerbodenBron(url)) return null;
+  try {
+    const r = await fetchFn(url, {
+      signal: AbortSignal.timeout(timeoutMs),
+      headers: { "user-agent": "Mozilla/5.0 (compatible; Nieuwsvoorziening/1.0; +https://nieuws.infofrankrijk.com/werkwijze)", accept: "text/html" },
+      redirect: "follow",
+    });
+    if (!r.ok) return null;
+    const type = r.headers.get("content-type") || "";
+    if (type && !type.includes("html")) return null;
+    const html = await r.text();
+    const tekst = haalTekstUitHtml(html);
+    const titel = titelUit(html);
+    return titel && tekst ? { titel, omschrijving: omschrijvingUit(html), tekst } : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Vult artikelTekst voor hooguit `max` bronnen per cluster, parallel. Geeft het aantal gelukte terug. */
 export async function verrijkMetArtikelen(c: Cluster, fetchFn: typeof fetch = fetch, max = 4): Promise<number> {
   const items = c.items.filter((i) => !isVerbodenBron(i.url)).slice(0, max);

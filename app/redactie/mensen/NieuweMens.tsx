@@ -7,7 +7,7 @@ export default function NieuweMens() {
   const [bezig, setBezig] = useState(false);
   const [fout, setFout] = useState("");
   const [uitkomst, setUitkomst] = useState<{ naam: string; link: string } | null>(null);
-  const [gekopieerd, setGekopieerd] = useState(false);
+  const [gekopieerd, setGekopieerd] = useState<"nee" | "ja" | "mislukt">("nee");
 
   async function maak(e: React.FormEvent) {
     e.preventDefault();
@@ -30,9 +30,9 @@ export default function NieuweMens() {
     if (!uitkomst) return;
     try {
       await navigator.clipboard.writeText(uitkomst.link);
-      setGekopieerd(true);
+      setGekopieerd("ja");
     } catch {
-      setGekopieerd(false);
+      setGekopieerd("mislukt");
     }
   }
 
@@ -49,8 +49,10 @@ export default function NieuweMens() {
       {uitkomst && (
         <div className="linkvak" role="status">
           <strong>Link voor {uitkomst.naam}</strong>
-          <code>{uitkomst.link}</code>
-          <button type="button" className="rd-knop" onClick={kopieer}>{gekopieerd ? "Gekopieerd" : "Kopieer de link"}</button>
+          {/* Een groot, selecteerbaar tekstvak: lukt kopiëren niet, dan kan de link met de vinger worden geselecteerd. */}
+          <input className="linkveld" type="text" readOnly value={uitkomst.link} aria-label={`Link voor ${uitkomst.naam}`} onClick={(e) => e.currentTarget.select()} onFocus={(e) => e.currentTarget.select()} />
+          <button type="button" className="rd-knop" onClick={kopieer}>{gekopieerd === "ja" ? "Gekopieerd" : "Kopieer de link"}</button>
+          {gekopieerd === "mislukt" && <p className="melding fout" role="alert">Kopiëren lukte niet. Houd uw vinger op de link en kies Kopiëren.</p>}
           <p>Stuur deze link zelf, per mail of WhatsApp.</p>
           <p className="stil">Deze link wordt maar één keer getoond. Sluit u dit scherm, dan moet u een nieuwe maken.</p>
         </div>

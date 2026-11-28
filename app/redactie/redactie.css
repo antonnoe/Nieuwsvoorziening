@@ -35,7 +35,7 @@ body:has(.rd) .net, body:has(.rd) footer, body:has(.rd) .sla-over { display: non
 .rd .rij .mini { flex: none; width: 56px; height: 56px; border-radius: 12px; background: var(--beeld); overflow: hidden; display: block; }
 .rd .rij .mini img { width: 100%; height: 100%; object-fit: contain; background: var(--wit); display: block; }
 .rd .rij .info { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 2px; }
-.rd .rij .kop { font-weight: 700; font-size: 15.5px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.rd .rij .rij-kop { font-weight: 700; font-size: 15.5px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .rd .rij .meta { font-size: 13px; color: var(--grijs); }
 .rd .label { display: inline-block; border-radius: 999px; padding: 1px 10px; font-size: 12px; font-weight: 700; margin-left: 6px; border: 1px solid var(--lijn); color: var(--grijs); background: var(--wit); }
 .rd .label.weg { background: var(--maroon); border-color: var(--maroon); color: #fff; }
@@ -79,3 +79,21 @@ body:has(.rd) .net, body:has(.rd) footer, body:has(.rd) .sla-over { display: non
 .rd .linkvak code { font-size: 13px; overflow-wrap: anywhere; word-break: break-all; }
 .rd .tip { border-radius: 18px; background: var(--kaart); border: 1px solid var(--lijn); padding: 16px; display: flex; flex-direction: column; gap: 10px; }
 .rd .tip .brontekst { font-size: 14px; color: var(--grijs); }
+
+/* herstelronde 1 (28-11-2026) */
+.rd .groot { font-size: 20px; line-height: 1.45; font-weight: 600; }
+.rd details.beheerder { border-top: 1px solid var(--lijn); padding-top: 8px; font-size: 14px; color: var(--grijs); }
+.rd details.beheerder > summary { min-height: 48px; display: flex; align-items: center; cursor: pointer; font-weight: 600; }
+.rd details.beheerder form { margin-top: 8px; }
+.rd .rij .mini .geenbeeld { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 11px; line-height: 1.2; color: var(--grijs); }
+.rd .tips { margin-bottom: 8px; }
+.rd .onderbalk { grid-template-columns: repeat(3, 1fr); }
+.rd details.weggehaald > summary { min-height: 48px; display: flex; align-items: center; font-weight: 700; color: var(--grijs); cursor: pointer; }
+.rd details.weggehaald .lijst { margin-top: 8px; }
+.rd .invoerblok { display: flex; flex-direction: column; gap: 12px; }
+.rd .bevestig { border: 1.5px solid var(--maroon); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+.rd details.techniek { font-size: 13px; color: var(--grijs); }
+.rd details.techniek > summary { min-height: 48px; display: flex; align-items: center; cursor: pointer; }
+.rd input.linkveld { width: 100%; min-height: 48px; padding: 10px 14px; border-radius: 12px; border: 1.5px solid var(--inkt); background: var(--kaart); color: var(--inkt); font: inherit; font-size: 15px; }
+.rd .tip form { display: flex; flex-direction: column; gap: 10px; }
+.rd .tip a.rd-knop { text-decoration: none; }

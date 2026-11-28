@@ -176,6 +176,8 @@ export interface Opslag {
   radarOpen(limiet: number): Promise<RadarRij[]>;
   radarRij(id: string): Promise<RadarRij | null>;
   zetRadarBesluit(id: string, keuze: RadarBesluit, nu?: number): Promise<void>;
+  /** Redactie: de tip is een bericht geworden: status "al gepubliceerd", bericht_id gezet en het besluit "geaccepteerd" (de tip is dan niet meer open). */
+  radarKoppelBericht(id: string, berichtId: string, nu?: number): Promise<void>;
   /** Ruimt signalen op die voor `oudIso` zijn beoordeeld. */
   radarOpruimen(oudIso: string): Promise<number>;
   // ---- Bronnen in de database (28-11-2026, tabel nv_bronnen). Ontbreekt de tabel: bronnenLijst en de schrijfmethoden gooien TabelOntbreekt;
@@ -241,6 +243,11 @@ export class GeheugenOpslag implements Opslag {
     this.radarCheck();
     const r = this.radarRijen.find((x) => x.id === id);
     if (r) Object.assign(r, { besluit: keuze, besluitOp: new Date(nu).toISOString() });
+  }
+  async radarKoppelBericht(id: string, berichtId: string, nu = Date.now()) {
+    this.radarCheck();
+    const r = this.radarRijen.find((x) => x.id === id);
+    if (r) Object.assign(r, { status: "al gepubliceerd", berichtId, besluit: "geaccepteerd", besluitOp: new Date(nu).toISOString() });
   }
   async radarOpruimen(oud: string) {
     if (this.radarTabelOntbreekt) return 0;
@@ -646,6 +653,10 @@ export class SupabaseOpslag implements Opslag {
   async zetRadarBesluit(id: string, keuze: RadarBesluit, nu = Date.now()) {
     if (!/^[0-9a-f-]{36}$/i.test(id)) return;
     await this.radarVraag(() => this.vraag(`nv_radar?id=eq.${id}`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ besluit: keuze, besluit_op: new Date(nu).toISOString() }) }));
+  }
+  async radarKoppelBericht(id: string, berichtId: string, nu = Date.now()) {
+    if (!/^[0-9a-f-]{36}$/i.test(id) || !/^[0-9a-f-]{36}$/i.test(berichtId)) return;
+    await this.radarVraag(() => this.vraag(`nv_radar?id=eq.${id}`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ status: "al gepubliceerd", bericht_id: berichtId, besluit: "geaccepteerd", besluit_op: new Date(nu).toISOString() }) }));
   }
   async radarOpruimen(oud: string) {
     try {

@@ -7,6 +7,7 @@
 //  - Zonder geheim én zonder tabel is alles dicht.
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { redactieGeheim } from "@/lib/redactie";
+import { TIJDELIJK_MELDING, logReden } from "@/lib/redactie-melding";
 import { TabelOntbreekt, type Opslag } from "@/lib/motor/opslag";
 import type { Redacteur, RedacteurRol } from "@/lib/motor/types";
 
@@ -80,6 +81,23 @@ export async function redacteurVoorToken(token: unknown, opslag: Opslag | null):
   }
 }
 
+/**
+ * Wat doet de proxy met het cookie? "verleng": geldige, niet ingetrokken redacteur. "wis": het token bestaat niet (meer) of is ingetrokken.
+ * "laat": geen redacteurscookie, of de opslag is onbereikbaar (dan wissen we niets: een storing mag niemand uitloggen).
+ */
+export async function cookieVerlenging(cookie: string | undefined, opslag: Opslag | null): Promise<"verleng" | "wis" | "laat"> {
+  if (!cookie || !cookie.startsWith("r.")) return "laat";
+  const token = cookie.slice(2);
+  if (!isTokenVorm(token)) return "wis";
+  if (!opslag) return "laat";
+  try {
+    const r = await opslag.redacteurPerHash(hashToken(token));
+    return r && !r.ingetrokkenOp ? "verleng" : "wis";
+  } catch {
+    return "laat";
+  }
+}
+
 /** Wie is dit? Null betekent: dicht. Werkt `laatst_gezien` bij (hooguit een keer per uur, zonder te falen). */
 export async function bepaalToegang(cookie: string | undefined, opslag: Opslag | null, nu = Date.now()): Promise<Toegang | null> {
   if (!cookie) return null;
@@ -119,6 +137,7 @@ export async function maakVrijwilliger(opslag: Opslag, naamRuw: string, nu = Dat
     const redacteur = await opslag.redacteurMaak({ naam, hash: hashToken(token), rol: "redacteur" }, nu);
     return { ok: true, redacteur, token };
   } catch (e) {
-    return { ok: false, melding: e instanceof TabelOntbreekt ? "Vrijwilligers toevoegen kan pas als de database is bijgewerkt (tabel nv_redacteuren)." : "Toevoegen is niet gelukt. Probeer het later opnieuw." };
+    logReden("vrijwilliger toevoegen", e);
+    return { ok: false, melding: e instanceof TabelOntbreekt ? TIJDELIJK_MELDING : "Toevoegen is niet gelukt. Probeer het later opnieuw." };
   }
 }

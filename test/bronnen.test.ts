@@ -289,7 +289,7 @@ test("toevoegen: geen feed gevonden slaat niets op en meldt dat", async () => {
   const opslag = metTabel();
   const voor = opslag.bronnenRijen.length;
   assert.deepEqual(await voegBronToe(opslag, "krant.test", "nieuws", "Anna", nepFetch({}).f, nu), { ok: false, melding: MELDING_GEEN_FEED });
-  assert.equal(MELDING_GEEN_FEED, "Geen feed gevonden op dit adres");
+  assert.equal(MELDING_GEEN_FEED, "Geen feed gevonden op dit adres. Probeer het adres van de nieuwspagina zelf, of vraag Anton.");
   assert.equal((await voegBronToe(opslag, "http://127.0.0.1", "nieuws", "Anna", nepFetch({}).f, nu)).ok, false);
   assert.equal(opslag.bronnenRijen.length, voor);
 });
@@ -361,9 +361,20 @@ test("aanpassen en weghalen: naam, soort (overheid, pers, NL-BE) en prullenbak",
   assert.ok((await wijzigBron(opslag, "le-monde", { soort: "overheid" })).ok);
   assert.equal(opslag.bronnenRijen[0].regime, "overheid");
   assert.equal((await wijzigBron(opslag, "bestaat-niet", { naam: "Nieuwe naam" })).ok, false);
-  assert.ok((await verwijderBron(opslag, "le-monde")).ok);
-  assert.equal(opslag.bronnenRijen.length, 1);
-  assert.equal((await verwijderBron(opslag, "le-monde")).ok, false);
+  // De laatste actieve nieuwsbron blijft: weghalen en uitzetten worden geweigerd, ook als de motor dan terugvalt op het bestand.
+  assert.deepEqual(await verwijderBron(opslag, "le-monde"), { ok: false, melding: "Er moet minstens één nieuwsbron aan blijven." });
+  assert.deepEqual(await wijzigBron(opslag, "le-monde", { actief: false }), { ok: false, melding: "Er moet minstens één nieuwsbron aan blijven." });
+  assert.equal(opslag.bronnenRijen.find((r) => r.id === "le-monde")?.actief, true);
+  opslag.bronnenRijen.push(rij({ id: "tweede", feed: "https://tweede.test/rss", domein: "tweede.test" }));
+  assert.ok((await wijzigBron(opslag, "le-monde", { actief: false })).ok, "met een tweede actieve bron mag het wel");
+  assert.deepEqual(await verwijderBron(opslag, "tweede"), { ok: false, melding: "Er moet minstens één nieuwsbron aan blijven." }, "nu is tweede de laatste");
+  await wijzigBron(opslag, "le-monde", { actief: true });
+  assert.ok((await verwijderBron(opslag, "tweede")).ok);
+  assert.equal(opslag.bronnenRijen.length, 2);
+  opslag.bronnenRijen.push(rij({ id: "concept", feed: "https://concept.test/rss", domein: "concept.test", status: "CONCEPT" }));
+  assert.deepEqual(await verwijderBron(opslag, "le-monde"), { ok: false, melding: "Er moet minstens één nieuwsbron aan blijven." }, "een conceptbron telt niet als actieve nieuwsbron");
+  assert.ok((await verwijderBron(opslag, "concept")).ok, "een bron die toch niet wordt geoogst mag weg");
+  assert.equal((await verwijderBron(opslag, "bestaat-niet")).ok, false);
   assert.deepEqual(soortVelden("pers", { taal: "fr", land: "FR" }).groep, "fr_pers");
 });
 

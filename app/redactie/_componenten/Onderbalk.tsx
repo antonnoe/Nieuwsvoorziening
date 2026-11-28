@@ -1,12 +1,18 @@
 import type { Toegang } from "@/lib/redactie-toegang";
 
-/** Onderaan elk hoofdscherm: Nieuws en Bronnen; voor de beheerder kleine links naar Mensen en uitloggen. */
-export default function Onderbalk({ nu, toegang }: { nu: "nieuws" | "bronnen" | "overig"; toegang: Toegang }) {
+type Nu = "nieuws" | "tips" | "bronnen" | "overig";
+
+/** Onderaan elk hoofdscherm: Nieuws, Tips en Bronnen; voor de beheerder kleine links naar Mensen en uitloggen. */
+export default function Onderbalk({ nu, toegang }: { nu: Nu; toegang: Toegang }) {
+  const knop = (id: Exclude<Nu, "overig">, href: string, tekst: string) => (
+    <a className={`rd-knop${nu === id ? " nu" : ""}`} href={href} aria-current={nu === id ? "page" : undefined}>{tekst}</a>
+  );
   return (
     <>
       <nav className="onderbalk" aria-label="Hoofdmenu">
-        <a className={`rd-knop${nu === "nieuws" ? " nu" : ""}`} href="/redactie" aria-current={nu === "nieuws" ? "page" : undefined}>Nieuws</a>
-        <a className={`rd-knop${nu === "bronnen" ? " nu" : ""}`} href="/redactie/bronnen" aria-current={nu === "bronnen" ? "page" : undefined}>Bronnen</a>
+        {knop("nieuws", "/redactie", "Nieuws")}
+        {knop("tips", "/redactie/radar", "Tips")}
+        {knop("bronnen", "/redactie/bronnen", "Bronnen")}
       </nav>
       <div className="klein-menu">
         <span>{toegang.naam}</span>

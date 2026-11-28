@@ -1,6 +1,7 @@
 // Gedeelde hulpjes voor de routes van de redactie-app: toegang, herkomstcontrole en antwoorden. Alles no-store en noindex.
 import { leesOpslag } from "@/lib/motor/api";
 import type { Opslag } from "@/lib/motor/opslag";
+import { TIJDELIJK_MELDING, logReden } from "@/lib/redactie-melding";
 import { bepaalToegang, leesCookie, type Toegang } from "@/lib/redactie-toegang";
 
 const KOPPEN = { "cache-control": "no-store", "x-robots-tag": "noindex, nofollow" };
@@ -33,6 +34,9 @@ export async function eisJson(req: Request, o: { beheerder?: boolean } = {}): Pr
   const toegang = await toegangVoor(req, opslag);
   if (!toegang) return { antwoord: jsonUit({ fout: "Niet ingelogd." }, 401) };
   if (o.beheerder && toegang.rol !== "beheerder") return { antwoord: jsonUit({ fout: "Alleen de beheerder kan dit." }, 403) };
-  if (!opslag) return { antwoord: jsonUit({ fout: "De opslag is niet beschikbaar." }, 503) };
+  if (!opslag) {
+    logReden("opslag", "geen opslag geconfigureerd");
+    return { antwoord: jsonUit({ fout: TIJDELIJK_MELDING }, 503) };
+  }
   return { toegang, opslag };
 }

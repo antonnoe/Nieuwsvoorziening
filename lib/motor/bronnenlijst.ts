@@ -61,6 +61,19 @@ export async function laadBronnenLijst(opslag: Opslag | null | undefined): Promi
 export const actieveNieuwsBronnen = (rijen: BronRij[]): Bron[] =>
   rijen.filter((r) => r.soort === "nieuws" && r.actief && r.status === "ACTIVE" && !isVerbodenBron(r.feed) && !isVerbodenBron(r.domein));
 
+/** Melding in de stapdetails als de tabel wel bestaat maar geen enkele actieve nieuwsbron heeft. */
+export const GEEN_ACTIEVE_BRONNEN_MELDING = "geen actieve nieuwsbronnen in de database, terugval gebruikt";
+
+/**
+ * De nieuwsbronnen die de motor oogst. Staat er niets actiefs in de tabel (alles uitgezet of weggehaald), dan valt hij terug op
+ * data/bronnen.json, zodat de motor nooit stilvalt; `terugval` is dan true en de run noteert een fout.
+ */
+export function kiesOogstBronnen(lijst: Pick<BronnenLijst, "rijen" | "uitTabel">): { bronnen: Bron[]; terugval: boolean } {
+  const bronnen = actieveNieuwsBronnen(lijst.rijen);
+  if (bronnen.length || !lijst.uitTabel) return { bronnen, terugval: false };
+  return { bronnen: actieveNieuwsBronnen(terugvalBronnen()), terugval: true };
+}
+
 /** Radarbronnen die gelezen worden. */
 export const actieveRadarBronnen = (rijen: BronRij[]): BronRij[] => rijen.filter((r) => r.soort === "radar" && r.actief);
 
@@ -81,6 +94,17 @@ export function bronKleur(r: Pick<BronRij, "status" | "actief" | "laatstGelezen"
 
 export type BronSoortLabel = "overheid" | "pers" | "NL-BE";
 export const BRON_SOORT_LABELS: BronSoortLabel[] = ["overheid", "pers", "NL-BE"];
+/** Wat een redacteur ziet bij de stip: nooit een technische fout, wel wat er aan de hand is in gewone taal. */
+export function statusTekst(r: Pick<BronRij, "actief" | "status" | "soort" | "laatsteFout">, kleur: BronKleur): string {
+  if (kleur === "groen") return "Leest goed";
+  if (kleur === "rood") return r.laatsteFout ? "Lukt even niet om te lezen" : "Al 3 dagen niets binnengekomen";
+  if (!r.actief) return "Staat uit";
+  if (r.soort === "nieuws" && r.status !== "ACTIVE") return "Nog niet in gebruik";
+  return "Nieuw, wordt getest";
+}
+
+/** Wat de redactie leest bij een soort (de waarde zelf blijft overheid, pers of NL-BE). */
+export const BRON_SOORT_TEKST: Record<BronSoortLabel, string> = { overheid: "overheid", pers: "krant of omroep", "NL-BE": "Nederland of België" };
 export const bronSoortLabel = (r: Pick<BronRij, "regime" | "groep">): BronSoortLabel => (r.regime === "overheid" ? "overheid" : r.groep === "nl_vl_pers" ? "NL-BE" : "pers");
 
 /** Zet een soortkeuze om in regime, groep en Frankrijk-filter (bij overheid geen filter; NL-BE en buitenland wel). */

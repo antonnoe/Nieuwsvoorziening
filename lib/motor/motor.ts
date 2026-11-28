@@ -32,7 +32,7 @@ import { dagStart } from "./tijd";
 import { leesSignaal, type Bericht, type Bron, type Cluster, type PeilParameter, type PeilSignaalNieuw, type StapResultaat, type Synthese } from "./types";
 import { beoordeelSignaal } from "./signaal";
 import { draaiRadar, RADAR_BEWAAR_DAGEN } from "./radar";
-import { laadBronnenLijst, actieveNieuwsBronnen, actieveRadarBronnen } from "./bronnenlijst";
+import { laadBronnenLijst, kiesOogstBronnen, actieveRadarBronnen, GEEN_ACTIEVE_BRONNEN_MELDING } from "./bronnenlijst";
 import { isVerbodenBron } from "./config";
 
 export interface RunOpties {
@@ -59,7 +59,7 @@ export interface RunUitslag {
 const ZOEKTERMEN_SYSTEEM = `Geef een JSON-lijst van 3 Engelse zoektermen van 2 tot 4 woorden om een foto te zoeken die zichtbaar bij dit nieuwsbericht past, van specifiek naar algemeen. Zoek het onderwerp zelf, letterlijk en concreet (bijvoorbeeld "flooded street", "airplane factory", "fuel pump prices"), niet de streek of een beroemde plek. Nooit een persoon of naam. Alleen de JSON-lijst.`;
 
 /** Poort met één herkansing (met de redenen erbij). Geeft de beste synthese en haar uitslag. */
-async function poortMetHerkansing(s: Synthese, c: Cluster, client: ModelClient, cfg: MotorConfig): Promise<{ s: Synthese; uitslag: PoortUitslag }> {
+export async function poortMetHerkansing(s: Synthese, c: Cluster, client: ModelClient, cfg: MotorConfig): Promise<{ s: Synthese; uitslag: PoortUitslag }> {
   let uitslag = kwaliteitsPoort(s, c, cfg);
   if (!uitslag.ok) {
     try {
@@ -127,7 +127,12 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
   let items: Awaited<ReturnType<typeof oogstBronnen>>["items"] = [];
   let bronResultaten: OogstBronResultaat[] = [];
   try {
-    const bronnen = o.bronnen ?? actieveNieuwsBronnen(lijst.rijen);
+    const gekozen = o.bronnen ? { bronnen: o.bronnen, terugval: false } : kiesOogstBronnen(lijst);
+    const bronnen = gekozen.bronnen;
+    if (gekozen.terugval) {
+      aantallen.bronnenUitTerugval = 1;
+      noteer({ stap: "bronnen", ok: false, fout: GEEN_ACTIEVE_BRONNEN_MELDING });
+    }
     const r = await oogstBronnen(bronnen, { nu, maxPerBron: cfg.maxItemsPerBron, fetchFn: o.fetchFn });
     items = r.items;
     bronResultaten = r.resultaten;
@@ -141,7 +146,7 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
     aantallen.bronnenMislukt = mislukt.length;
     noteer({ stap: "oogst", ok: true, aantal: items.length, detail: { geweerd, mislukteBronnen: mislukt.map((x) => `${x.bronId}: ${x.fout}`) } });
     // Leesresultaat per bron bewaren voor het scherm Bronnen (kleur, laatste leesmoment); een storing of ontbrekende tabel breekt niets.
-    if (lijst.uitTabel) {
+    if (lijst.uitTabel && !gekozen.terugval) {
       const gelezenOp = new Date(nu).toISOString();
       await o.opslag.bronGelezen(r.resultaten.map((x) => ({ id: x.bronId, gelezenOp, items: x.ok && x.gelezen > 0, fout: x.ok ? null : x.fout ?? "Onbekende fout" }))).catch(() => {});
     }

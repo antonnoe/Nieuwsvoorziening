@@ -1,11 +1,11 @@
 // Een beeld laten tekenen (redactie-app, 28-11-2026): het synthesemodel tekent één SVG bij kop en samenvatting. Wat terugkomt wordt
 // STRENG gecontroleerd voor het ook maar getoond wordt, en bij "Gebruiken" nog eens (de browser is niet te vertrouwen).
-// Afgekeurd is niets opgeslagen en de melding is altijd "Tekening mislukt, probeer opnieuw"; de reden staat alleen in het resultaat voor de logs en tests.
+// Afgekeurd is niets opgeslagen en de melding is altijd "Het tekenen is niet gelukt. Tik nog eens op Nieuw beeld laten tekenen."; de reden staat alleen in het resultaat voor de logs en tests.
 // De controle werkt met een lijst van toegestane elementen en attributen (geen verbodenlijst): wat niet op de lijst staat, valt af.
 import type { ModelClient } from "@/lib/motor/ai";
 import { modelSynthese } from "@/lib/motor/config";
 
-export const TEKEN_MELDING = "Tekening mislukt, probeer opnieuw";
+export const TEKEN_MELDING = "Het tekenen is niet gelukt. Tik nog eens op Nieuw beeld laten tekenen.";
 export const SVG_BREEDTE = 1200;
 export const SVG_HOOGTE = 675;
 export const MAX_SVG_BYTES = 60_000;

@@ -4,14 +4,17 @@ import { maakModelClient, type ModelClient } from "@/lib/motor/ai";
 import { illustratieKeuzeRedactie, illustratieMetId, modelKandidaten, type Illustratie } from "@/lib/motor/illustraties";
 import { MigratieOntbreekt, type Opslag, type OpgeslagenBericht } from "@/lib/motor/opslag";
 import { RadarOntbreekt } from "@/lib/motor/radar";
-import { RADAR_BESLUITEN, type BeeldCredit, type BronSoort, type RadarBesluit } from "@/lib/motor/types";
+import { MELDING_AL_AFGEHANDELD } from "@/lib/redactie-maak-bericht";
+import type { BeeldCredit, BronSoort } from "@/lib/motor/types";
 import { voegBronToe, verwijderBron, wijzigBron } from "@/lib/bronbeheer";
+import { TIJDELIJK_MELDING, logReden } from "@/lib/redactie-melding";
+import { maakBerichtUitTip, type MaakOpties } from "@/lib/redactie-maak-bericht";
 import { radarBesluitUitvoeren } from "@/lib/redactie";
 import type { Toegang } from "@/lib/redactie-toegang";
 import { TEKEN_MELDING, controleerSvg, maakTekening, schoneNaam } from "@/lib/redactie-tekenen";
 import { bewaarSvg, storageUitOmgeving, type StorageInstellingen } from "@/lib/tekeningen";
 
-export const GEEN_MIGRATIE_REDACTIE = "De database is nog niet bijgewerkt (kanalen en redactie). Vraag de beheerder.";
+export const GEEN_MIGRATIE_REDACTIE = TIJDELIJK_MELDING;
 export const ID_VORM = /^[0-9a-f-]{36}$/i;
 
 export interface ActieUitkomst {
@@ -19,6 +22,16 @@ export interface ActieUitkomst {
   melding: string;
   /** Pad waar de bezoeker na de handeling heen gaat (altijd binnen /redactie). */
   terug: string;
+  /** Extra waarden die met de melding meegaan in de url (bijvoorbeeld het adres dat niet lukte, om het in het veld te laten staan). */
+  terugExtra?: Record<string, string>;
+}
+
+/** Voor de handelingen die een model of de database nodig hebben (alleen tests geven iets mee; anders de gewone instellingen). */
+export interface ActieOpties {
+  client?: ModelClient | null;
+  peil?: MaakOpties["peil"];
+  generator?: MaakOpties["generator"];
+  nu?: number;
 }
 
 /** Alleen paden binnen /redactie, zonder rare tekens; anders de beginpagina. */
@@ -28,13 +41,14 @@ export function veiligTerug(pad: unknown): string {
 }
 
 /** Zet een melding aan een pad vast (voor de redirect), zonder vorige meldingen. */
-export function metMelding(pad: string, melding: string, ok: boolean): string {
+export function metMelding(pad: string, melding: string, ok: boolean, extra: Record<string, string> = {}): string {
   const [basis, query = ""] = veiligTerug(pad).split("?");
   const q = new URLSearchParams(query);
   q.delete("m");
   q.delete("ok");
   q.set("m", melding.slice(0, 200));
   q.set("ok", ok ? "1" : "0");
+  for (const [k, v] of Object.entries(extra)) if (/^[a-z]+$/.test(k) && v) q.set(k, v.slice(0, 300));
   return `${basis}?${q.toString()}`;
 }
 
@@ -71,12 +85,16 @@ export async function gebruikTekening(opslag: Opslag, id: string, svgRuw: unknow
   if (!c.ok) return { ok: false, melding: TEKEN_MELDING };
   const b = await opslag.redactieBericht(id);
   if (!b) return { ok: false, melding: "Dit bericht bestaat niet." };
-  if (!storage) return { ok: false, melding: "De opslag voor tekeningen is niet beschikbaar." };
+  if (!storage) {
+    logReden("tekening bewaren", "storage niet geconfigureerd");
+    return { ok: false, melding: TIJDELIJK_MELDING };
+  }
   const naam = schoneNaam(naamRuw);
   let url: string;
   try {
     url = await bewaarSvg(c.svg, storage);
-  } catch {
+  } catch (e) {
+    logReden("tekening bewaren", e);
     return { ok: false, melding: "De tekening kon niet worden bewaard. Probeer het opnieuw." };
   }
   const credit: BeeldCredit = { bron: "Illustratie", maker: "Communities Abroad", naam, keuze: "getekend", png: null };
@@ -91,9 +109,9 @@ export async function gebruikTekening(opslag: Opslag, id: string, svgRuw: unknow
 }
 
 /** Eén handeling uit een formulier. `f` bevat de velden als tekst. */
-export async function voerActieUit(opslag: Opslag, toegang: Toegang, f: Record<string, string>, fetchFn: typeof fetch = fetch): Promise<ActieUitkomst> {
+export async function voerActieUit(opslag: Opslag, toegang: Toegang, f: Record<string, string>, fetchFn: typeof fetch = fetch, opties: ActieOpties = {}): Promise<ActieUitkomst> {
   const terug = veiligTerug(f.terug);
-  const klaar = (ok: boolean, melding: string, naar = terug): ActieUitkomst => ({ ok, melding, terug: naar });
+  const klaar = (ok: boolean, melding: string, naar = terug, terugExtra?: Record<string, string>): ActieUitkomst => ({ ok, melding, terug: naar, ...(terugExtra ? { terugExtra } : {}) });
   const id = String(f.id || "").trim();
   try {
     switch (f.actie) {
@@ -101,22 +119,31 @@ export async function voerActieUit(opslag: Opslag, toegang: Toegang, f: Record<s
       case "terug": {
         if (!ID_VORM.test(id) || !(await opslag.redactieBericht(id))) return klaar(false, "Dit bericht bestaat niet.");
         await opslag.zetRedactie(id, f.actie === "weg" ? "weg" : null);
-        return klaar(true, f.actie === "weg" ? "Weggehaald: het bericht staat nergens meer." : "Teruggezet: het bericht staat er weer.");
+        // Na weghalen of terugzetten terug naar de lijst Vandaag, met de melding bovenaan.
+        return klaar(true, f.actie === "weg" ? "Weggehaald: het bericht staat nergens meer." : "Teruggezet: het bericht staat er weer.", "/redactie");
       }
       case "beeld": {
         const u = await kiesBeeldUitBeeldbank(opslag, id, String(f.illustratie || ""));
-        return klaar(u.ok, u.melding);
+        return klaar(u.ok, u.melding, u.ok ? "/redactie" : terug);
       }
       case "radar": {
-        if (!ID_VORM.test(id) || !(RADAR_BESLUITEN as readonly string[]).includes(f.keuze)) return klaar(false, "Dit kan niet.");
-        const u = await radarBesluitUitvoeren(opslag, id, f.keuze as RadarBesluit);
-        if (!u.ok) return klaar(false, u.fout);
-        return klaar(true, f.keuze === "geaccepteerd" ? "Genoteerd: dit onderwerp wordt opgepakt." : "Genegeerd.");
+        // Alleen "Negeer": een tip wordt een bericht via "Maak bericht" (maak-bericht), nooit met alleen een vinkje.
+        if (!ID_VORM.test(id) || f.keuze !== "afgewezen") return klaar(false, "Dit kan niet.");
+        const u = await radarBesluitUitvoeren(opslag, id, "afgewezen");
+        if (!u.ok) return klaar(false, u.status === 409 ? MELDING_AL_AFGEHANDELD : "Deze tip bestaat niet meer.");
+        return klaar(true, "Tip weggelegd.");
+      }
+      case "maak-bericht": {
+        if (!ID_VORM.test(id)) return klaar(false, "Deze tip bestaat niet meer.");
+        const client = opties.client !== undefined ? opties.client : maakModelClient(90_000);
+        const u = await maakBerichtUitTip({ opslag, client, fetchFn, peil: opties.peil, generator: opties.generator, nu: opties.nu }, id, f.link);
+        if (!u.ok) return klaar(false, u.melding, terug, { tip: id, ...(f.link ? { link: f.link } : {}) });
+        return klaar(true, u.melding, `/redactie/bericht/${u.berichtId}`);
       }
       case "bron-toevoegen": {
         const soort: BronSoort = f.soort === "radar" ? "radar" : "nieuws";
         const u = await voegBronToe(opslag, String(f.adres || ""), soort, toegang.naam, fetchFn);
-        return klaar(u.ok, u.melding);
+        return klaar(u.ok, u.melding, terug, !u.ok && f.adres ? { adres: f.adres } : undefined);
       }
       case "bron-wijzig": {
         const u = await wijzigBron(opslag, id, { naam: f.naam, soort: f.soort });
@@ -136,8 +163,9 @@ export async function voerActieUit(opslag: Opslag, toegang: Toegang, f: Record<s
         return klaar(false, "Onbekende handeling.");
     }
   } catch (e) {
-    if (e instanceof MigratieOntbreekt || e instanceof RadarOntbreekt) return klaar(false, GEEN_MIGRATIE_REDACTIE);
-    if (e instanceof Error && e.name === "TabelOntbreekt") return klaar(false, "De database is nog niet bijgewerkt voor dit onderdeel. Vraag de beheerder.");
+    // De echte reden gaat naar het serverlog; de redacteur ziet alleen een zin in gewone taal.
+    logReden(`actie ${f.actie}`, e);
+    if (e instanceof MigratieOntbreekt || e instanceof RadarOntbreekt || (e instanceof Error && e.name === "TabelOntbreekt")) return klaar(false, TIJDELIJK_MELDING);
     return klaar(false, "Dat is niet gelukt. Probeer het later opnieuw.");
   }
 }

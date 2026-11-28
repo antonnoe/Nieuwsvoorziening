@@ -8,7 +8,7 @@ import { wisOpslagCache, publiekBericht } from "../lib/motor/api";
 import { wisRem as wisApiRem } from "../lib/redactie";
 import {
   REDACTIE_COOKIE, bepaalToegang, beheerderSleutelKlopt, hashToken, isTokenVorm, leesCookie, maakBeheerderCookie, maakRedacteurCookie, maakToken, maakVrijwilliger,
-  redacteurVoorToken, teVaak, noteerFout, wisRedactieRem, cookieKop,
+  redacteurVoorToken, teVaak, noteerFout, wisRedactieRem, cookieKop, cookieVerlenging,
 } from "../lib/redactie-toegang";
 import { beeldbankKeuzes, gebruikTekening, kiesBeeldUitBeeldbank, metMelding, tekenVoorBericht, veiligTerug, voerActieUit } from "../lib/redactie-acties";
 import { ILLUSTRATIES, pad } from "../lib/motor/illustraties";
@@ -71,7 +71,7 @@ test("vrijwilliger toevoegen: naam gecontroleerd; zonder tabel een nette melding
   weg.redacteurenTabelOntbreekt = true;
   const u = await maakVrijwilliger(weg, "Piet");
   assert.equal(u.ok, false);
-  if (!u.ok) assert.match(u.melding, /nv_redacteuren/);
+  if (!u.ok) assert.equal(u.melding, "Dit werkt tijdelijk niet. Anton is ingelicht.");
 });
 
 test("persoonlijke link: geldig token geeft toegang als redacteur; ingetrokken is dicht; onbekend of kapot is dicht", async () => {
@@ -115,7 +115,7 @@ test("beheerder: sleutel REDACTIE_SECRET (terugval CRON_SECRET); het cookie beva
   assert.equal(await bepaalToegang(c, null, nu + 8 * 86400_000), null, "na 7 dagen verlopen");
   const [b, exp, sig] = c.split(".");
   assert.equal(await bepaalToegang(`${b}.${Number(exp) + 99999}.${sig}`, null, nu), null, "verlengd zonder geldige handtekening");
-  assert.equal(await bepaalToegang(`${b}.${exp}.${sig.slice(0, -1)}0`, null, nu), null);
+  assert.equal(await bepaalToegang(`${b}.${exp}.${sig.slice(0, -1)}${sig.endsWith("0") ? "1" : "0"}`, null, nu), null);
   delete process.env.REDACTIE_SECRET;
   process.env.CRON_SECRET = "terugval-geheim";
   assert.equal(beheerderSleutelKlopt("terugval-geheim"), true);
@@ -138,18 +138,59 @@ test("rem: na 5 foute pogingen binnen 10 minuten is het dicht, daarna weer open"
   assert.equal(teVaak("a", nu + 601_000), false);
 });
 
-test("proxy: verlengt alleen het cookie van een redacteur (90 dagen), nooit dat van de beheerder of zonder cookie", () => {
-  const maak = (c?: string) => new NextRequest("https://nieuws.test/redactie", { headers: c ? { cookie: `nv_redactie=${c}` } : {} });
-  const r = proxy(maak("r.abc"));
-  const gezet = r.headers.get("set-cookie") || "";
-  assert.match(gezet, /nv_redactie=r\.abc/);
-  assert.match(gezet, /Max-Age=7776000/);
-  assert.match(gezet, /HttpOnly/i);
-  assert.match(gezet, /Secure/i);
-  assert.match(gezet, /SameSite=strict/i);
-  assert.match(gezet, /Path=\/redactie/);
-  assert.equal(proxy(maak("b.1.2")).headers.get("set-cookie"), null);
-  assert.equal(proxy(maak()).headers.get("set-cookie"), null);
+test("proxy: verlengt het cookie alleen als het token geldig is; ingetrokken of onbekend wordt gewist; bij een storing blijft het staan", async () => {
+  const opslag = new GeheugenOpslag();
+  const u = await maakVrijwilliger(opslag, "Marijke");
+  assert.ok(u.ok);
+  if (!u.ok) return;
+  const geldig = maakRedacteurCookie(u.token);
+  assert.equal(await cookieVerlenging(geldig, opslag), "verleng");
+  assert.equal(await cookieVerlenging(maakRedacteurCookie(maakToken()), opslag), "wis", "onbekend token");
+  assert.equal(await cookieVerlenging("r.abc", opslag), "wis", "geen tokenvorm");
+  assert.equal(await cookieVerlenging("b.1.2", opslag), "laat", "nooit het cookie van de beheerder");
+  assert.equal(await cookieVerlenging(undefined, opslag), "laat");
+  const stuk = { redacteurPerHash: async () => { throw new Error("storing"); } } as unknown as GeheugenOpslag;
+  assert.equal(await cookieVerlenging(geldig, stuk), "laat", "een storing logt niemand uit");
+  assert.equal(await cookieVerlenging(geldig, null), "laat");
+  await opslag.redacteurIntrekken(opslag.redacteuren[0].id);
+  assert.equal(await cookieVerlenging(geldig, opslag), "wis", "ingetrokken");
+});
+
+test("proxy: zet bij een geldig token 90 dagen (httpOnly, Secure, strict, Path /redactie) en wist een ongeldig token; niets zonder cookie", async () => {
+  const opslag = new GeheugenOpslag();
+  const u = await maakVrijwilliger(opslag, "Marijke");
+  assert.ok(u.ok);
+  if (!u.ok) return;
+  const voor = { REDACTIE_SECRET: process.env.REDACTIE_SECRET };
+  void voor;
+  // De proxy leest de opslag via leesOpslag(); hier een nep-Supabase die alleen de redacteur-opvraging beantwoordt.
+  const rij = { id: ID1, naam: "Marijke", token_hash: hashToken(u.token), rol: "redacteur", aangemaakt_op: new Date().toISOString(), laatst_gezien: null, ingetrokken_op: null };
+  const env = { url: process.env.SUPABASE_URL, key: process.env.SUPABASE_SERVICE_ROLE_KEY, f: globalThis.fetch };
+  process.env.SUPABASE_URL = "https://p.supabase.co";
+  process.env.SUPABASE_SERVICE_ROLE_KEY = "sleutel";
+  let ingetrokken = false;
+  globalThis.fetch = (async (url: string) => new Response(JSON.stringify(String(url).includes("nv_redacteuren") ? (ingetrokken ? [{ ...rij, ingetrokken_op: new Date().toISOString() }] : [rij]) : []), { status: 200, headers: { "content-type": "application/json" } })) as typeof fetch;
+  wisOpslagCache();
+  try {
+    const maak = (c?: string, pad = "/redactie") => new NextRequest(`https://nieuws.test${pad}`, { headers: c ? { cookie: `nv_redactie=${c}` } : {} });
+    const gezet = (await proxy(maak(maakRedacteurCookie(u.token)))).headers.get("set-cookie") || "";
+    assert.match(gezet, /Max-Age=7776000/);
+    assert.match(gezet, /HttpOnly/i);
+    assert.match(gezet, /Secure/i);
+    assert.match(gezet, /SameSite=strict/i);
+    assert.match(gezet, /Path=\/redactie/);
+    assert.equal((await proxy(maak(undefined))).headers.get("set-cookie"), null);
+    assert.equal((await proxy(maak("b.1.2"))).headers.get("set-cookie"), null);
+    ingetrokken = true;
+    const gewist = (await proxy(maak(maakRedacteurCookie(u.token)))).headers.get("set-cookie") || "";
+    assert.match(gewist, /Max-Age=0/);
+    assert.equal((await proxy(maak(maakRedacteurCookie(u.token), "/redactie/welkom/activeer"))).headers.get("set-cookie"), null, "routes die zelf een cookie zetten blijven met rust");
+  } finally {
+    globalThis.fetch = env.f;
+    if (env.url === undefined) delete process.env.SUPABASE_URL; else process.env.SUPABASE_URL = env.url;
+    if (env.key === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY; else process.env.SUPABASE_SERVICE_ROLE_KEY = env.key;
+    wisOpslagCache();
+  }
 });
 
 // ---- Handelingen -------------------------------------------------------------------------------------------
@@ -168,10 +209,12 @@ test("weg en terugzetten gebruiken de bestaande redactie-logica (redactie = weg)
   opslag.berichtenLijst.push(bericht(ID1));
   const weg = await voerActieUit(opslag, redacteur, { actie: "weg", id: ID1, terug: `/redactie/bericht/${ID1}` });
   assert.equal(weg.ok, true);
-  assert.equal(weg.terug, `/redactie/bericht/${ID1}`);
+  assert.equal(weg.terug, "/redactie", "na weghalen terug naar de lijst Vandaag");
   assert.equal((await opslag.redactieBericht(ID1))?.redactie, "weg");
   assert.equal((await opslag.berichten({ limiet: 10 })).length, 0, "weg verschijnt nergens");
-  assert.equal((await voerActieUit(opslag, redacteur, { actie: "terug", id: ID1 })).ok, true);
+  const terugzet = await voerActieUit(opslag, redacteur, { actie: "terug", id: ID1, terug: `/redactie/bericht/${ID1}` });
+  assert.equal(terugzet.ok, true);
+  assert.equal(terugzet.terug, "/redactie");
   assert.equal((await opslag.redactieBericht(ID1))?.redactie ?? null, null);
   assert.equal((await voerActieUit(opslag, redacteur, { actie: "weg", id: ID2 })).ok, false);
   assert.equal((await voerActieUit(opslag, redacteur, { actie: "weg", id: "geen-uuid" })).ok, false);
@@ -205,22 +248,19 @@ test("beeldbankkeuzes sluiten de beelden van de 13 nieuwste berichten uit", asyn
   assert.ok(keuzes.every((k) => !bezet.has(k.svg)));
 });
 
-test("radar: maak bericht of negeer gebruikt de bestaande besluiten; tweede keer geeft een melding", async () => {
-  const opslag = new GeheugenOpslag();
-  await opslag.radarOpslaan([{ signaalUrl: "https://radar.example/a", signaalDatum: new Date().toISOString(), werktitel: "Hogere belasting op tweede woningen", categorie: "Belastingen", relevantie: "x", status: "handmatige broncheck vereist", primaireBron: null, berichtId: null, beoordeeldOp: new Date().toISOString() }]);
-  const rid = (await opslag.radarOpen(5))[0].id;
-  assert.equal((await voerActieUit(opslag, redacteur, { actie: "radar", id: rid, keuze: "geaccepteerd" })).ok, false, "id is geen uuid in het geheugen");
+test("tip negeren: melding Tip weggelegd, tweede keer en ontbrekende tabel in gewone taal; Maak bericht gaat via maak-bericht", async () => {
   const opslag2 = new GeheugenOpslag();
   opslag2.radarRijen.push({ id: ID1, signaalUrl: "https://radar.example/a", signaalDatum: "2026-11-27T00:00:00.000Z", werktitel: "Hogere belasting", categorie: "Belastingen", relevantie: "x", status: "klaar voor redactie", primaireBron: null, berichtId: null, beoordeeldOp: "2026-11-27T00:00:00.000Z", besluit: null, besluitOp: null });
-  const eerst = await voerActieUit(opslag2, redacteur, { actie: "radar", id: ID1, keuze: "geaccepteerd", terug: "/redactie/radar" });
-  assert.equal(eerst.ok, true);
-  assert.equal(opslag2.radarRijen[0].besluit, "geaccepteerd");
+  assert.equal((await voerActieUit(opslag2, redacteur, { actie: "radar", id: "geen-uuid", keuze: "afgewezen" })).ok, false);
+  assert.equal((await voerActieUit(opslag2, redacteur, { actie: "radar", id: ID1, keuze: "geaccepteerd" })).ok, false, "accepteren kan alleen met Maak bericht");
+  const eerst = await voerActieUit(opslag2, redacteur, { actie: "radar", id: ID1, keuze: "afgewezen", terug: "/redactie/radar" });
+  assert.deepEqual([eerst.ok, eerst.melding], [true, "Tip weggelegd."]);
+  assert.equal(opslag2.radarRijen[0].besluit, "afgewezen");
   const nogeens = await voerActieUit(opslag2, redacteur, { actie: "radar", id: ID1, keuze: "afgewezen" });
-  assert.equal(nogeens.ok, false);
-  assert.match(nogeens.melding, /al afgehandeld/);
-  assert.equal((await voerActieUit(opslag2, redacteur, { actie: "radar", id: ID1, keuze: "verwijder" })).ok, false);
+  assert.deepEqual([nogeens.ok, nogeens.melding], [false, "Deze tip is al afgehandeld."]);
+  assert.equal((await voerActieUit(opslag2, redacteur, { actie: "radar", id: ID1, keuze: "verwijder" })).melding, "Dit kan niet.");
   opslag2.radarTabelOntbreekt = true;
-  assert.match((await voerActieUit(opslag2, redacteur, { actie: "radar", id: ID2, keuze: "afgewezen" })).melding, /database is nog niet bijgewerkt/);
+  assert.equal((await voerActieUit(opslag2, redacteur, { actie: "radar", id: ID2, keuze: "afgewezen" })).melding, "Dit werkt tijdelijk niet. Anton is ingelicht.");
 });
 
 test("mensen intrekken: alleen de beheerder", async () => {
@@ -243,11 +283,15 @@ test("bronnen via de handelingen: toevoegen met melding, redacteur mag, weghalen
   opslag.bronnenRijen.push({ id: "a", naam: "A", feed: "https://a.test/f", domein: "a.test", taal: "fr", land: "FR", groep: "fr_pers", regime: "pers", status: "ACTIVE", prioriteit: 1, frankrijkFilter: false, vensterUren: 48, soort: "nieuws", actief: true, toegevoegdOp: null, toegevoegdDoor: null, laatstGelezen: null, laatstItems: null, laatsteFout: null });
   const geenFeed = (async () => new Response("nee", { status: 404 })) as unknown as typeof fetch;
   const u = await voerActieUit(opslag, redacteur, { actie: "bron-toevoegen", adres: "krant.test", soort: "nieuws", terug: "/redactie/bronnen" }, geenFeed);
-  assert.deepEqual([u.ok, u.melding], [false, "Geen feed gevonden op dit adres"]);
+  assert.deepEqual([u.ok, u.melding], [false, "Geen feed gevonden op dit adres. Probeer het adres van de nieuwspagina zelf, of vraag Anton."]);
+  assert.equal(u.terugExtra?.adres, "krant.test", "het geplakte adres blijft in het veld staan");
   assert.equal((await voerActieUit(opslag, redacteur, { actie: "bron-wijzig", id: "a", naam: "Krant A", soort: "NL-BE" })).ok, true);
   assert.equal(opslag.bronnenRijen[0].naam, "Krant A");
+  const laatste = await voerActieUit(opslag, redacteur, { actie: "bron-weg", id: "a" });
+  assert.deepEqual([laatste.ok, laatste.melding], [false, "Er moet minstens één nieuwsbron aan blijven."], "de laatste actieve nieuwsbron blijft");
+  opslag.bronnenRijen.push({ ...opslag.bronnenRijen[0], id: "b", naam: "B", feed: "https://b.test/f", domein: "b.test" });
   assert.equal((await voerActieUit(opslag, redacteur, { actie: "bron-weg", id: "a" })).ok, true);
-  assert.equal(opslag.bronnenRijen.length, 0);
+  assert.equal(opslag.bronnenRijen.length, 1);
 });
 
 // ---- Tekening gebruiken -------------------------------------------------------------------------------------
@@ -319,7 +363,7 @@ test("tekenen: het model krijgt kop en samenvatting van het bericht; niets wordt
   assert.ok(goed.aanroepen[0].user.includes("Nieuwe regels voor huurders"));
   assert.equal((await opslag.redactieBericht(ID1))?.beeldUrl, null);
   const slecht = await tekenVoorBericht(opslag, klein(["<svg><script>x</script></svg>"]), ID1);
-  assert.deepEqual(slecht, { ok: false, melding: "Tekening mislukt, probeer opnieuw" });
+  assert.deepEqual(slecht, { ok: false, melding: "Het tekenen is niet gelukt. Tik nog eens op Nieuw beeld laten tekenen." });
   assert.equal((await tekenVoorBericht(opslag, goed, ID2)).ok, false);
 });
 

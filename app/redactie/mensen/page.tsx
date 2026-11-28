@@ -4,6 +4,7 @@ import Terugvelden from "../_componenten/Terugvelden";
 import NieuweMens from "./NieuweMens";
 import { eisToegang, leesMelding } from "@/lib/redactie-pagina";
 import { TZ } from "@/lib/site";
+import { TIJDELIJK_MELDING, logReden } from "@/lib/redactie-melding";
 
 type SP = Promise<{ m?: string; ok?: string }>;
 
@@ -20,6 +21,7 @@ export default async function Mensen({ searchParams }: { searchParams: SP }) {
     mensen = opslag ? await opslag.redacteurLijst() : null;
   } catch (e) {
     zonderTabel = e instanceof Error && e.name === "TabelOntbreekt";
+    logReden("mensen lezen", e);
   }
   return (
     <>
@@ -28,7 +30,7 @@ export default async function Mensen({ searchParams }: { searchParams: SP }) {
       <p className="stil">Wie meewerkt aan de redactie. Iedereen met een link kan alles doen behalve deze pagina.</p>
       <Melding melding={melding} />
       {zonderTabel ? (
-        <p className="melding fout">Vrijwilligers toevoegen kan pas als de database is bijgewerkt (tabel nv_redacteuren).</p>
+        <p className="melding fout">{TIJDELIJK_MELDING}</p>
       ) : (
         <NieuweMens />
       )}

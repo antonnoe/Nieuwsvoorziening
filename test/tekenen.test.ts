@@ -126,7 +126,7 @@ test("maakTekening: afgekeurd, modelfout en geen model geven de nette melding en
     assert.equal(u.ok, false);
     if (!u.ok) assert.equal(u.melding, TEKEN_MELDING);
   }
-  assert.equal(TEKEN_MELDING, "Tekening mislukt, probeer opnieuw");
+  assert.equal(TEKEN_MELDING, "Het tekenen is niet gelukt. Tik nog eens op Nieuw beeld laten tekenen.");
 });
 
 // ---- Storage ---------------------------------------------------------------------------------------------

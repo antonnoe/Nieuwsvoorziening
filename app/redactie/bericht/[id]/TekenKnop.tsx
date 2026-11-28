@@ -9,6 +9,7 @@ type Stand =
   | { s: "klaar" }
   | { s: "fout"; melding: string };
 
+const TEKEN_FOUT = "Het tekenen is niet gelukt. Tik nog eens op Nieuw beeld laten tekenen.";
 const adres = (svg: string) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 
 /** "Nieuw beeld laten tekenen": vraagt een tekening, toont die als voorbeeld en bewaart hem pas bij "Gebruiken". */
@@ -22,9 +23,9 @@ export default function TekenKnop({ id }: { id: string }) {
       const j = (await r.json()) as { ok?: boolean; svg?: string; naam?: string; melding?: string; fout?: string };
       if (r.ok && j.ok && j.svg) setStand({ s: "voorbeeld", svg: j.svg, naam: j.naam || "Getekend beeld" });
       else if (r.status === 401) window.location.href = "/redactie/inloggen";
-      else setStand({ s: "fout", melding: j.melding || j.fout || "Tekening mislukt, probeer opnieuw" });
+      else setStand({ s: "fout", melding: j.melding || j.fout || TEKEN_FOUT });
     } catch {
-      setStand({ s: "fout", melding: "Tekening mislukt, probeer opnieuw" });
+      setStand({ s: "fout", melding: TEKEN_FOUT });
     }
   }
 
@@ -34,7 +35,7 @@ export default function TekenKnop({ id }: { id: string }) {
       const r = await fetch("/redactie/actie/gebruik", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id, svg, naam }) });
       const j = (await r.json()) as { ok?: boolean; melding?: string };
       if (r.ok && j.ok) {
-        window.location.href = `/redactie/bericht/${id}?m=${encodeURIComponent(`Beeld gewijzigd: ${naam}`)}&ok=1`;
+        window.location.href = `/redactie?m=${encodeURIComponent(`Beeld gewijzigd: ${naam}`)}&ok=1`;
         setStand({ s: "klaar" });
       } else setStand({ s: "fout", melding: j.melding || "Dat is niet gelukt. Probeer het opnieuw." });
     } catch {
@@ -50,6 +51,7 @@ export default function TekenKnop({ id }: { id: string }) {
         <p className="stil">{stand.naam} · illustratie Communities Abroad</p>
         <button type="button" className="rd-knop hoofd" disabled={bezig} onClick={() => gebruik(stand.svg, stand.naam)}>{bezig ? "Bezig met bewaren…" : "Gebruiken"}</button>
         <button type="button" className="rd-knop" disabled={bezig} onClick={teken}>Opnieuw</button>
+        <p className="stil">Dit duurt weer ongeveer een minuut.</p>
       </div>
     );
   }

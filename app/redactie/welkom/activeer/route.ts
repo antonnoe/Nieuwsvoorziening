@@ -16,7 +16,7 @@ export async function POST(req: Request) {
   const r = await redacteurVoorToken(token, leesOpslag());
   if (!r) {
     noteerFout(wie);
-    return jsonUit({ fout: "Deze link werkt niet (meer). Vraag om een nieuwe." }, 401);
+    return jsonUit({ fout: "Deze link werkt niet meer. Vraag Anton om een nieuwe." }, 401);
   }
   wisFouten(wie);
   return jsonUit({ ok: true, naam: r.naam }, 200, { "set-cookie": cookieKop(maakRedacteurCookie(token as string), REDACTEUR_GELDIG_SECONDEN) });
