@@ -13,6 +13,7 @@ import { laadBronnenLijst, actieveRadarBronnen } from "./bronnenlijst";
 import { leesFeed } from "./feeds";
 import { hashId, normaliseer } from "./tekst";
 import { isKanttekeningItem } from "./kanttekening";
+import { HUISEIGENAREN_LIJST_TEKST, raaktHuiseigenaren } from "./huiseigenaren";
 import type { Bron, BronItem, BronRij, RadarBron, RadarCategorie, RadarNieuw, RadarRij, RadarStatus, UitsluitRegel } from "./types";
 import { RADAR_CATEGORIEEN } from "./types";
 import type { Opslag, OpgeslagenBericht } from "./opslag";
@@ -186,6 +187,7 @@ export interface Geselecteerd {
 }
 
 export const SYSTEEM_RADAR_SELECTIE = `Je bent redacteur van een Nederlandstalige nieuwsdienst voor Nederlanders en Belgen die in Frankrijk wonen: EU-burgers, huiseigenaren, verhuurders, bezitters van een tweede huis en gepensioneerden. Je krijgt een genummerde lijst met titels van berichten (de taal van de titels wisselt: Engels, Frans of Nederlands) en beoordeelt ALLEEN op de titel of een titel praktisch impactnieuws is: een nieuwe of gewijzigde regel, tarief, belasting, premie, subsidie, verplichting, verbod, prijs of procedure die deze lezers concreet raakt. Geen human interest, opinie, lifestyle, sport, recepten, reistips of nieuws dat alleen Britten of niet-EU-burgers raakt.
+Voorrang (selecteer deze titels altijd, ook als de titel kort is) hebben onderwerpen die eigenaren van een (tweede) woning in Frankrijk financieel raken: ${HUISEIGENAREN_LIJST_TEKST}.
 Categorieën (precies een van): Vastgoed, Belastingen, Zorg, Verkeer, Energie, Consumentenrecht, Overig.
 Geef voor elke GESELECTEERDE titel een object en laat alle andere weg:
 {"n": <nummer>, "werktitel": "korte feitelijke Nederlandse titel in je eigen woorden, nooit de kop overnemen of vertalen (ook niet als de kop al Nederlands is: formuleer het onderwerp opnieuw), geen onnodige hoofdletters, geen krantennaam", "categorie": "...", "relevantie": "een of twee zinnen: waarom dit Nederlanders en Belgen in Frankrijk raakt", "zoektermen": ["3 tot 6 Franse zoektermen of korte zinnen waarmee je de bijbehorende Franse overheidsmaatregel zou vinden, bijvoorbeeld de naam van de regeling of belasting"]}
@@ -606,7 +608,8 @@ export async function draaiRadar(o: RadarOpties): Promise<RadarUitslag> {
       if (r) { uitgesloten_ += 1; reden[r] = (reden[r] || 0) + 1; return false; }
       return true;
     });
-    const nieuwe = doorFilter.filter((i) => !bekend.has(i.url));
+    // Voorrang voor de doelgroep eigenaren van een woning (lijst in huiseigenaren.ts): die titels komen eerst, zodat ze binnen de drie aanroepen vallen.
+    const nieuwe = doorFilter.filter((i) => !bekend.has(i.url)).map((i, n) => ({ i, n, v: raaktHuiseigenaren(i.titel) ? 0 : 1 })).sort((a, b) => a.v - b.v || a.n - b.n).map((x) => x.i);
     uit.detail = { radarBronnen: bronnen.length, ...(fouten.length ? { bronFouten: fouten } : {}), gelezen: alle.length, binnenVenster: venster.length, uitgesloten: uitgesloten_, uitsluitRedenen: reden, alBekend: doorFilter.length - nieuwe.length };
     if (!nieuwe.length) return uit;
 

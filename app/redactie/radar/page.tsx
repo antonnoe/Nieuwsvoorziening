@@ -6,6 +6,7 @@ import { laadBronnenLijst } from "@/lib/motor/bronnenlijst";
 import { kaleHost } from "@/lib/motor/config";
 import { eisToegang, leesMelding } from "@/lib/redactie-pagina";
 import { toonLinkVeld } from "@/lib/redactie-maak-bericht";
+import { HUISEIGENAREN_LABEL, tipLabelHuiseigenaren } from "@/lib/motor/huiseigenaren";
 import { LEGIFRANCE_ZOEKLINK, isRampTip } from "@/lib/motor/radar";
 import { TIJDELIJK_MELDING } from "@/lib/redactie-melding";
 import { veiligeUrl } from "@/lib/site";
@@ -48,6 +49,7 @@ export default async function Radar({ searchParams }: { searchParams: SP }) {
         const hier = sp.tip === t.id;
         return (
           <article key={t.id} className="tip">
+            {tipLabelHuiseigenaren(t) && <p><span className="label">{HUISEIGENAREN_LABEL}</span></p>}
             <h2>{t.werktitel}</h2>
             <p className="brontekst">Tip van {tipgeverNaam(t.signaalUrl)}</p>
             {signaal && <a className="rd-knop" href={signaal} target="_blank" rel="noopener noreferrer">Bekijk de tip</a>}

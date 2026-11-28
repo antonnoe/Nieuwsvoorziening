@@ -540,6 +540,21 @@
       "frankrijkFilter": false,
       "vensterUren": 336,
       "notitie": "Actualités-feed (brèves, articles, dossiers). Juiste RSS-URL door Anton aangeleverd op 03-08-2026; de oude rss.xml gaf 0 items. Venster op 14 dagen (trage publi"
+    },
+    {
+      "id": "insee-conjoncture",
+      "naam": "Insee - publications conjoncturelles",
+      "feed": "https://www.insee.fr/fr/flux/3",
+      "domein": "insee.fr",
+      "taal": "fr",
+      "land": "FR",
+      "groep": "overheid",
+      "regime": "overheid",
+      "status": "ACTIVE",
+      "prioriteit": 2,
+      "frankrijkFilter": false,
+      "vensterUren": 168,
+      "notitie": "Officiele RSS van Insee (Abonnement aux flux RSS, insee.fr/fr/information/2381941, flux 3 Publications conjoncturelles), gecontroleerd 28-11-2026: HTTP 200 application/rss+xml, 115 items met titel, link en pubDate (de omschrijving is bij de prijsberichten leeg: de kop bevat het cijfer en de motor leest de artikeltekst). Bevat de Informations rapides over prijzen: de flash-raming eind van de maand en de definitieve IPC/IPCH (indices des prix a la consommation) midden van de maand; de IPCH van november bepaalt de jaarlijkse verhoging van de taxe fonciere (revalorisation des valeurs locatives, art. 1518 bis CGI). De feed bevat ook andere conjunctuurcijfers (PIB, productieprijzen); het model beoordeelt de relevantie. Venster 7 dagen. Alternatief niet gekozen: de dataset-feed bdm.insee.fr/series/sdmx/rss/donnees (alleen titels van bijgewerkte reeksen, geen leesbare omschrijving)."
     }
   ]
 }
