@@ -17,6 +17,7 @@ export default function Onderbalk({ nu, toegang }: { nu: Nu; toegang: Toegang })
       <div className="klein-menu">
         <span>{toegang.naam}</span>
         {toegang.rol === "beheerder" && <a href="/redactie/mensen">Mensen</a>}
+        {toegang.rol === "beheerder" && <a href="/redactie/peil">PEIL</a>}
         <form method="post" action="/redactie/uitloggen"><button type="submit">Uitloggen</button></form>
       </div>
     </>

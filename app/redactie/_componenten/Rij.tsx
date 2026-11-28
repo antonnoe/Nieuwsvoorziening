@@ -1,6 +1,7 @@
 import MiniBeeld from "./MiniBeeld";
 import { CATEGORIE_VOL, aantalBronnen } from "@/lib/site";
 import Terugvelden from "./Terugvelden";
+import { rijLabels } from "@/lib/redactie-peil";
 import { magTochPlaatsen, miniBeeldUrl } from "@/lib/redactie-vandaag";
 import type { OpgeslagenBericht } from "@/lib/motor/opslag";
 
@@ -11,6 +12,7 @@ export default function Rij({ b, extra, plaatsKnop }: { b: OpgeslagenBericht; ex
       <span className="mini"><MiniBeeld url={miniBeeldUrl(b)} /></span>
       <span className="info">
         <span className="rij-kop">{b.kop}</span>
+        {rijLabels(b).length > 0 && <span className="meta">{rijLabels(b).map((l) => <span key={l} className="label">{l}</span>)}</span>}
         <span className="meta">{CATEGORIE_VOL[b.categorie]} · {aantalBronnen(b.bronnen.length)}</span>
         {extra && <span className="meta reden">{extra}</span>}
       </span>

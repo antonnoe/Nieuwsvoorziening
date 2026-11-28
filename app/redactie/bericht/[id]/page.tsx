@@ -5,6 +5,8 @@ import Terugvelden from "../../_componenten/Terugvelden";
 import Uitklap from "../../_componenten/Uitklap";
 import TekenKnop from "./TekenKnop";
 import { ID_VORM, beeldbankKeuzes } from "@/lib/redactie-acties";
+import PeilBlok from "../../_componenten/PeilBlok";
+import { laadPeilBlok } from "@/lib/redactie-peil";
 import { eisToegang, leesMelding } from "@/lib/redactie-pagina";
 import { UITLEG_VOORSTELLEN, magTochPlaatsen } from "@/lib/redactie-vandaag";
 import { CATEGORIE_VOL, HERFORMULERING, aantalBronnen } from "@/lib/site";
@@ -12,7 +14,7 @@ import { CATEGORIE_VOL, HERFORMULERING, aantalBronnen } from "@/lib/site";
 type SP = Promise<{ m?: string; ok?: string }>;
 
 export default async function BerichtScherm({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: SP }) {
-  const { opslag } = await eisToegang();
+  const { opslag, toegang } = await eisToegang();
   const { id } = await params;
   const melding = leesMelding(await searchParams);
   if (!opslag || !ID_VORM.test(id)) notFound();
@@ -20,6 +22,7 @@ export default async function BerichtScherm({ params, searchParams }: { params: 
   if (!b) notFound();
   const pad = `/redactie/bericht/${id}`;
   const keuzes = await beeldbankKeuzes(opslag, b);
+  const peilData = await laadPeilBlok(opslag, b, toegang.rol === "beheerder");
   const weg = b.redactie === "weg";
   const alinea = b.tekst.split(/\n{2,}/).map((a) => a.trim()).filter(Boolean);
   return (
@@ -38,6 +41,7 @@ export default async function BerichtScherm({ params, searchParams }: { params: 
         {alinea.map((a, n) => <p key={n}>{a}</p>)}
         <p className="herformulering">{HERFORMULERING}</p>
       </details>
+      <PeilBlok data={peilData} />
 
       {magTochPlaatsen(b) && (
         <form method="post" action="/redactie/actie">

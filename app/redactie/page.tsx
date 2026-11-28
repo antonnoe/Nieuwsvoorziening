@@ -3,6 +3,7 @@ import Onderbalk from "./_componenten/Onderbalk";
 import Rij from "./_componenten/Rij";
 import { eisToegang, leesMelding } from "@/lib/redactie-pagina";
 import { TIJDELIJK_MELDING } from "@/lib/redactie-melding";
+import { laadPeilVragen } from "@/lib/redactie-peil";
 import { redenTekst } from "@/lib/redactie";
 import { UITLEG_VOORSTELLEN, VANDAAG_DAGEN, verdeelVandaag } from "@/lib/redactie-vandaag";
 
@@ -14,6 +15,7 @@ export default async function Vandaag({ searchParams }: { searchParams: SP }) {
   if (!opslag) return <p className="melding fout">{TIJDELIJK_MELDING}</p>;
   const lijst = await opslag.berichtenVoorRedactie(new Date(Date.now() - VANDAAG_DAGEN * 86400_000).toISOString(), 500).catch(() => null);
   const tips = (await opslag.radarOpen(50).catch(() => [])).length;
+  const peilVragen = toegang.rol === "beheerder" ? ((await laadPeilVragen(opslag)) || []).length : 0;
   const { live, voorstellen, tegengehouden, weg } = verdeelVandaag(lijst || []);
   return (
     <>
@@ -36,6 +38,12 @@ export default async function Vandaag({ searchParams }: { searchParams: SP }) {
       {tips > 0 && (
         <a className="tips" href="/redactie/radar">
           <span>{tips === 1 ? "1 tip om te bekijken" : `${tips} tips om te bekijken`}</span>
+          <span aria-hidden="true">›</span>
+        </a>
+      )}
+      {peilVragen > 0 && (
+        <a className="tips" href="/redactie/peil">
+          <span>{peilVragen === 1 ? "1 PEIL-vraag" : `${peilVragen} PEIL-vragen`}</span>
           <span aria-hidden="true">›</span>
         </a>
       )}

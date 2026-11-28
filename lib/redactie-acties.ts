@@ -9,7 +9,9 @@ import type { BeeldCredit, BronSoort } from "@/lib/motor/types";
 import { voegBronToe, verwijderBron, wijzigBron } from "@/lib/bronbeheer";
 import { TIJDELIJK_MELDING, logReden } from "@/lib/redactie-melding";
 import { maakBerichtUitTip, type MaakOpties } from "@/lib/redactie-maak-bericht";
-import { radarBesluitUitvoeren } from "@/lib/redactie";
+import { peilBesluitUitvoeren, radarBesluitUitvoeren } from "@/lib/redactie";
+import { peilMelding } from "@/lib/redactie-peil";
+import { PEIL_BESLUITEN, type PeilBesluit } from "@/lib/motor/types";
 import { magTochPlaatsen } from "@/lib/redactie-vandaag";
 import type { Toegang } from "@/lib/redactie-toegang";
 import { TEKEN_MELDING, controleerSvg, maakTekening, schoneNaam } from "@/lib/redactie-tekenen";
@@ -171,6 +173,15 @@ export async function voerActieUit(opslag: Opslag, toegang: Toegang, f: Record<s
         const u = await radarBesluitUitvoeren(opslag, id, "afgewezen");
         if (!u.ok) return klaar(false, u.status === 409 ? MELDING_AL_AFGEHANDELD : "Deze tip bestaat niet meer.");
         return klaar(true, "Tip weggelegd.");
+      }
+      case "peil": {
+        // Alleen de beheerder; alleen de status van het signaal verandert, PEIL zelf nooit.
+        if (toegang.rol !== "beheerder") return klaar(false, "Alleen de beheerder kan dit.", "/redactie");
+        const keuze = f.keuze as PeilBesluit;
+        if (!ID_VORM.test(id) || !(PEIL_BESLUITEN as readonly string[]).includes(keuze)) return klaar(false, "Dit kan niet.", "/redactie/peil");
+        const u = await peilBesluitUitvoeren(opslag, id, keuze);
+        if (!u.ok) return klaar(false, u.status === 409 ? "Deze vraag is al beantwoord." : "Deze vraag bestaat niet meer.", "/redactie/peil");
+        return klaar(true, peilMelding(keuze), "/redactie/peil");
       }
       case "maak-bericht": {
         if (!ID_VORM.test(id)) return klaar(false, "Deze tip bestaat niet meer.");

@@ -106,3 +106,10 @@ body:has(.rd) .net, body:has(.rd) footer, body:has(.rd) .sla-over { display: non
 .rd .voorstellen { margin-top: 20px; }
 .rd .voorstellen h2 { font-size: 18px; margin-bottom: 4px; }
 .rd .herformulering { font-size: 13px; color: var(--grijs); margin-top: 16px; }
+
+/* PEIL in de redactie-app */
+.rd .peilblok { border: 1.5px solid var(--lijn); border-radius: 18px; padding: 14px 16px; background: var(--kaart); display: flex; flex-direction: column; gap: 10px; }
+.rd .peilblok h2 { margin: 0; font-size: 18px; }
+.rd .peilblok p { margin: 0; }
+.rd .peilblok .peil-oranje { color: var(--grijs); }
+.rd .rij-kop + .meta .label { margin-left: 0; margin-right: 6px; }

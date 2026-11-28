@@ -149,6 +149,20 @@ export function peilVorm(x: PeilSignaalRij) {
   };
 }
 
+/** Het besluit over een PEIL-signaal uitvoeren (gedeeld door /api/redactie en de redactie-app). PEIL zelf wordt nooit aangepast, alleen de status van het signaal. */
+export async function peilBesluitUitvoeren(opslag: Opslag, id: string, keuze: PeilBesluit): Promise<{ ok: true } | { ok: false; status: 404 | 409; fout: string }> {
+  const sig = await opslag.peilSignaal(id);
+  if (!sig) return { ok: false, status: 404, fout: "Signaal niet gevonden." };
+  if (sig.status !== "gesignaleerd") return { ok: false, status: 409, fout: `Dit signaal is al afgehandeld (status ${sig.status}) en kan niet nog een keer worden beslist.` };
+  await opslag.zetPeilBesluit(id, keuze);
+  // Bij "raakt niet" verdwijnt de koppeling ook bij het bericht, zodat lezers hem niet meer zien. PEIL zelf blijft ongemoeid.
+  if (keuze === "raakt_niet" && sig.soort === "wijziging") {
+    const b = await opslag.redactieBericht(sig.berichtId);
+    if (b) await opslag.zetPeilKoppeling(b.id, { raakt: b.peil.raakt.filter((r) => r.id !== sig.parameterId), mogelijkGewijzigd: b.peil.mogelijkGewijzigd.filter((r) => r.id !== sig.parameterId) });
+  }
+  return { ok: true };
+}
+
 /** Het besluit over een radarsignaal uitvoeren (gedeeld door /api/redactie en de redactie-app). */
 export async function radarBesluitUitvoeren(opslag: Opslag, id: string, keuze: RadarBesluit): Promise<{ ok: true } | { ok: false; status: 404 | 409; fout: string }> {
   const rij = await opslag.radarRij(id);

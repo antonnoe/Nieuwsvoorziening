@@ -2,7 +2,7 @@ import { geenOpslag, leesOpslag } from "@/lib/motor/api";
 import { MigratieOntbreekt } from "@/lib/motor/opslag";
 import { RadarOntbreekt } from "@/lib/motor/radar";
 import { radarVorm } from "@/lib/motor/radar";
-import { controleerToegang, leesOpdracht, peilVorm, poortBlokkade, radarBesluitUitvoeren, redactieAntwoord, redactieCors, redactieVorm, toegangFout } from "@/lib/redactie";
+import { controleerToegang, leesOpdracht, peilBesluitUitvoeren, peilVorm, poortBlokkade, radarBesluitUitvoeren, redactieAntwoord, redactieCors, redactieVorm, toegangFout } from "@/lib/redactie";
 
 export const dynamic = "force-dynamic";
 
@@ -57,16 +57,9 @@ export async function POST(req: Request) {
   const { opdracht } = l;
   try {
     if (opdracht.actie === "peil") {
-      const sig = await opslag.peilSignaal(opdracht.id);
-      if (!sig) return redactieAntwoord(req, { fout: "Signaal niet gevonden." }, 404);
-      if (sig.status !== "gesignaleerd") return redactieAntwoord(req, { fout: `Dit signaal is al afgehandeld (status ${sig.status}) en kan niet nog een keer worden beslist.` }, 409);
-      await opslag.zetPeilBesluit(opdracht.id, opdracht.keuze!);
-      // Bij "raakt niet" verdwijnt de koppeling ook bij het bericht, zodat lezers hem niet meer zien. PEIL zelf blijft ongemoeid.
-      if (opdracht.keuze === "raakt_niet" && sig.soort === "wijziging") {
-        const b = await opslag.redactieBericht(sig.berichtId);
-        if (b) await opslag.zetPeilKoppeling(b.id, { raakt: b.peil.raakt.filter((r) => r.id !== sig.parameterId), mogelijkGewijzigd: b.peil.mogelijkGewijzigd.filter((r) => r.id !== sig.parameterId) });
-      }
-      return redactieAntwoord(req, { signaal: { id: sig.id, status: opdracht.keuze } });
+      const u = await peilBesluitUitvoeren(opslag, opdracht.id, opdracht.keuze!);
+      if (!u.ok) return redactieAntwoord(req, { fout: u.fout }, u.status);
+      return redactieAntwoord(req, { signaal: { id: opdracht.id, status: opdracht.keuze } });
     }
     if (opdracht.actie === "radar") {
       const u = await radarBesluitUitvoeren(opslag, opdracht.id, opdracht.radarKeuze!);
