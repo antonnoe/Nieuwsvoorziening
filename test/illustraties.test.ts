@@ -181,8 +181,8 @@ test("echte koppen kiezen de passende illustratie", () => {
 test("alle illustraties in de index hebben een bestaand svg- en png-bestand", async () => {
   const { existsSync } = await import("node:fs");
   const { join } = await import("node:path");
-  assert.equal(ILLUSTRATIES.beelden.length, 120);
-  assert.equal(new Set(ILLUSTRATIES.beelden.map((i) => i.id)).size, 120);
+  assert.equal(ILLUSTRATIES.beelden.length, 213);
+  assert.equal(new Set(ILLUSTRATIES.beelden.map((i) => i.id)).size, 213);
   for (const i of ILLUSTRATIES.beelden) {
     assert.ok(existsSync(join(process.cwd(), "public", i.svg)), i.svg);
     assert.ok(existsSync(join(process.cwd(), "public", i.png)), i.png);
@@ -199,4 +199,27 @@ test("Nederland-onderwerp: nl-beeld met treffer krijgt +3, bij alles 0 gaat een 
   assert.equal(kiesIllustratie(b("Nederlanders zonder treffer", "", "algemeen"), [], l)?.id, "b-nl"); // alles 0: nl uit de hele set
   assert.equal(kiesIllustratie(b("Storm bij Nederland en svb", "", "algemeen"), [], l)?.id, "b-nl"); // 3+2 tegen 2
   assert.equal(kiesIllustratie(b("Storm", "", "algemeen"), [], l)?.id, "a-fr"); // geen Nederland: ongewijzigd
+});
+
+test("nieuwe reeksen: echte koppen kiezen het passende beeld", () => {
+  const k = (kop: string, categorie: string) => kiesIllustratie({ kop, samenvatting: "", categorie });
+  assert.ok(["natuur-overstroming-dorp-fr", "algemeen-stad-nice-fr"].includes(k("Overstromingen in Nice: Promenade des Anglais afgesloten", "natuur en rampen")!.id));
+  assert.equal(k("Nieuwe regels voor de DPE: verhuurverbod voor slecht geïsoleerde woningen uitgesteld", "politiek")?.id, "algemeen-klus-energielabel-dpe-fr");
+  assert.equal(k("Ma Prime Rénov: minder subsidie voor warmtepompen in 2027", "economie en ondernemen")?.id, "algemeen-klus-warmtepomp-fr");
+  assert.equal(k("Overvolle gevangenissen: recordaantal gedetineerden", "algemeen")?.id, "algemeen-gevangenis-fr");
+  assert.ok(["algemeen-sport-wielrennen-fr", "algemeen-stad-lille-fr"].includes(k("Tour de France 2027 start in Lille", "algemeen")!.id));
+  assert.equal(k("Elfstedentocht? Nederlanders in Frankrijk missen het natuurijs", "merkwaardig")?.id, "algemeen-schaatsers-ijs-nl");
+  const be = k("Belgen in Frankrijk: Brussel past regels voor kinderbijslag aan", "algemeen")!;
+  assert.ok(be.binding === "nl" || be.id === "algemeen-caf-loket-fr", be.id);
+  assert.equal(k("CAF verhoogt de huurtoeslag (APL) per 1 januari", "economie en ondernemen")?.id, "algemeen-caf-loket-fr");
+  assert.notEqual(k("Inflatie daalt in november", "economie en ondernemen")?.id, "natuur-rivierdal-fr");
+});
+
+test("index: geen dubbele id's en geen verboden korte trefwoorden (woordbegin-matches)", () => {
+  const verboden = new Set(["weg", "dal", "ai", "top", "wet", "bos", "vis", "ov", "app", "eu", "gas", "lek", "ev", "x", "lot", "caf"]);
+  const ids = ILLUSTRATIES.beelden.map((i) => i.id);
+  assert.equal(new Set(ids).size, ids.length);
+  for (const i of ILLUSTRATIES.beelden) {
+    for (const t of i.trefwoorden) assert.ok(!verboden.has(t.toLowerCase().trim()), `${i.id}: ${t}`);
+  }
 });

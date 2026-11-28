@@ -2,6 +2,22 @@
  "afkomst": "Illustratie door Communities Abroad",
  "beelden": [
   {
+   "id": "algemeen-alpinopet-stokbrood-fr",
+   "categorie": "algemeen",
+   "naam": "Alpinopet en stokbrood",
+   "binding": "fr",
+   "trefwoorden": [
+    "alpinopet",
+    "baret",
+    "stokbrood",
+    "baguette",
+    "cliche",
+    "frans leven"
+   ],
+   "svg": "/illustraties/algemeen-alpinopet-stokbrood-fr.svg",
+   "png": "/illustraties/algemeen-alpinopet-stokbrood-fr.png"
+  },
+  {
    "id": "algemeen-ambulance-nacht-fr",
    "categorie": "algemeen",
    "naam": "Ambulance in de nacht",
@@ -38,6 +54,37 @@
    "png": "/illustraties/algemeen-apotheek-fr.png"
   },
   {
+   "id": "algemeen-arc-de-triomphe-fr",
+   "categorie": "algemeen",
+   "naam": "Arc de Triomphe",
+   "binding": "fr",
+   "trefwoorden": [
+    "arc de triomphe",
+    "champs-elysees",
+    "herdenking",
+    "11 november",
+    "14 juli",
+    "defile"
+   ],
+   "svg": "/illustraties/algemeen-arc-de-triomphe-fr.svg",
+   "png": "/illustraties/algemeen-arc-de-triomphe-fr.png"
+  },
+  {
+   "id": "algemeen-atomium-be",
+   "categorie": "algemeen",
+   "naam": "Atomium",
+   "binding": "nl",
+   "trefwoorden": [
+    "atomium",
+    "brussel",
+    "belgie",
+    "belgen",
+    "expo"
+   ],
+   "svg": "/illustraties/algemeen-atomium-be.svg",
+   "png": "/illustraties/algemeen-atomium-be.png"
+  },
+  {
    "id": "algemeen-bakkerij-dorp-fr",
    "categorie": "algemeen",
    "naam": "Bakkerij in het dorp",
@@ -56,6 +103,36 @@
    "png": "/illustraties/algemeen-bakkerij-dorp-fr.png"
   },
   {
+   "id": "algemeen-belastingkantoor-fr",
+   "categorie": "algemeen",
+   "naam": "Belastingkantoor",
+   "binding": "fr",
+   "trefwoorden": [
+    "belastingkantoor",
+    "impots",
+    "fiscus",
+    "dgfip",
+    "centre des finances",
+    "aanslag"
+   ],
+   "svg": "/illustraties/algemeen-belastingkantoor-fr.svg",
+   "png": "/illustraties/algemeen-belastingkantoor-fr.png"
+  },
+  {
+   "id": "algemeen-boormachine-fr",
+   "categorie": "algemeen",
+   "naam": "Boormachine",
+   "binding": "fr",
+   "trefwoorden": [
+    "boormachine",
+    "boren",
+    "klussen",
+    "elektrisch gereedschap"
+   ],
+   "svg": "/illustraties/algemeen-boormachine-fr.svg",
+   "png": "/illustraties/algemeen-boormachine-fr.png"
+  },
+  {
    "id": "algemeen-brandweerkazerne-fr",
    "categorie": "algemeen",
    "naam": "Brandweerkazerne",
@@ -71,6 +148,42 @@
    ],
    "svg": "/illustraties/algemeen-brandweerkazerne-fr.svg",
    "png": "/illustraties/algemeen-brandweerkazerne-fr.png"
+  },
+  {
+   "id": "algemeen-brugse-reien-be",
+   "categorie": "algemeen",
+   "naam": "Brugse reien",
+   "binding": "nl",
+   "trefwoorden": [
+    "brugge",
+    "gent",
+    "vlaanderen",
+    "belgie",
+    "belgen",
+    "vlaams"
+   ],
+   "svg": "/illustraties/algemeen-brugse-reien-be.svg",
+   "png": "/illustraties/algemeen-brugse-reien-be.png"
+  },
+  {
+   "id": "algemeen-caf-loket-fr",
+   "categorie": "algemeen",
+   "naam": "CAF-loket",
+   "binding": "fr",
+   "trefwoorden": [
+    "kinderbijslag",
+    "toeslag",
+    "huurtoeslag",
+    "apl",
+    "rsa",
+    "allocations",
+    "uitkering",
+    "loket",
+    "allocations familiales",
+    "caisse d'allocations"
+   ],
+   "svg": "/illustraties/algemeen-caf-loket-fr.svg",
+   "png": "/illustraties/algemeen-caf-loket-fr.png"
   },
   {
    "id": "algemeen-collegezaal-studenten-fr",
@@ -91,6 +204,21 @@
    "png": "/illustraties/algemeen-collegezaal-studenten-fr.png"
   },
   {
+   "id": "algemeen-commissariaat-police-fr",
+   "categorie": "algemeen",
+   "naam": "Commissariaat",
+   "binding": "fr",
+   "trefwoorden": [
+    "police nationale",
+    "commissariaat",
+    "politiebureau",
+    "agenten",
+    "aangifte"
+   ],
+   "svg": "/illustraties/algemeen-commissariaat-police-fr.svg",
+   "png": "/illustraties/algemeen-commissariaat-police-fr.png"
+  },
+  {
    "id": "algemeen-consulaat-paspoort-nl",
    "categorie": "algemeen",
    "naam": "Consulaat en paspoort",
@@ -107,6 +235,250 @@
    ],
    "svg": "/illustraties/algemeen-consulaat-paspoort-nl.svg",
    "png": "/illustraties/algemeen-consulaat-paspoort-nl.png"
+  },
+  {
+   "id": "algemeen-eiffeltoren-fr",
+   "categorie": "algemeen",
+   "naam": "Eiffeltoren",
+   "binding": "fr",
+   "trefwoorden": [
+    "eiffeltoren",
+    "tour eiffel",
+    "parijs",
+    "monument",
+    "toerisme"
+   ],
+   "svg": "/illustraties/algemeen-eiffeltoren-fr.svg",
+   "png": "/illustraties/algemeen-eiffeltoren-fr.png"
+  },
+  {
+   "id": "algemeen-fiets-bij-brug-nl",
+   "categorie": "algemeen",
+   "naam": "Fiets bij een brug",
+   "binding": "nl",
+   "trefwoorden": [
+    "fiets",
+    "fietsen",
+    "brug",
+    "gracht",
+    "fietsland"
+   ],
+   "svg": "/illustraties/algemeen-fiets-bij-brug-nl.svg",
+   "png": "/illustraties/algemeen-fiets-bij-brug-nl.png"
+  },
+  {
+   "id": "algemeen-france-travail-fr",
+   "categorie": "algemeen",
+   "naam": "France Travail",
+   "binding": "fr",
+   "trefwoorden": [
+    "france travail",
+    "pole emploi",
+    "werkloos",
+    "werkloosheid",
+    "werkzoekenden",
+    "vacatures",
+    "uitkering"
+   ],
+   "svg": "/illustraties/algemeen-france-travail-fr.svg",
+   "png": "/illustraties/algemeen-france-travail-fr.png"
+  },
+  {
+   "id": "algemeen-franse-lelie-fr",
+   "categorie": "algemeen",
+   "naam": "Franse lelie",
+   "binding": "fr",
+   "trefwoorden": [
+    "lelie",
+    "fleur de lys",
+    "monarchie",
+    "koning",
+    "geschiedenis"
+   ],
+   "svg": "/illustraties/algemeen-franse-lelie-fr.svg",
+   "png": "/illustraties/algemeen-franse-lelie-fr.png"
+  },
+  {
+   "id": "algemeen-functie-boer-fr",
+   "categorie": "algemeen",
+   "naam": "Boer",
+   "binding": "fr",
+   "trefwoorden": [
+    "boer",
+    "boeren",
+    "agriculteur",
+    "landbouwer",
+    "boerenprotest"
+   ],
+   "svg": "/illustraties/algemeen-functie-boer-fr.svg",
+   "png": "/illustraties/algemeen-functie-boer-fr.png"
+  },
+  {
+   "id": "algemeen-functie-bouwvakker-fr",
+   "categorie": "algemeen",
+   "naam": "Bouwvakker",
+   "binding": "fr",
+   "trefwoorden": [
+    "bouwvakker",
+    "bouw",
+    "bouwsector",
+    "werf",
+    "chantier",
+    "aannemer",
+    "artisan"
+   ],
+   "svg": "/illustraties/algemeen-functie-bouwvakker-fr.svg",
+   "png": "/illustraties/algemeen-functie-bouwvakker-fr.png"
+  },
+  {
+   "id": "algemeen-functie-brandweer-fr",
+   "categorie": "algemeen",
+   "naam": "Brandweerman",
+   "binding": "fr",
+   "trefwoorden": [
+    "brandweerman",
+    "pompier",
+    "brandweerlieden",
+    "vrijwillige brandweer"
+   ],
+   "svg": "/illustraties/algemeen-functie-brandweer-fr.svg",
+   "png": "/illustraties/algemeen-functie-brandweer-fr.png"
+  },
+  {
+   "id": "algemeen-functie-gendarme-fr",
+   "categorie": "algemeen",
+   "naam": "Gendarme",
+   "binding": "fr",
+   "trefwoorden": [
+    "gendarme",
+    "gendarmerie",
+    "controle",
+    "verkeerscontrole",
+    "agent"
+   ],
+   "svg": "/illustraties/algemeen-functie-gendarme-fr.svg",
+   "png": "/illustraties/algemeen-functie-gendarme-fr.png"
+  },
+  {
+   "id": "algemeen-functie-hotelier-fr",
+   "categorie": "algemeen",
+   "naam": "Hotelier",
+   "binding": "fr",
+   "trefwoorden": [
+    "hotelier",
+    "receptie",
+    "hotel",
+    "gastvrijheid",
+    "toerisme"
+   ],
+   "svg": "/illustraties/algemeen-functie-hotelier-fr.svg",
+   "png": "/illustraties/algemeen-functie-hotelier-fr.png"
+  },
+  {
+   "id": "algemeen-functie-kok-fr",
+   "categorie": "algemeen",
+   "naam": "Kok",
+   "binding": "fr",
+   "trefwoorden": [
+    "kok",
+    "chef",
+    "keuken",
+    "gastronomie",
+    "michelin",
+    "restaurantkeuken"
+   ],
+   "svg": "/illustraties/algemeen-functie-kok-fr.svg",
+   "png": "/illustraties/algemeen-functie-kok-fr.png"
+  },
+  {
+   "id": "algemeen-functie-leraar-fr",
+   "categorie": "algemeen",
+   "naam": "Leraar",
+   "binding": "fr",
+   "trefwoorden": [
+    "leraar",
+    "lerares",
+    "docent",
+    "onderwijzer",
+    "enseignant",
+    "klas"
+   ],
+   "svg": "/illustraties/algemeen-functie-leraar-fr.svg",
+   "png": "/illustraties/algemeen-functie-leraar-fr.png"
+  },
+  {
+   "id": "algemeen-functie-ober-fr",
+   "categorie": "algemeen",
+   "naam": "Ober",
+   "binding": "fr",
+   "trefwoorden": [
+    "ober",
+    "horeca",
+    "serveur",
+    "cafe",
+    "personeelstekort"
+   ],
+   "svg": "/illustraties/algemeen-functie-ober-fr.svg",
+   "png": "/illustraties/algemeen-functie-ober-fr.png"
+  },
+  {
+   "id": "algemeen-functie-postbode-fr",
+   "categorie": "algemeen",
+   "naam": "Postbode",
+   "binding": "fr",
+   "trefwoorden": [
+    "postbode",
+    "facteur",
+    "la poste",
+    "post"
+   ],
+   "svg": "/illustraties/algemeen-functie-postbode-fr.svg",
+   "png": "/illustraties/algemeen-functie-postbode-fr.png"
+  },
+  {
+   "id": "algemeen-functie-president-fr",
+   "categorie": "algemeen",
+   "naam": "President",
+   "binding": "fr",
+   "trefwoorden": [
+    "president",
+    "staatshoofd",
+    "elysee",
+    "macron",
+    "presidentschap"
+   ],
+   "svg": "/illustraties/algemeen-functie-president-fr.svg",
+   "png": "/illustraties/algemeen-functie-president-fr.png"
+  },
+  {
+   "id": "algemeen-functie-rechter-fr",
+   "categorie": "algemeen",
+   "naam": "Rechter",
+   "binding": "fr",
+   "trefwoorden": [
+    "rechter",
+    "magistraat",
+    "juge",
+    "toga",
+    "vonnis"
+   ],
+   "svg": "/illustraties/algemeen-functie-rechter-fr.svg",
+   "png": "/illustraties/algemeen-functie-rechter-fr.png"
+  },
+  {
+   "id": "algemeen-functie-verpleegkundige-fr",
+   "categorie": "algemeen",
+   "naam": "Verpleegkundige",
+   "binding": "fr",
+   "trefwoorden": [
+    "verpleegkundige",
+    "infirmiere",
+    "verpleging",
+    "zorgpersoneel",
+    "thuiszorg"
+   ],
+   "svg": "/illustraties/algemeen-functie-verpleegkundige-fr.svg",
+   "png": "/illustraties/algemeen-functie-verpleegkundige-fr.png"
   },
   {
    "id": "algemeen-gemeentehuis-fr",
@@ -165,6 +537,69 @@
    ],
    "svg": "/illustraties/algemeen-geneesmiddelen-doosjes-fr.svg",
    "png": "/illustraties/algemeen-geneesmiddelen-doosjes-fr.png"
+  },
+  {
+   "id": "algemeen-gereedschapskist-fr",
+   "categorie": "algemeen",
+   "naam": "Gereedschapskist",
+   "binding": "fr",
+   "trefwoorden": [
+    "gereedschap",
+    "gereedschapskist",
+    "klussen",
+    "doe-het-zelf",
+    "reparaties"
+   ],
+   "svg": "/illustraties/algemeen-gereedschapskist-fr.svg",
+   "png": "/illustraties/algemeen-gereedschapskist-fr.png"
+  },
+  {
+   "id": "algemeen-gevangenis-fr",
+   "categorie": "algemeen",
+   "naam": "Gevangenis",
+   "binding": "fr",
+   "trefwoorden": [
+    "gevangenis",
+    "prison",
+    "cel",
+    "gedetineerden",
+    "celstraf",
+    "overvolle gevangenissen",
+    "detentie"
+   ],
+   "svg": "/illustraties/algemeen-gevangenis-fr.svg",
+   "png": "/illustraties/algemeen-gevangenis-fr.png"
+  },
+  {
+   "id": "algemeen-grachtenpanden-nl",
+   "categorie": "algemeen",
+   "naam": "Grachtenpanden",
+   "binding": "nl",
+   "trefwoorden": [
+    "amsterdam",
+    "gracht",
+    "grachten",
+    "nederlandse stad",
+    "utrecht",
+    "leiden"
+   ],
+   "svg": "/illustraties/algemeen-grachtenpanden-nl.svg",
+   "png": "/illustraties/algemeen-grachtenpanden-nl.png"
+  },
+  {
+   "id": "algemeen-haan-fr",
+   "categorie": "algemeen",
+   "naam": "Haan",
+   "binding": "fr",
+   "trefwoorden": [
+    "haan",
+    "coq gaulois",
+    "les bleus",
+    "frans symbool",
+    "nationaal"
+   ],
+   "svg": "/illustraties/algemeen-haan-fr.svg",
+   "png": "/illustraties/algemeen-haan-fr.png"
   },
   {
    "id": "algemeen-helikopter-fr",
@@ -242,6 +677,218 @@
    "png": "/illustraties/algemeen-kazerne-fr.png"
   },
   {
+   "id": "algemeen-klus-badkamer-fr",
+   "categorie": "algemeen",
+   "naam": "Badkamer",
+   "binding": "fr",
+   "trefwoorden": [
+    "badkamer",
+    "douche",
+    "badkuip",
+    "sanitair",
+    "renovatie badkamer"
+   ],
+   "svg": "/illustraties/algemeen-klus-badkamer-fr.svg",
+   "png": "/illustraties/algemeen-klus-badkamer-fr.png"
+  },
+  {
+   "id": "algemeen-klus-dubbel-glas-fr",
+   "categorie": "algemeen",
+   "naam": "Dubbel glas",
+   "binding": "fr",
+   "trefwoorden": [
+    "dubbel glas",
+    "ramen",
+    "kozijnen",
+    "double vitrage",
+    "isolatie ramen"
+   ],
+   "svg": "/illustraties/algemeen-klus-dubbel-glas-fr.svg",
+   "png": "/illustraties/algemeen-klus-dubbel-glas-fr.png"
+  },
+  {
+   "id": "algemeen-klus-energielabel-dpe-fr",
+   "categorie": "algemeen",
+   "naam": "Energielabel",
+   "binding": "fr",
+   "trefwoorden": [
+    "dpe",
+    "energielabel",
+    "diagnostic",
+    "energieprestatie",
+    "passoire thermique",
+    "verhuurverbod"
+   ],
+   "svg": "/illustraties/algemeen-klus-energielabel-dpe-fr.svg",
+   "png": "/illustraties/algemeen-klus-energielabel-dpe-fr.png"
+  },
+  {
+   "id": "algemeen-klus-keuken-fr",
+   "categorie": "algemeen",
+   "naam": "Keuken",
+   "binding": "fr",
+   "trefwoorden": [
+    "keuken",
+    "keukenrenovatie",
+    "aanrecht",
+    "kasten"
+   ],
+   "svg": "/illustraties/algemeen-klus-keuken-fr.svg",
+   "png": "/illustraties/algemeen-klus-keuken-fr.png"
+  },
+  {
+   "id": "algemeen-klus-lekkage-fr",
+   "categorie": "algemeen",
+   "naam": "Lekkage",
+   "binding": "fr",
+   "trefwoorden": [
+    "lekkage",
+    "waterschade",
+    "degat des eaux",
+    "plafond",
+    "lekt",
+    "daklek"
+   ],
+   "svg": "/illustraties/algemeen-klus-lekkage-fr.svg",
+   "png": "/illustraties/algemeen-klus-lekkage-fr.png"
+  },
+  {
+   "id": "algemeen-klus-loodgieter-fr",
+   "categorie": "algemeen",
+   "naam": "Loodgieter",
+   "binding": "fr",
+   "trefwoorden": [
+    "loodgieter",
+    "plombier",
+    "afvoer",
+    "leidingen",
+    "gootsteen",
+    "sanitair"
+   ],
+   "svg": "/illustraties/algemeen-klus-loodgieter-fr.svg",
+   "png": "/illustraties/algemeen-klus-loodgieter-fr.png"
+  },
+  {
+   "id": "algemeen-klus-metselen-fr",
+   "categorie": "algemeen",
+   "naam": "Metselen",
+   "binding": "fr",
+   "trefwoorden": [
+    "metselen",
+    "muur",
+    "bakstenen",
+    "verbouwen",
+    "maconnerie"
+   ],
+   "svg": "/illustraties/algemeen-klus-metselen-fr.svg",
+   "png": "/illustraties/algemeen-klus-metselen-fr.png"
+  },
+  {
+   "id": "algemeen-klus-natuurstenen-muur-fr",
+   "categorie": "algemeen",
+   "naam": "Natuurstenen muur",
+   "binding": "fr",
+   "trefwoorden": [
+    "natuursteen",
+    "muur en pierre",
+    "voegen",
+    "kalkmortel",
+    "oude stenen"
+   ],
+   "svg": "/illustraties/algemeen-klus-natuurstenen-muur-fr.svg",
+   "png": "/illustraties/algemeen-klus-natuurstenen-muur-fr.png"
+  },
+  {
+   "id": "algemeen-klus-stopcontact-fr",
+   "categorie": "algemeen",
+   "naam": "Stopcontact",
+   "binding": "fr",
+   "trefwoorden": [
+    "stopcontact",
+    "elektriciteit",
+    "bedrading",
+    "aansluiting",
+    "prise"
+   ],
+   "svg": "/illustraties/algemeen-klus-stopcontact-fr.svg",
+   "png": "/illustraties/algemeen-klus-stopcontact-fr.png"
+  },
+  {
+   "id": "algemeen-klus-stoppenkast-fr",
+   "categorie": "algemeen",
+   "naam": "Stoppenkast",
+   "binding": "fr",
+   "trefwoorden": [
+    "stoppenkast",
+    "meterkast",
+    "tableau electrique",
+    "groepenkast",
+    "consuel",
+    "elektra"
+   ],
+   "svg": "/illustraties/algemeen-klus-stoppenkast-fr.svg",
+   "png": "/illustraties/algemeen-klus-stoppenkast-fr.png"
+  },
+  {
+   "id": "algemeen-klus-tegelvloer-fr",
+   "categorie": "algemeen",
+   "naam": "Tegelvloer",
+   "binding": "fr",
+   "trefwoorden": [
+    "tegels",
+    "tegelvloer",
+    "tomettes",
+    "carrelage",
+    "vloer"
+   ],
+   "svg": "/illustraties/algemeen-klus-tegelvloer-fr.svg",
+   "png": "/illustraties/algemeen-klus-tegelvloer-fr.png"
+  },
+  {
+   "id": "algemeen-klus-warmtepomp-fr",
+   "categorie": "algemeen",
+   "naam": "Warmtepomp",
+   "binding": "fr",
+   "trefwoorden": [
+    "warmtepomp",
+    "pompe a chaleur",
+    "verwarming",
+    "ma prime renov",
+    "airco"
+   ],
+   "svg": "/illustraties/algemeen-klus-warmtepomp-fr.svg",
+   "png": "/illustraties/algemeen-klus-warmtepomp-fr.png"
+  },
+  {
+   "id": "algemeen-klus-zolderisolatie-fr",
+   "categorie": "algemeen",
+   "naam": "Zolderisolatie",
+   "binding": "fr",
+   "trefwoorden": [
+    "isolatie",
+    "zolder",
+    "dakisolatie",
+    "isoleren",
+    "combles"
+   ],
+   "svg": "/illustraties/algemeen-klus-zolderisolatie-fr.svg",
+   "png": "/illustraties/algemeen-klus-zolderisolatie-fr.png"
+  },
+  {
+   "id": "algemeen-klus-zonnepanelen-fr",
+   "categorie": "algemeen",
+   "naam": "Zonnepanelen",
+   "binding": "fr",
+   "trefwoorden": [
+    "zonnepanelen",
+    "zonne-energie",
+    "panneaux solaires",
+    "terugleveren"
+   ],
+   "svg": "/illustraties/algemeen-klus-zonnepanelen-fr.svg",
+   "png": "/illustraties/algemeen-klus-zonnepanelen-fr.png"
+  },
+  {
    "id": "algemeen-krantenstapel-fr",
    "categorie": "algemeen",
    "naam": "Kranten",
@@ -249,14 +896,15 @@
    "trefwoorden": [
     "krant",
     "kranten",
-    "pers",
     "media",
     "publicatie",
     "onthullingen",
     "artikel",
     "uitgeverij",
     "boek",
-    "persbureau"
+    "persbureau",
+    "persvrijheid",
+    "perspublicatie"
    ],
    "svg": "/illustraties/algemeen-krantenstapel-fr.svg",
    "png": "/illustraties/algemeen-krantenstapel-fr.png"
@@ -276,9 +924,7 @@
     "phishing",
     "oplichting online",
     "wachtwoord",
-    "privacy",
-    "offline",
-    "digitale aanval"
+    "privacy"
    ],
    "svg": "/illustraties/algemeen-laptop-slot-cyber-fr.svg",
    "png": "/illustraties/algemeen-laptop-slot-cyber-fr.png"
@@ -303,6 +949,37 @@
    "png": "/illustraties/algemeen-legertruck-fr.png"
   },
   {
+   "id": "algemeen-manneken-pis-be",
+   "categorie": "algemeen",
+   "naam": "Manneken Pis",
+   "binding": "nl",
+   "trefwoorden": [
+    "brussel",
+    "belgie",
+    "belgen",
+    "manneken pis",
+    "belgisch"
+   ],
+   "svg": "/illustraties/algemeen-manneken-pis-be.svg",
+   "png": "/illustraties/algemeen-manneken-pis-be.png"
+  },
+  {
+   "id": "algemeen-marianne-borstbeeld-fr",
+   "categorie": "algemeen",
+   "naam": "Marianne",
+   "binding": "fr",
+   "trefwoorden": [
+    "marianne",
+    "republiek",
+    "republique",
+    "frans symbool",
+    "laicite",
+    "waarden van de republiek"
+   ],
+   "svg": "/illustraties/algemeen-marianne-borstbeeld-fr.svg",
+   "png": "/illustraties/algemeen-marianne-borstbeeld-fr.png"
+  },
+  {
    "id": "algemeen-marineschip-fr",
    "categorie": "algemeen",
    "naam": "Marineschip",
@@ -320,6 +997,53 @@
    ],
    "svg": "/illustraties/algemeen-marineschip-fr.svg",
    "png": "/illustraties/algemeen-marineschip-fr.png"
+  },
+  {
+   "id": "algemeen-mobiele-telefoon-fr",
+   "categorie": "algemeen",
+   "naam": "Mobiele telefoon",
+   "binding": "fr",
+   "trefwoorden": [
+    "telefoon",
+    "smartphone",
+    "mobiel",
+    "apps",
+    "bellen",
+    "sms"
+   ],
+   "svg": "/illustraties/algemeen-mobiele-telefoon-fr.svg",
+   "png": "/illustraties/algemeen-mobiele-telefoon-fr.png"
+  },
+  {
+   "id": "algemeen-nieuwsbrief-mailbox-fr",
+   "categorie": "algemeen",
+   "naam": "Nieuwsbrief",
+   "binding": "fr",
+   "trefwoorden": [
+    "nieuwsbrief",
+    "e-mail",
+    "mail",
+    "inbox",
+    "abonnees",
+    "mailbox"
+   ],
+   "svg": "/illustraties/algemeen-nieuwsbrief-mailbox-fr.svg",
+   "png": "/illustraties/algemeen-nieuwsbrief-mailbox-fr.png"
+  },
+  {
+   "id": "algemeen-podcastmicrofoon-fr",
+   "categorie": "algemeen",
+   "naam": "Podcast",
+   "binding": "fr",
+   "trefwoorden": [
+    "podcast",
+    "microfoon",
+    "interview",
+    "opname",
+    "luisteren"
+   ],
+   "svg": "/illustraties/algemeen-podcastmicrofoon-fr.svg",
+   "png": "/illustraties/algemeen-podcastmicrofoon-fr.png"
   },
   {
    "id": "algemeen-politielint-fr",
@@ -360,6 +1084,37 @@
    "png": "/illustraties/algemeen-postkantoor-dorp-fr.png"
   },
   {
+   "id": "algemeen-puntzak-friet-be",
+   "categorie": "algemeen",
+   "naam": "Puntzak friet",
+   "binding": "nl",
+   "trefwoorden": [
+    "friet",
+    "frieten",
+    "belgie",
+    "belgen",
+    "frituur",
+    "belgisch eten"
+   ],
+   "svg": "/illustraties/algemeen-puntzak-friet-be.svg",
+   "png": "/illustraties/algemeen-puntzak-friet-be.png"
+  },
+  {
+   "id": "algemeen-radio-fr",
+   "categorie": "algemeen",
+   "naam": "Radio",
+   "binding": "fr",
+   "trefwoorden": [
+    "radio",
+    "omroep",
+    "uitzending",
+    "france inter",
+    "luisteraars"
+   ],
+   "svg": "/illustraties/algemeen-radio-fr.svg",
+   "png": "/illustraties/algemeen-radio-fr.png"
+  },
+  {
    "id": "algemeen-rechtbank-gang-fr",
    "categorie": "algemeen",
    "naam": "Gang van de rechtbank",
@@ -395,6 +1150,21 @@
    ],
    "svg": "/illustraties/algemeen-satelliet-fr.svg",
    "png": "/illustraties/algemeen-satelliet-fr.png"
+  },
+  {
+   "id": "algemeen-schaatsers-ijs-nl",
+   "categorie": "algemeen",
+   "naam": "Schaatsers op het ijs",
+   "binding": "nl",
+   "trefwoorden": [
+    "schaatsen",
+    "natuurijs",
+    "elfstedentocht",
+    "winter in nederland",
+    "ijs"
+   ],
+   "svg": "/illustraties/algemeen-schaatsers-ijs-nl.svg",
+   "png": "/illustraties/algemeen-schaatsers-ijs-nl.png"
   },
   {
    "id": "algemeen-school-fr",
@@ -434,13 +1204,26 @@
    "png": "/illustraties/algemeen-schoolhek-protest-fr.png"
   },
   {
+   "id": "algemeen-schroevendraaier-fr",
+   "categorie": "algemeen",
+   "naam": "Schroevendraaier",
+   "binding": "fr",
+   "trefwoorden": [
+    "schroevendraaier",
+    "klussen",
+    "gereedschap",
+    "reparatie"
+   ],
+   "svg": "/illustraties/algemeen-schroevendraaier-fr.svg",
+   "png": "/illustraties/algemeen-schroevendraaier-fr.png"
+  },
+  {
    "id": "algemeen-serverkast-fr",
    "categorie": "algemeen",
    "naam": "Datacenter",
    "binding": "fr",
    "trefwoorden": [
     "datacenter",
-    "ai",
     "kunstmatige intelligentie",
     "chatbot",
     "internet",
@@ -452,6 +1235,301 @@
    ],
    "svg": "/illustraties/algemeen-serverkast-fr.svg",
    "png": "/illustraties/algemeen-serverkast-fr.png"
+  },
+  {
+   "id": "algemeen-sociale-media-telefoon-fr",
+   "categorie": "algemeen",
+   "naam": "Sociale media",
+   "binding": "fr",
+   "trefwoorden": [
+    "sociale media",
+    "facebook",
+    "instagram",
+    "tiktok",
+    "influencer",
+    "online",
+    "berichten"
+   ],
+   "svg": "/illustraties/algemeen-sociale-media-telefoon-fr.svg",
+   "png": "/illustraties/algemeen-sociale-media-telefoon-fr.png"
+  },
+  {
+   "id": "algemeen-sport-rugby-fr",
+   "categorie": "algemeen",
+   "naam": "Rugby",
+   "binding": "fr",
+   "trefwoorden": [
+    "rugby",
+    "xv de france",
+    "top 14",
+    "zes landen",
+    "finale rugby"
+   ],
+   "svg": "/illustraties/algemeen-sport-rugby-fr.svg",
+   "png": "/illustraties/algemeen-sport-rugby-fr.png"
+  },
+  {
+   "id": "algemeen-sport-schaatsen-fr",
+   "categorie": "algemeen",
+   "naam": "Schaatsen",
+   "binding": "fr",
+   "trefwoorden": [
+    "schaatsen",
+    "schaatser",
+    "schaatsbaan",
+    "ijsbaan"
+   ],
+   "svg": "/illustraties/algemeen-sport-schaatsen-fr.svg",
+   "png": "/illustraties/algemeen-sport-schaatsen-fr.png"
+  },
+  {
+   "id": "algemeen-sport-skien-fr",
+   "categorie": "algemeen",
+   "naam": "Skiën",
+   "binding": "fr",
+   "trefwoorden": [
+    "skien",
+    "skier",
+    "afdaling",
+    "wintersport",
+    "piste"
+   ],
+   "svg": "/illustraties/algemeen-sport-skien-fr.svg",
+   "png": "/illustraties/algemeen-sport-skien-fr.png"
+  },
+  {
+   "id": "algemeen-sport-tennis-fr",
+   "categorie": "algemeen",
+   "naam": "Tennis",
+   "binding": "fr",
+   "trefwoorden": [
+    "tennis",
+    "roland garros",
+    "tennisser",
+    "grand slam"
+   ],
+   "svg": "/illustraties/algemeen-sport-tennis-fr.svg",
+   "png": "/illustraties/algemeen-sport-tennis-fr.png"
+  },
+  {
+   "id": "algemeen-sport-wielrennen-fr",
+   "categorie": "algemeen",
+   "naam": "Wielrennen",
+   "binding": "fr",
+   "trefwoorden": [
+    "wielrennen",
+    "tour de france",
+    "renner",
+    "etappe",
+    "peloton",
+    "koers"
+   ],
+   "svg": "/illustraties/algemeen-sport-wielrennen-fr.svg",
+   "png": "/illustraties/algemeen-sport-wielrennen-fr.png"
+  },
+  {
+   "id": "algemeen-sport-zeilen-fr",
+   "categorie": "algemeen",
+   "naam": "Zeilen",
+   "binding": "fr",
+   "trefwoorden": [
+    "zeilen",
+    "zeilboot",
+    "regatta",
+    "vendee globe",
+    "zeiler"
+   ],
+   "svg": "/illustraties/algemeen-sport-zeilen-fr.svg",
+   "png": "/illustraties/algemeen-sport-zeilen-fr.png"
+  },
+  {
+   "id": "algemeen-sport-zwemmen-fr",
+   "categorie": "algemeen",
+   "naam": "Zwemmen",
+   "binding": "fr",
+   "trefwoorden": [
+    "zwemmen",
+    "zwembad",
+    "zwemmer",
+    "zwemles"
+   ],
+   "svg": "/illustraties/algemeen-sport-zwemmen-fr.svg",
+   "png": "/illustraties/algemeen-sport-zwemmen-fr.png"
+  },
+  {
+   "id": "algemeen-stad-bordeaux-fr",
+   "categorie": "algemeen",
+   "naam": "Bordeaux",
+   "binding": "fr",
+   "trefwoorden": [
+    "bordeaux",
+    "gironde",
+    "nouvelle-aquitaine",
+    "garonne"
+   ],
+   "svg": "/illustraties/algemeen-stad-bordeaux-fr.svg",
+   "png": "/illustraties/algemeen-stad-bordeaux-fr.png"
+  },
+  {
+   "id": "algemeen-stad-dijon-fr",
+   "categorie": "algemeen",
+   "naam": "Dijon",
+   "binding": "fr",
+   "trefwoorden": [
+    "dijon",
+    "bourgondie",
+    "bourgogne",
+    "cote-d'or"
+   ],
+   "svg": "/illustraties/algemeen-stad-dijon-fr.svg",
+   "png": "/illustraties/algemeen-stad-dijon-fr.png"
+  },
+  {
+   "id": "algemeen-stad-lille-fr",
+   "categorie": "algemeen",
+   "naam": "Lille",
+   "binding": "fr",
+   "trefwoorden": [
+    "lille",
+    "nord",
+    "hauts-de-france",
+    "rijsel",
+    "roubaix",
+    "tourcoing"
+   ],
+   "svg": "/illustraties/algemeen-stad-lille-fr.svg",
+   "png": "/illustraties/algemeen-stad-lille-fr.png"
+  },
+  {
+   "id": "algemeen-stad-lyon-fr",
+   "categorie": "algemeen",
+   "naam": "Lyon",
+   "binding": "fr",
+   "trefwoorden": [
+    "lyon",
+    "lyonnais",
+    "rhone",
+    "saone",
+    "fourviere",
+    "auvergne-rhone-alpes"
+   ],
+   "svg": "/illustraties/algemeen-stad-lyon-fr.svg",
+   "png": "/illustraties/algemeen-stad-lyon-fr.png"
+  },
+  {
+   "id": "algemeen-stad-marseille-fr",
+   "categorie": "algemeen",
+   "naam": "Marseille",
+   "binding": "fr",
+   "trefwoorden": [
+    "marseille",
+    "vieux-port",
+    "bouches-du-rhone",
+    "provence",
+    "olympique de marseille"
+   ],
+   "svg": "/illustraties/algemeen-stad-marseille-fr.svg",
+   "png": "/illustraties/algemeen-stad-marseille-fr.png"
+  },
+  {
+   "id": "algemeen-stad-montpellier-fr",
+   "categorie": "algemeen",
+   "naam": "Montpellier",
+   "binding": "fr",
+   "trefwoorden": [
+    "montpellier",
+    "herault",
+    "occitanie"
+   ],
+   "svg": "/illustraties/algemeen-stad-montpellier-fr.svg",
+   "png": "/illustraties/algemeen-stad-montpellier-fr.png"
+  },
+  {
+   "id": "algemeen-stad-nantes-fr",
+   "categorie": "algemeen",
+   "naam": "Nantes",
+   "binding": "fr",
+   "trefwoorden": [
+    "nantes",
+    "loire-atlantique",
+    "pays de la loire"
+   ],
+   "svg": "/illustraties/algemeen-stad-nantes-fr.svg",
+   "png": "/illustraties/algemeen-stad-nantes-fr.png"
+  },
+  {
+   "id": "algemeen-stad-nice-fr",
+   "categorie": "algemeen",
+   "naam": "Nice",
+   "binding": "fr",
+   "trefwoorden": [
+    "nice",
+    "promenade des anglais",
+    "alpes-maritimes",
+    "cote d'azur",
+    "riviera"
+   ],
+   "svg": "/illustraties/algemeen-stad-nice-fr.svg",
+   "png": "/illustraties/algemeen-stad-nice-fr.png"
+  },
+  {
+   "id": "algemeen-stad-parijs-fr",
+   "categorie": "algemeen",
+   "naam": "Parijs",
+   "binding": "fr",
+   "trefwoorden": [
+    "parijs",
+    "parisien",
+    "ile-de-france",
+    "hoofdstad",
+    "seine",
+    "eiffeltoren"
+   ],
+   "svg": "/illustraties/algemeen-stad-parijs-fr.svg",
+   "png": "/illustraties/algemeen-stad-parijs-fr.png"
+  },
+  {
+   "id": "algemeen-stad-rennes-fr",
+   "categorie": "algemeen",
+   "naam": "Rennes",
+   "binding": "fr",
+   "trefwoorden": [
+    "rennes",
+    "bretagne",
+    "ille-et-vilaine"
+   ],
+   "svg": "/illustraties/algemeen-stad-rennes-fr.svg",
+   "png": "/illustraties/algemeen-stad-rennes-fr.png"
+  },
+  {
+   "id": "algemeen-stad-straatsburg-fr",
+   "categorie": "algemeen",
+   "naam": "Straatsburg",
+   "binding": "fr",
+   "trefwoorden": [
+    "straatsburg",
+    "strasbourg",
+    "elzas",
+    "alsace",
+    "bas-rhin",
+    "europees parlement straatsburg"
+   ],
+   "svg": "/illustraties/algemeen-stad-straatsburg-fr.svg",
+   "png": "/illustraties/algemeen-stad-straatsburg-fr.png"
+  },
+  {
+   "id": "algemeen-stad-toulouse-fr",
+   "categorie": "algemeen",
+   "naam": "Toulouse",
+   "binding": "fr",
+   "trefwoorden": [
+    "toulouse",
+    "occitanie",
+    "haute-garonne",
+    "airbus"
+   ],
+   "svg": "/illustraties/algemeen-stad-toulouse-fr.svg",
+   "png": "/illustraties/algemeen-stad-toulouse-fr.png"
   },
   {
    "id": "algemeen-stadion-fr",
@@ -472,6 +1550,50 @@
    ],
    "svg": "/illustraties/algemeen-stadion-fr.svg",
    "png": "/illustraties/algemeen-stadion-fr.png"
+  },
+  {
+   "id": "algemeen-tijdschrift-fr",
+   "categorie": "algemeen",
+   "naam": "Tijdschrift",
+   "binding": "fr",
+   "trefwoorden": [
+    "tijdschrift",
+    "magazine",
+    "blad",
+    "consumentenblad"
+   ],
+   "svg": "/illustraties/algemeen-tijdschrift-fr.svg",
+   "png": "/illustraties/algemeen-tijdschrift-fr.png"
+  },
+  {
+   "id": "algemeen-tribunal-fr",
+   "categorie": "algemeen",
+   "naam": "Tribunal",
+   "binding": "fr",
+   "trefwoorden": [
+    "tribunal",
+    "rechtbank",
+    "tribunal judiciaire",
+    "correctionnel",
+    "zitting"
+   ],
+   "svg": "/illustraties/algemeen-tribunal-fr.svg",
+   "png": "/illustraties/algemeen-tribunal-fr.png"
+  },
+  {
+   "id": "algemeen-tulpen-nl",
+   "categorie": "algemeen",
+   "naam": "Tulpen",
+   "binding": "nl",
+   "trefwoorden": [
+    "tulpen",
+    "bloemen",
+    "bollen",
+    "keukenhof",
+    "lente"
+   ],
+   "svg": "/illustraties/algemeen-tulpen-nl.svg",
+   "png": "/illustraties/algemeen-tulpen-nl.png"
   },
   {
    "id": "algemeen-tv-camera-pers-fr",
@@ -510,6 +1632,20 @@
    ],
    "svg": "/illustraties/algemeen-verhuisdozen-emigratie-nl.svg",
    "png": "/illustraties/algemeen-verhuisdozen-emigratie-nl.png"
+  },
+  {
+   "id": "algemeen-windmolen-nl",
+   "categorie": "algemeen",
+   "naam": "Windmolen",
+   "binding": "nl",
+   "trefwoorden": [
+    "windmolen",
+    "molen",
+    "polder",
+    "hollands"
+   ],
+   "svg": "/illustraties/algemeen-windmolen-nl.svg",
+   "png": "/illustraties/algemeen-windmolen-nl.png"
   },
   {
    "id": "algemeen-ziekenhuis-fr",
@@ -605,6 +1741,21 @@
    "png": "/illustraties/economie-beursgrafiek-fr.png"
   },
   {
+   "id": "economie-bouwmarkt-fr",
+   "categorie": "economie en ondernemen",
+   "naam": "Bouwmarkt",
+   "binding": "fr",
+   "trefwoorden": [
+    "bouwmarkt",
+    "leroy merlin",
+    "brico",
+    "doe-het-zelf",
+    "gereedschap kopen"
+   ],
+   "svg": "/illustraties/economie-bouwmarkt-fr.svg",
+   "png": "/illustraties/economie-bouwmarkt-fr.png"
+  },
+  {
    "id": "economie-centrale-bank-fr",
    "categorie": "economie en ondernemen",
    "naam": "Centrale bank",
@@ -651,13 +1802,14 @@
     "energie",
     "stroom",
     "elektriciteit",
-    "gas",
     "energierekening",
     "linky",
     "edf",
     "tarief",
     "verwarming",
-    "stookkosten"
+    "stookkosten",
+    "gasprijs",
+    "gasrekening"
    ],
    "svg": "/illustraties/economie-energiemeter-fr.svg",
    "png": "/illustraties/economie-energiemeter-fr.png"
@@ -812,6 +1964,22 @@
    "png": "/illustraties/economie-speelgoed-fr.png"
   },
   {
+   "id": "economie-supermarkt-fr",
+   "categorie": "economie en ondernemen",
+   "naam": "Supermarkt",
+   "binding": "fr",
+   "trefwoorden": [
+    "supermarkt",
+    "boodschappen",
+    "prijzen",
+    "leclerc",
+    "carrefour",
+    "levensmiddelen"
+   ],
+   "svg": "/illustraties/economie-supermarkt-fr.svg",
+   "png": "/illustraties/economie-supermarkt-fr.png"
+  },
+  {
    "id": "economie-tankstation-fr",
    "categorie": "economie en ondernemen",
    "naam": "Tankstation",
@@ -828,6 +1996,21 @@
    ],
    "svg": "/illustraties/economie-tankstation-fr.svg",
    "png": "/illustraties/economie-tankstation-fr.png"
+  },
+  {
+   "id": "economie-vismarkt-fr",
+   "categorie": "economie en ondernemen",
+   "naam": "Vismarkt",
+   "binding": "fr",
+   "trefwoorden": [
+    "vismarkt",
+    "visserij",
+    "vissers",
+    "zeevruchten",
+    "oesters"
+   ],
+   "svg": "/illustraties/economie-vismarkt-fr.svg",
+   "png": "/illustraties/economie-vismarkt-fr.png"
   },
   {
    "id": "economie-winkelstraat-rolluiken-fr",
@@ -1009,7 +2192,6 @@
    "trefwoorden": [
     "truffel",
     "hond",
-    "bos",
     "perigord",
     "gastronomie",
     "zoeken"
@@ -1067,6 +2249,24 @@
    "png": "/illustraties/natuur-aardverschuiving-fr.png"
   },
   {
+   "id": "natuur-bocage-fr",
+   "categorie": "natuur en rampen",
+   "naam": "Bocage",
+   "binding": "fr",
+   "trefwoorden": [
+    "platteland",
+    "bocage",
+    "weilanden",
+    "heggen",
+    "normandie",
+    "landelijk",
+    "rural",
+    "boerenland"
+   ],
+   "svg": "/illustraties/natuur-bocage-fr.svg",
+   "png": "/illustraties/natuur-bocage-fr.png"
+  },
+  {
    "id": "natuur-bosbrand-blusvliegtuig-fr",
    "categorie": "natuur en rampen",
    "naam": "Bosbrand",
@@ -1099,6 +2299,23 @@
    ],
    "svg": "/illustraties/natuur-droogte-akker-fr.svg",
    "png": "/illustraties/natuur-droogte-akker-fr.png"
+  },
+  {
+   "id": "natuur-garrigue-zuiden-fr",
+   "categorie": "natuur en rampen",
+   "naam": "Garrigue",
+   "binding": "fr",
+   "trefwoorden": [
+    "garrigue",
+    "zuiden",
+    "provence",
+    "languedoc",
+    "droog",
+    "maquis",
+    "occitanie"
+   ],
+   "svg": "/illustraties/natuur-garrigue-zuiden-fr.svg",
+   "png": "/illustraties/natuur-garrigue-zuiden-fr.png"
   },
   {
    "id": "natuur-gestrand-schip-fr",
@@ -1170,6 +2387,40 @@
    ],
    "svg": "/illustraties/natuur-hittegolf-fr.svg",
    "png": "/illustraties/natuur-hittegolf-fr.png"
+  },
+  {
+   "id": "natuur-hooggebergte-fr",
+   "categorie": "natuur en rampen",
+   "naam": "Hooggebergte",
+   "binding": "fr",
+   "trefwoorden": [
+    "bergen",
+    "gebergte",
+    "alpen",
+    "pyreneeen",
+    "berggebied",
+    "haute-savoie",
+    "savoie"
+   ],
+   "svg": "/illustraties/natuur-hooggebergte-fr.svg",
+   "png": "/illustraties/natuur-hooggebergte-fr.png"
+  },
+  {
+   "id": "natuur-kustlijn-fr",
+   "categorie": "natuur en rampen",
+   "naam": "Kustlijn",
+   "binding": "fr",
+   "trefwoorden": [
+    "kust",
+    "kustlijn",
+    "zee",
+    "bretagne",
+    "normandie",
+    "atlantische kust",
+    "kliffen"
+   ],
+   "svg": "/illustraties/natuur-kustlijn-fr.svg",
+   "png": "/illustraties/natuur-kustlijn-fr.png"
   },
   {
    "id": "natuur-lege-kom-droog-land-fr",
@@ -1246,6 +2497,20 @@
    "png": "/illustraties/natuur-rivier-hoogwater-fr.png"
   },
   {
+   "id": "natuur-rivierdal-fr",
+   "categorie": "natuur en rampen",
+   "naam": "Rivierdal",
+   "binding": "fr",
+   "trefwoorden": [
+    "rivier",
+    "vallei",
+    "dordogne",
+    "dorp aan de rivier"
+   ],
+   "svg": "/illustraties/natuur-rivierdal-fr.svg",
+   "png": "/illustraties/natuur-rivierdal-fr.png"
+  },
+  {
    "id": "natuur-smog-stad-fr",
    "categorie": "natuur en rampen",
    "naam": "Smog",
@@ -1279,6 +2544,23 @@
    ],
    "svg": "/illustraties/natuur-sneeuw-bergpas-fr.svg",
    "png": "/illustraties/natuur-sneeuw-bergpas-fr.png"
+  },
+  {
+   "id": "natuur-stadsrand-fr",
+   "categorie": "natuur en rampen",
+   "naam": "Stadsrand",
+   "binding": "fr",
+   "trefwoorden": [
+    "banlieue",
+    "voorstad",
+    "stadsrand",
+    "flats",
+    "wijk",
+    "urban",
+    "woonwijk"
+   ],
+   "svg": "/illustraties/natuur-stadsrand-fr.svg",
+   "png": "/illustraties/natuur-stadsrand-fr.png"
   },
   {
    "id": "natuur-storm-kust-fr",
@@ -1415,9 +2697,9 @@
     "vereniging",
     "partijcongres",
     "bijeenkomst",
-    "top",
     "conferentie",
-    "choose france"
+    "choose france",
+    "topconferentie"
    ],
    "svg": "/illustraties/politiek-congreszaal-burgemeesters-fr.svg",
    "png": "/illustraties/politiek-congreszaal-burgemeesters-fr.png"
@@ -1485,7 +2767,6 @@
    "trefwoorden": [
     "europa",
     "europese unie",
-    "eu",
     "brussel",
     "europees parlement",
     "europese commissie",
@@ -1586,10 +2867,10 @@
     "overleg",
     "sociale partners",
     "vakbonden",
-    "top",
     "gesprekken",
     "diplomatie",
-    "verdrag"
+    "verdrag",
+    "topoverleg"
    ],
    "svg": "/illustraties/politiek-onderhandelingstafel-fr.svg",
    "png": "/illustraties/politiek-onderhandelingstafel-fr.png"
@@ -1604,7 +2885,6 @@
     "assemblee",
     "nationale assemblee",
     "kamer",
-    "wet",
     "wetsvoorstel",
     "stemming",
     "afgevaardigden",
@@ -1692,8 +2972,7 @@
     "aanklacht",
     "berecht",
     "terechtstaan",
-    "advocaat",
-    "voor de rechter"
+    "advocaat"
    ],
    "svg": "/illustraties/politiek-rechtszaal-fr.svg",
    "png": "/illustraties/politiek-rechtszaal-fr.png"
@@ -1707,7 +2986,6 @@
     "senaat",
     "senat",
     "senatoren",
-    "wet",
     "amendement",
     "stemming"
    ],
@@ -1757,7 +3035,6 @@
    "naam": "Wetboek",
    "binding": "fr",
    "trefwoorden": [
-    "wet",
     "wetboek",
     "decreet",
     "regelgeving",
@@ -1898,6 +3175,21 @@
    "png": "/illustraties/toerisme-festivalpodium-fr.png"
   },
   {
+   "id": "toerisme-hotel-fr",
+   "categorie": "toerisme en evenementen",
+   "naam": "Hotel",
+   "binding": "fr",
+   "trefwoorden": [
+    "hotel",
+    "overnachting",
+    "hotels",
+    "toeristen",
+    "boeking"
+   ],
+   "svg": "/illustraties/toerisme-hotel-fr.svg",
+   "png": "/illustraties/toerisme-hotel-fr.png"
+  },
+  {
    "id": "toerisme-kasteel-loire-fr",
    "categorie": "toerisme en evenementen",
    "naam": "Kasteel aan de Loire",
@@ -1931,6 +3223,21 @@
    "png": "/illustraties/toerisme-kerstmarkt-fr.png"
   },
   {
+   "id": "toerisme-kledingmarkt-fr",
+   "categorie": "toerisme en evenementen",
+   "naam": "Kledingmarkt",
+   "binding": "fr",
+   "trefwoorden": [
+    "kleding",
+    "markt",
+    "marktkraam",
+    "weekmarkt",
+    "mode"
+   ],
+   "svg": "/illustraties/toerisme-kledingmarkt-fr.svg",
+   "png": "/illustraties/toerisme-kledingmarkt-fr.png"
+  },
+  {
    "id": "toerisme-museum-fr",
    "categorie": "toerisme en evenementen",
    "naam": "Museum",
@@ -1946,6 +3253,22 @@
    ],
    "svg": "/illustraties/toerisme-museum-fr.svg",
    "png": "/illustraties/toerisme-museum-fr.png"
+  },
+  {
+   "id": "toerisme-restaurant-fr",
+   "categorie": "toerisme en evenementen",
+   "naam": "Restaurant",
+   "binding": "fr",
+   "trefwoorden": [
+    "restaurant",
+    "uit eten",
+    "horeca",
+    "bistro",
+    "menu",
+    "terras"
+   ],
+   "svg": "/illustraties/toerisme-restaurant-fr.svg",
+   "png": "/illustraties/toerisme-restaurant-fr.png"
   },
   {
    "id": "toerisme-skigebied-fr",
@@ -2037,6 +3360,22 @@
    "png": "/illustraties/verkeer-apk-keuring-fr.png"
   },
   {
+   "id": "verkeer-bromfiets-fr",
+   "categorie": "reizen en verkeer",
+   "naam": "Bromfiets",
+   "binding": "fr",
+   "trefwoorden": [
+    "bromfiets",
+    "scooter",
+    "brommer",
+    "motor",
+    "motorrijder",
+    "tweewieler"
+   ],
+   "svg": "/illustraties/verkeer-bromfiets-fr.svg",
+   "png": "/illustraties/verkeer-bromfiets-fr.png"
+  },
+  {
    "id": "verkeer-caravan-geel-kenteken-nl",
    "categorie": "reizen en verkeer",
    "naam": "Caravan met geel kenteken",
@@ -2071,13 +3410,42 @@
    "png": "/illustraties/verkeer-fietser-dorpsweg-nl.png"
   },
   {
+   "id": "verkeer-laadpaal-fr",
+   "categorie": "reizen en verkeer",
+   "naam": "Laadpaal",
+   "binding": "fr",
+   "trefwoorden": [
+    "laadpaal",
+    "elektrische auto",
+    "opladen",
+    "laden",
+    "elektrisch rijden"
+   ],
+   "svg": "/illustraties/verkeer-laadpaal-fr.svg",
+   "png": "/illustraties/verkeer-laadpaal-fr.png"
+  },
+  {
+   "id": "verkeer-landweg-platanen-fr",
+   "categorie": "reizen en verkeer",
+   "naam": "Landweg met platanen",
+   "binding": "fr",
+   "trefwoorden": [
+    "landweg",
+    "platanen",
+    "departementale weg",
+    "route nationale",
+    "platteland"
+   ],
+   "svg": "/illustraties/verkeer-landweg-platanen-fr.svg",
+   "png": "/illustraties/verkeer-landweg-platanen-fr.png"
+  },
+  {
    "id": "verkeer-metro-staking-fr",
    "categorie": "reizen en verkeer",
    "naam": "Metro bij staking",
    "binding": "fr",
    "trefwoorden": [
     "metro",
-    "ov",
     "openbaar vervoer",
     "ratp",
     "staking",
@@ -2087,6 +3455,20 @@
    ],
    "svg": "/illustraties/verkeer-metro-staking-fr.svg",
    "png": "/illustraties/verkeer-metro-staking-fr.png"
+  },
+  {
+   "id": "verkeer-oversteekplaats-fr",
+   "categorie": "reizen en verkeer",
+   "naam": "Oversteekplaats",
+   "binding": "fr",
+   "trefwoorden": [
+    "voetgangers",
+    "zebrapad",
+    "oversteekplaats",
+    "oversteken"
+   ],
+   "svg": "/illustraties/verkeer-oversteekplaats-fr.svg",
+   "png": "/illustraties/verkeer-oversteekplaats-fr.png"
   },
   {
    "id": "verkeer-perron-tgv-fr",
@@ -2117,8 +3499,7 @@
     "snelheid",
     "flitspaal",
     "boete",
-    "rijbewijs",
-    "weg"
+    "rijbewijs"
    ],
    "svg": "/illustraties/verkeer-rotonde-fr.svg",
    "png": "/illustraties/verkeer-rotonde-fr.png"
@@ -2141,6 +3522,20 @@
    ],
    "svg": "/illustraties/verkeer-snelweg-file-fr.svg",
    "png": "/illustraties/verkeer-snelweg-file-fr.png"
+  },
+  {
+   "id": "verkeer-stoplicht-fr",
+   "categorie": "reizen en verkeer",
+   "naam": "Stoplicht",
+   "binding": "fr",
+   "trefwoorden": [
+    "stoplicht",
+    "verkeerslicht",
+    "kruispunt",
+    "rood licht"
+   ],
+   "svg": "/illustraties/verkeer-stoplicht-fr.svg",
+   "png": "/illustraties/verkeer-stoplicht-fr.png"
   },
   {
    "id": "verkeer-tolpoort-fr",
@@ -2193,6 +3588,22 @@
    ],
    "svg": "/illustraties/verkeer-vliegveld-fr.svg",
    "png": "/illustraties/verkeer-vliegveld-fr.png"
+  },
+  {
+   "id": "verkeer-vrachtwagen-fr",
+   "categorie": "reizen en verkeer",
+   "naam": "Vrachtwagen",
+   "binding": "fr",
+   "trefwoorden": [
+    "vrachtwagen",
+    "vrachtverkeer",
+    "transport",
+    "chauffeur",
+    "camion",
+    "poids lourd"
+   ],
+   "svg": "/illustraties/verkeer-vrachtwagen-fr.svg",
+   "png": "/illustraties/verkeer-vrachtwagen-fr.png"
   }
  ]
 }
