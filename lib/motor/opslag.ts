@@ -6,7 +6,7 @@ import { zoekSamenvoeging } from "./peilbeoordeling";
 import { dagStart } from "./tijd";
 import { REGELVERSIE, isVerbodenBron } from "./config";
 import { RadarOntbreekt, isRadarFout } from "./radar";
-import type { RadarBesluit, RadarNieuw, RadarRij, RadarBron } from "./types";
+import type { RadarBesluit, RadarNieuw, RadarRij, RadarBron, BronRij, Redacteur, RedacteurRol, TekeningRij, Regime, Groep } from "./types";
 
 export interface RunRecord {
   id?: string;
@@ -39,6 +39,19 @@ export function isKolomFout(e: unknown): boolean {
 export function isSignaalKolomFout(e: unknown): boolean {
   const m = e instanceof Error ? e.message : String(e);
   return /signaal/i.test(m) && /(42703|PGRST204|PGRST205|does not exist|Could not find)/i.test(m);
+}
+
+/** Een tabel van de redactie-ronde van 28-11-2026 (nv_bronnen, nv_redacteuren, nv_tekeningen) bestaat nog niet: migratie niet toegepast. */
+export class TabelOntbreekt extends Error {
+  constructor(public tabel: string) {
+    super(`De tabel ${tabel} bestaat nog niet (migratie niet toegepast).`);
+    this.name = "TabelOntbreekt";
+  }
+}
+/** Herkent de fout van Supabase bij een ontbrekende tabel (of kolom daarvan) `tabel`. */
+export function isTabelFout(e: unknown, tabel: string): boolean {
+  const m = e instanceof Error ? e.message : String(e);
+  return m.toLowerCase().includes(tabel) && /(42P01|42703|PGRST204|PGRST205|does not exist|Could not find)/i.test(m);
 }
 
 /** Afgeleid kenmerk: "overheid" of "pers" (ontbrekende waarde telt als pers, behalve bij een overheidsregime). */
@@ -165,6 +178,24 @@ export interface Opslag {
   zetRadarBesluit(id: string, keuze: RadarBesluit, nu?: number): Promise<void>;
   /** Ruimt signalen op die voor `oudIso` zijn beoordeeld. */
   radarOpruimen(oudIso: string): Promise<number>;
+  // ---- Bronnen in de database (28-11-2026, tabel nv_bronnen). Ontbreekt de tabel: bronnenLijst en de schrijfmethoden gooien TabelOntbreekt;
+  // de motor valt dan terug op data/bronnen.json (zie bronnenlijst.ts).
+  bronnenLijst(): Promise<BronRij[]>;
+  /** Nieuwe bron; gooit een gewone Error bij een dubbel id. */
+  bronOpslaan(r: BronRij): Promise<void>;
+  bronWijzig(id: string, v: Partial<Pick<BronRij, "naam" | "regime" | "groep" | "taal" | "land" | "frankrijkFilter" | "actief" | "status">>): Promise<void>;
+  bronVerwijder(id: string): Promise<void>;
+  /** Leesresultaat per bron na een oogst of radarrun: laatst_gelezen altijd, laatst_items bij items, laatste_fout (null bij succes). */
+  bronGelezen(u: { id: string; gelezenOp: string; items: boolean; fout: string | null }[]): Promise<void>;
+  // ---- Redacteuren (28-11-2026, tabel nv_redacteuren): persoonlijke inloglinks; alleen de SHA-256-hash van het token staat in de opslag.
+  redacteurMaak(r: { naam: string; hash: string; rol: RedacteurRol }, nu?: number): Promise<Redacteur>;
+  redacteurLijst(): Promise<Redacteur[]>;
+  /** De redacteur bij deze hash (ook een ingetrokken: kijk naar `ingetrokkenOp`), of null. */
+  redacteurPerHash(hash: string): Promise<Redacteur | null>;
+  redacteurGezien(id: string, nu?: number): Promise<void>;
+  redacteurIntrekken(id: string, nu?: number): Promise<void>;
+  // ---- Getekende beelden (28-11-2026, tabel nv_tekeningen): lijst voor een latere stap naar de beeldbank.
+  tekeningNoteer(t: TekeningRij): Promise<void>;
 }
 
 // ---- Geheugen -----------------------------------------------------------------
@@ -216,6 +247,78 @@ export class GeheugenOpslag implements Opslag {
     const voor = this.radarRijen.length;
     this.radarRijen = this.radarRijen.filter((r) => r.beoordeeldOp >= oud);
     return voor - this.radarRijen.length;
+  }
+  // ---- bronnen, redacteuren, tekeningen (geheugen)
+  bronnenRijen: BronRij[] = [];
+  redacteuren: (Redacteur & { hash: string })[] = [];
+  tekeningen: TekeningRij[] = [];
+  /** Voor tests: doet alsof de tabellen ontbreken. */
+  bronnenTabelOntbreekt = false;
+  redacteurenTabelOntbreekt = false;
+  private bronCheck() {
+    if (this.bronnenTabelOntbreekt) throw new TabelOntbreekt("nv_bronnen");
+  }
+  private redCheck() {
+    if (this.redacteurenTabelOntbreekt) throw new TabelOntbreekt("nv_redacteuren");
+  }
+  async bronnenLijst() {
+    this.bronCheck();
+    return this.bronnenRijen.map((r) => ({ ...r }));
+  }
+  async bronOpslaan(r: BronRij) {
+    this.bronCheck();
+    if (this.bronnenRijen.some((x) => x.id === r.id)) throw new Error("Bron bestaat al.");
+    this.bronnenRijen.push({ ...r });
+  }
+  async bronWijzig(id: string, v: Partial<BronRij>) {
+    this.bronCheck();
+    const r = this.bronnenRijen.find((x) => x.id === id);
+    if (r) Object.assign(r, v);
+  }
+  async bronVerwijder(id: string) {
+    this.bronCheck();
+    this.bronnenRijen = this.bronnenRijen.filter((x) => x.id !== id);
+  }
+  async bronGelezen(u: { id: string; gelezenOp: string; items: boolean; fout: string | null }[]) {
+    this.bronCheck();
+    for (const x of u) {
+      const r = this.bronnenRijen.find((y) => y.id === x.id);
+      if (!r) continue;
+      r.laatstGelezen = x.gelezenOp;
+      if (x.items) r.laatstItems = x.gelezenOp;
+      r.laatsteFout = x.fout;
+    }
+  }
+  async redacteurMaak(r: { naam: string; hash: string; rol: RedacteurRol }, nu = Date.now()) {
+    this.redCheck();
+    const x = { id: `red-${(this.n += 1)}`, naam: r.naam, rol: r.rol, gemaaktOp: new Date(nu).toISOString(), laatstGezien: null, ingetrokkenOp: null, hash: r.hash };
+    this.redacteuren.push(x);
+    const { hash: _h, ...uit } = x;
+    return uit;
+  }
+  async redacteurLijst() {
+    this.redCheck();
+    return this.redacteuren.map(({ hash: _h, ...r }) => r);
+  }
+  async redacteurPerHash(hash: string) {
+    this.redCheck();
+    const x = this.redacteuren.find((r) => r.hash === hash);
+    if (!x) return null;
+    const { hash: _h, ...r } = x;
+    return r;
+  }
+  async redacteurGezien(id: string, nu = Date.now()) {
+    this.redCheck();
+    const x = this.redacteuren.find((r) => r.id === id);
+    if (x) x.laatstGezien = new Date(nu).toISOString();
+  }
+  async redacteurIntrekken(id: string, nu = Date.now()) {
+    this.redCheck();
+    const x = this.redacteuren.find((r) => r.id === id);
+    if (x && !x.ingetrokkenOp) x.ingetrokkenOp = new Date(nu).toISOString();
+  }
+  async tekeningNoteer(t: TekeningRij) {
+    this.tekeningen.push({ ...t, id: `tek-${(this.n += 1)}` });
   }
   async upsertItems(items: BronItem[]) {
     let nieuw = 0;
@@ -552,6 +655,104 @@ export class SupabaseOpslag implements Opslag {
       if (isRadarFout(e)) return 0;
       throw e;
     }
+  }
+
+  // ---- Bronnen: tabel nv_bronnen (migratie 20261128130000_nv_bronnen.sql, door de regisseur toe te passen)
+  private async metTabel<T>(tabel: string, f: () => Promise<T>): Promise<T> {
+    try {
+      return await f();
+    } catch (e) {
+      if (isTabelFout(e, tabel)) throw new TabelOntbreekt(tabel);
+      throw e;
+    }
+  }
+  private naarBronRij(r: Rij): BronRij {
+    const t = (v: unknown) => (v == null ? null : String(v));
+    const uitsluit = Array.isArray(r.uitsluit)
+      ? (r.uitsluit as Rij[]).filter((x) => x && typeof x.patroon === "string").map((x) => ({ reden: String(x.reden || "uitgesloten"), patroon: String(x.patroon), ...(typeof x.vlaggen === "string" ? { vlaggen: x.vlaggen } : {}) }))
+      : null;
+    return {
+      id: String(r.id), naam: String(r.naam), feed: String(r.feed), domein: String(r.domein || ""), taal: String(r.taal || "fr"), land: String(r.land || "FR"),
+      groep: String(r.groep || "fr_pers") as Groep, regime: (r.regime === "overheid" ? "overheid" : "pers") as Regime, status: r.status === "ACTIVE" ? "ACTIVE" : "CONCEPT",
+      prioriteit: Number(r.prioriteit ?? 2), frankrijkFilter: r.frankrijk_filter === true, vensterUren: Number(r.venster_uren ?? 48), ...(r.notitie ? { notitie: String(r.notitie) } : {}),
+      soort: r.soort === "radar" ? "radar" : "nieuws", actief: r.actief !== false, toegevoegdOp: t(r.toegevoegd_op), toegevoegdDoor: t(r.toegevoegd_door),
+      laatstGelezen: t(r.laatst_gelezen), laatstItems: t(r.laatst_items), laatsteFout: t(r.laatste_fout), uitsluit,
+    };
+  }
+  async bronnenLijst() {
+    return this.metTabel("nv_bronnen", async () => (await this.lees("nv_bronnen?order=soort.asc,naam.asc&limit=1000")).map((r) => this.naarBronRij(r)));
+  }
+  async bronOpslaan(r: BronRij) {
+    await this.metTabel("nv_bronnen", () => this.vraag("nv_bronnen", {
+      method: "POST", prefer: "return=minimal",
+      body: JSON.stringify({
+        id: r.id, naam: r.naam, feed: r.feed, domein: r.domein, taal: r.taal, land: r.land, groep: r.groep, regime: r.regime, status: r.status, prioriteit: r.prioriteit,
+        frankrijk_filter: r.frankrijkFilter, venster_uren: r.vensterUren, notitie: r.notitie ?? null, soort: r.soort, actief: r.actief, toegevoegd_op: r.toegevoegdOp,
+        toegevoegd_door: r.toegevoegdDoor, uitsluit: r.uitsluit ?? null,
+      }),
+    }));
+  }
+  async bronWijzig(id: string, v: Partial<BronRij>) {
+    const body: Record<string, unknown> = {};
+    if (v.naam !== undefined) body.naam = v.naam;
+    if (v.regime !== undefined) body.regime = v.regime;
+    if (v.groep !== undefined) body.groep = v.groep;
+    if (v.taal !== undefined) body.taal = v.taal;
+    if (v.land !== undefined) body.land = v.land;
+    if (v.frankrijkFilter !== undefined) body.frankrijk_filter = v.frankrijkFilter;
+    if (v.actief !== undefined) body.actief = v.actief;
+    if (v.status !== undefined) body.status = v.status;
+    if (!Object.keys(body).length || !/^[A-Za-z0-9._-]{1,80}$/.test(id)) return;
+    await this.metTabel("nv_bronnen", () => this.vraag(`nv_bronnen?id=eq.${encodeURIComponent(id)}`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify(body) }));
+  }
+  async bronVerwijder(id: string) {
+    if (!/^[A-Za-z0-9._-]{1,80}$/.test(id)) return;
+    await this.metTabel("nv_bronnen", () => this.vraag(`nv_bronnen?id=eq.${encodeURIComponent(id)}`, { method: "DELETE", prefer: "return=minimal" }));
+  }
+  async bronGelezen(u: { id: string; gelezenOp: string; items: boolean; fout: string | null }[]) {
+    await this.metTabel("nv_bronnen", async () => {
+      await Promise.all(u.filter((x) => /^[A-Za-z0-9._-]{1,80}$/.test(x.id)).map((x) =>
+        this.vraag(`nv_bronnen?id=eq.${encodeURIComponent(x.id)}`, {
+          method: "PATCH", prefer: "return=minimal",
+          body: JSON.stringify({ laatst_gelezen: x.gelezenOp, ...(x.items ? { laatst_items: x.gelezenOp } : {}), laatste_fout: x.fout ? x.fout.slice(0, 200) : null }),
+        })));
+    });
+  }
+  // ---- Redacteuren: tabel nv_redacteuren (migratie 20261128140000_nv_redacteuren.sql)
+  private naarRedacteur(r: Rij): Redacteur {
+    const t = (v: unknown) => (v == null ? null : String(v));
+    return { id: String(r.id), naam: String(r.naam), rol: r.rol === "beheerder" ? "beheerder" : "redacteur", gemaaktOp: String(r.gemaakt_op), laatstGezien: t(r.laatst_gezien), ingetrokkenOp: t(r.ingetrokken_op) };
+  }
+  async redacteurMaak(r: { naam: string; hash: string; rol: RedacteurRol }, nu = Date.now()) {
+    return this.metTabel("nv_redacteuren", async () => {
+      const antw = await this.vraag("nv_redacteuren", { method: "POST", prefer: "return=representation", body: JSON.stringify({ naam: r.naam, hash: r.hash, rol: r.rol, gemaakt_op: new Date(nu).toISOString() }) });
+      return this.naarRedacteur(((await antw.json()) as Rij[])[0]);
+    });
+  }
+  async redacteurLijst() {
+    return this.metTabel("nv_redacteuren", async () => (await this.lees("nv_redacteuren?select=id,naam,rol,gemaakt_op,laatst_gezien,ingetrokken_op&order=gemaakt_op.asc&limit=500")).map((r) => this.naarRedacteur(r)));
+  }
+  async redacteurPerHash(hash: string) {
+    if (!/^[0-9a-f]{64}$/.test(hash)) return null;
+    return this.metTabel("nv_redacteuren", async () => {
+      const r = (await this.lees(`nv_redacteuren?hash=eq.${hash}&select=id,naam,rol,gemaakt_op,laatst_gezien,ingetrokken_op&limit=1`))[0];
+      return r ? this.naarRedacteur(r) : null;
+    });
+  }
+  async redacteurGezien(id: string, nu = Date.now()) {
+    if (!/^[0-9a-f-]{36}$/i.test(id)) return;
+    await this.metTabel("nv_redacteuren", () => this.vraag(`nv_redacteuren?id=eq.${id}`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ laatst_gezien: new Date(nu).toISOString() }) }));
+  }
+  async redacteurIntrekken(id: string, nu = Date.now()) {
+    if (!/^[0-9a-f-]{36}$/i.test(id)) return;
+    await this.metTabel("nv_redacteuren", () => this.vraag(`nv_redacteuren?id=eq.${id}&ingetrokken_op=is.null`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ ingetrokken_op: new Date(nu).toISOString() }) }));
+  }
+  // ---- Getekende beelden: tabel nv_tekeningen (migratie 20261128150000_nv_tekeningen.sql)
+  async tekeningNoteer(t: TekeningRij) {
+    await this.metTabel("nv_tekeningen", () => this.vraag("nv_tekeningen", {
+      method: "POST", prefer: "return=minimal",
+      body: JSON.stringify({ bericht_id: t.berichtId && /^[0-9a-f-]{36}$/i.test(t.berichtId) ? t.berichtId : null, url: t.url, naam: t.naam, gemaakt_op: t.gemaaktOp }),
+    }));
   }
 
   async upsertItems(items: BronItem[]) {

@@ -28,6 +28,30 @@ export interface Bron {
   notitie?: string;
 }
 
+/** Soort bron in de tabel nv_bronnen: "nieuws" wordt geoogst en gebruikt; "radar" is uitsluitend onderwerpsignaal (nooit bron). */
+export type BronSoort = "nieuws" | "radar";
+/** Uitsluitregel van een radarbron: reguliere expressie als tekst (met vlaggen), op de titel. */
+export interface UitsluitRegel {
+  reden: string;
+  patroon: string;
+  vlaggen?: string;
+}
+/** Een bron zoals de tabel nv_bronnen (of het terugvalbestand data/bronnen.json) hem kent. */
+export interface BronRij extends Bron {
+  soort: BronSoort;
+  actief: boolean;
+  toegevoegdOp: string | null;
+  toegevoegdDoor: string | null;
+  /** Laatste leesmoment (ISO), ook als het niets opleverde. */
+  laatstGelezen: string | null;
+  /** Laatste moment (ISO) waarop de bron minstens één item opleverde. */
+  laatstItems: string | null;
+  /** Foutmelding van de laatste leesbeurt; null als die lukte. */
+  laatsteFout: string | null;
+  /** Alleen radarbronnen: eigen uitsluitlijst; null of ontbrekend is de standaardlijst (RADAR_UITSLUIT). */
+  uitsluit?: UitsluitRegel[] | null;
+}
+
 /** Een ruw item uit een feed. */
 export interface BronItem {
   id?: string;
@@ -246,3 +270,24 @@ export interface RadarRij {
   besluitOp: string | null;
 }
 export type RadarNieuw = Omit<RadarRij, "id" | "besluit" | "besluitOp">;
+
+// ---- Redactie-app (28-11-2026): redacteuren met een persoonlijke inloglink ---------------------------
+export const REDACTEUR_ROLLEN = ["redacteur", "beheerder"] as const;
+export type RedacteurRol = (typeof REDACTEUR_ROLLEN)[number];
+/** Een redacteur (zonder hash: die verlaat de opslag nooit). */
+export interface Redacteur {
+  id: string;
+  naam: string;
+  rol: RedacteurRol;
+  gemaaktOp: string;
+  laatstGezien: string | null;
+  ingetrokkenOp: string | null;
+}
+/** Een door de redactie getekend beeld, bewaard zodat het later in de beeldbank kan. */
+export interface TekeningRij {
+  id?: string;
+  berichtId: string | null;
+  url: string;
+  naam: string;
+  gemaaktOp: string;
+}

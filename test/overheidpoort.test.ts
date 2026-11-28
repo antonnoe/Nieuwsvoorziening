@@ -79,8 +79,8 @@ test("motor: Nederlands binnenlands bestuur wordt voor de synthese tegengehouden
   assert.equal(r.berichten[0].regime, "overheid");
   assert.equal(opslag.berichtenLijst[0].soort, "overheid");
   assert.equal(opslag.items.get("https://rijk.test/0")?.verwerkt, "r17");
-  // Het model is nooit gevraagd om het Lingewaard-bericht te schrijven.
-  assert.ok(client.aanroepen.filter((c) => !c.system.includes("groepeert")).every((c) => !c.user.includes("Lingewaard")));
+  // Het model is nooit gevraagd om het Lingewaard-bericht te schrijven (de radar leest nu ook feeds: die krijgt alleen titels, geen synthese).
+  assert.ok(client.aanroepen.filter((c) => !c.system.includes("groepeert") && !c.system.includes("beoordeelt ALLEEN op de titel")).every((c) => !c.user.includes("Lingewaard")));
 });
 
 test("bronnenlijst: Rijksoverheid NL is actief, BOSS en info.gouv blijven CONCEPT", () => {

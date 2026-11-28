@@ -2,7 +2,7 @@
 // Elke stap faalt netjes: een fout wordt vastgelegd en de volgende stap gaat door
 // met wat er wel is.
 import { haalJson, type ModelClient } from "./ai";
-import { laadConfig, actieveBronnen, modelSynthese, REGELVERSIE, MAX_HERSCHRIJVEN_PER_RUN, EENMALIGE_PEIL_HERTOETS, SIGNAAL_NALOOP_DAGEN, MAX_SIGNAAL_NALOOP_PER_RUN, type MotorConfig } from "./config";
+import { laadConfig, modelSynthese, REGELVERSIE, MAX_HERSCHRIJVEN_PER_RUN, EENMALIGE_PEIL_HERTOETS, SIGNAAL_NALOOP_DAGEN, MAX_SIGNAAL_NALOOP_PER_RUN, type MotorConfig } from "./config";
 import { aantalBronnen, clusterItems } from "./cluster";
 import { oogstBronnen, type OogstBronResultaat } from "./feeds";
 import { schoneZoektermen, beeldResultaat, fotoSleutel, type BeeldGenerator, actieveGenerator } from "./beeld";
@@ -32,6 +32,7 @@ import { dagStart } from "./tijd";
 import { leesSignaal, type Bericht, type Bron, type Cluster, type PeilParameter, type PeilSignaalNieuw, type StapResultaat, type Synthese } from "./types";
 import { beoordeelSignaal } from "./signaal";
 import { draaiRadar, RADAR_BEWAAR_DAGEN } from "./radar";
+import { laadBronnenLijst, actieveNieuwsBronnen, actieveRadarBronnen } from "./bronnenlijst";
 import { isVerbodenBron } from "./config";
 
 export interface RunOpties {
@@ -117,11 +118,16 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
     if (!s.ok && s.fout) fouten.push(`${s.stap}: ${s.fout}`);
   };
 
+  // 0. Bronnenlijst (28-11-2026): uit de tabel nv_bronnen, anders (tabel ontbreekt, leeg of storing) uit data/bronnen.json.
+  // Deze stap zet ook de radardomeinen, zodat een radardomein nooit als nieuwsbron kan worden geoogst.
+  const lijst = await laadBronnenLijst(o.opslag);
+  if (!lijst.uitTabel) aantallen.bronnenUitTerugval = 1;
+
   // 1. Oogst
   let items: Awaited<ReturnType<typeof oogstBronnen>>["items"] = [];
   let bronResultaten: OogstBronResultaat[] = [];
   try {
-    const bronnen = o.bronnen ?? actieveBronnen();
+    const bronnen = o.bronnen ?? actieveNieuwsBronnen(lijst.rijen);
     const r = await oogstBronnen(bronnen, { nu, maxPerBron: cfg.maxItemsPerBron, fetchFn: o.fetchFn });
     items = r.items;
     bronResultaten = r.resultaten;
@@ -134,6 +140,11 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
     const mislukt = r.resultaten.filter((x) => !x.ok);
     aantallen.bronnenMislukt = mislukt.length;
     noteer({ stap: "oogst", ok: true, aantal: items.length, detail: { geweerd, mislukteBronnen: mislukt.map((x) => `${x.bronId}: ${x.fout}`) } });
+    // Leesresultaat per bron bewaren voor het scherm Bronnen (kleur, laatste leesmoment); een storing of ontbrekende tabel breekt niets.
+    if (lijst.uitTabel) {
+      const gelezenOp = new Date(nu).toISOString();
+      await o.opslag.bronGelezen(r.resultaten.map((x) => ({ id: x.bronId, gelezenOp, items: x.ok && x.gelezen > 0, fout: x.ok ? null : x.fout ?? "Onbekende fout" }))).catch(() => {});
+    }
     if (mislukt.length) noteer({ stap: "bronnen_mislukt", ok: false, aantal: mislukt.length, fout: mislukt.map((x) => `${x.bronId} (${x.fout})`).join(", ").slice(0, 400) });
   } catch (e) {
     noteer({ stap: "oogst", ok: false, fout: fout(e) });
@@ -154,7 +165,7 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
   // Faalt de radar (of ontbreekt de tabel nv_radar), dan gaat de motor gewoon door.
   const voorrang = new Set<string>();
   try {
-    const r = await draaiRadar({ opslag: o.opslag, client: o.client, fetchFn: o.fetchFn, nu });
+    const r = await draaiRadar({ opslag: o.opslag, client: o.client, fetchFn: o.fetchFn, nu, radarBronnen: actieveRadarBronnen(lijst.rijen), bronnenUitTabel: lijst.uitTabel });
     for (const u of r.voorrangUrls) voorrang.add(u);
     aantallen.radarNieuw = r.nieuw;
     noteer({ stap: "radar", ok: r.ok, aantal: r.nieuw, fout: r.fout, detail: r.detail });

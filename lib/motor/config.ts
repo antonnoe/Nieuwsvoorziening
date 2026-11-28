@@ -71,12 +71,38 @@ export function laadBronnen(): Bron[] {
   return Array.isArray(d.bronnen) ? d.bronnen : [];
 }
 
+/** Nieuwssitemap van The Connexion: de eerste radarbron (besluit 28-11-2026). */
+export const CONNEXION_SITEMAP_URL = "https://www.connexionfrance.com/tag/news?lab_viewport=newssitemap";
+
 /**
  * Harde regel (besluit 28-11-2026): deze domeinen zijn NOOIT bron. The Connexion is uitsluitend onderwerpsignaal voor de
  * radar (lib/motor/radar.ts) en komt nergens in bronnen, bronnenblok, nv_bron_items, clustering, synthese, artikelophaling,
  * beeld of publicatie. Deze controle staat op elke plek waar een bron-url de motor in komt of eruit gaat.
+ * Dit is de vaste lijst: ze geldt altijd, ook als de database onbereikbaar is.
  */
 export const VERBODEN_BRONDOMEINEN = ["connexionfrance.com"];
+
+// Radar-domeinen uit de database (tabel nv_bronnen, soort 'radar'): een domein dat radarbron is, kan nooit nieuwsbron zijn.
+// Wordt gezet door `zetRadarDomeinen` zodra de bronnenlijst is gelezen (oogstrun, redactiepagina's). Faalt de lezing, dan blijft
+// de laatst bekende stand en altijd de vaste lijst hierboven.
+let radarDomeinenUitDatabase: string[] = [];
+/** Kale hostnaam in kleine letters, zonder www. Werkt voor een url of een kaal domein. */
+export function kaleHost(invoer: string | null | undefined): string {
+  const s = String(invoer || "").trim().toLowerCase();
+  if (!s) return "";
+  try {
+    return new URL(/^[a-z][a-z0-9+.-]*:\/\//.test(s) ? s : `https://${s}`).hostname.replace(/^www\./, "");
+  } catch {
+    return s.replace(/^www\./, "");
+  }
+}
+export function zetRadarDomeinen(domeinen: string[]) {
+  radarDomeinenUitDatabase = [...new Set(domeinen.map(kaleHost).filter(Boolean))];
+}
+export function radarDomeinen(): string[] {
+  return [...new Set([...VERBODEN_BRONDOMEINEN, ...radarDomeinenUitDatabase])];
+}
+const hoortBij = (h: string, d: string) => h === d || h.endsWith(`.${d}`);
 export function isVerbodenBron(url: string | null | undefined): boolean {
   const s = String(url || "").trim();
   if (!s) return false;
@@ -86,9 +112,12 @@ export function isVerbodenBron(url: string | null | undefined): boolean {
   } catch {
     h = s.toLowerCase();
   }
-  return VERBODEN_BRONDOMEINEN.some((d) => h === d || h.endsWith(`.${d}`) || h.includes(d));
+  if (VERBODEN_BRONDOMEINEN.some((d) => h === d || h.endsWith(`.${d}`) || h.includes(d))) return true;
+  const kaal = h.replace(/^www\./, "");
+  return radarDomeinenUitDatabase.some((d) => hoortBij(kaal, d));
 }
 
+/** Nieuwsbronnen uit het terugvalbestand die geoogst mogen worden (zonder database). Zie ook `bronnenlijst.ts`. */
 export function actieveBronnen(): Bron[] {
   return laadBronnen().filter((b) => b.status === "ACTIVE" && !isVerbodenBron(b.feed) && !isVerbodenBron(b.domein));
 }

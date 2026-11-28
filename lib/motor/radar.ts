@@ -8,13 +8,16 @@
 // eigen opslag (nv_bron_items); nooit een verzonnen url. Wat hier uitkomt is alleen zichtbaar voor de redactie
 // (GET/POST /api/redactie); publieke API's, RSS en pagina's tonen niets van de radar.
 import { haalJson, type ModelClient } from "./ai";
-import { modelGoedkoop } from "./config";
+import { modelGoedkoop, CONNEXION_SITEMAP_URL, kaleHost } from "./config";
+import { laadBronnenLijst, actieveRadarBronnen } from "./bronnenlijst";
+import { leesFeed } from "./feeds";
 import { normaliseer } from "./tekst";
-import type { BronItem, RadarBron, RadarCategorie, RadarNieuw, RadarStatus } from "./types";
+import type { Bron, BronItem, BronRij, RadarBron, RadarCategorie, RadarNieuw, RadarStatus, UitsluitRegel } from "./types";
 import { RADAR_CATEGORIEEN } from "./types";
 import type { Opslag, OpgeslagenBericht } from "./opslag";
 
-export const RADAR_SITEMAP_URL = "https://www.connexionfrance.com/tag/news?lab_viewport=newssitemap";
+/** De eerste radarbron (The Connexion); de lijst met radarbronnen staat in de tabel nv_bronnen (zie bronnenlijst.ts). */
+export const RADAR_SITEMAP_URL = CONNEXION_SITEMAP_URL;
 export const RADAR_VENSTER_DAGEN = 3;
 export const RADAR_BRONNEN_DAGEN = 14;
 export const RADAR_BEWAAR_DAGEN = 30;
@@ -73,15 +76,23 @@ export function parseSitemap(xml: string): SitemapItem[] {
   return uit;
 }
 
-/** Eén aanvraag, timeout 10 s; faalt netjes (geeft een foutmelding in plaats van te gooien). */
-export async function leesSitemap(fetchFn: typeof fetch = fetch): Promise<{ items: SitemapItem[]; fout?: string }> {
+/** Leest een nieuwssitemap of, als dat niets oplevert, een RSS- of Atom-feed: alleen url, datum en titel (nooit tekst). */
+export function parseRadarTekst(xml: string): SitemapItem[] {
+  const uitSitemap = parseSitemap(xml);
+  if (uitSitemap.length) return uitSitemap;
+  const dummy: Bron = { id: "radar", naam: "radar", feed: "", domein: "", taal: "en", land: "FR", groep: "buitenlandse_pers", regime: "pers", status: "ACTIVE", prioriteit: 3, frankrijkFilter: false, vensterUren: 72 };
+  return leesFeed(xml, dummy).map((i) => ({ url: i.url, datum: i.gepubliceerdOp, titel: i.titel }));
+}
+
+/** Eén aanvraag per radarbron, timeout 10 s; faalt netjes (geeft een foutmelding in plaats van te gooien). */
+export async function leesSitemap(fetchFn: typeof fetch = fetch, url: string = RADAR_SITEMAP_URL): Promise<{ items: SitemapItem[]; fout?: string }> {
   try {
-    const r = await fetchFn(RADAR_SITEMAP_URL, {
+    const r = await fetchFn(url, {
       signal: AbortSignal.timeout(RADAR_TIMEOUT_MS),
-      headers: { "user-agent": "Mozilla/5.0 (compatible; Nieuwsvoorziening/1.0; +https://nieuws.infofrankrijk.com/werkwijze)", accept: "application/xml,text/xml" },
+      headers: { "user-agent": "Mozilla/5.0 (compatible; Nieuwsvoorziening/1.0; +https://nieuws.infofrankrijk.com/werkwijze)", accept: "application/xml,text/xml,application/rss+xml,application/atom+xml" },
     });
     if (!r.ok) return { items: [], fout: `HTTP ${r.status}` };
-    return { items: parseSitemap(await r.text()) };
+    return { items: parseRadarTekst(await r.text()) };
   } catch (e) {
     return { items: [], fout: (e instanceof Error ? e.message : String(e)).slice(0, 160) };
   }
@@ -109,14 +120,28 @@ export const RADAR_UITSLUIT: { reden: string; patroon: RegExp }[] = [
   { reden: "sport", patroon: /\brugby\b|\bfootball\b|\bsoccer\b|\bligue 1\b|\btour de france\b|\bcycling\b|\btennis\b|\broland[- ]garros\b|\bolympics?\b|\bparalympics?\b|\bformula (?:1|one)\b|\bgolf\b|\bmarathon\b|\bhandball\b|\bbasketball\b|\bsailing race\b/i },
 ];
 
-/** Geeft de reden van uitsluiting, of null als de titel door het filter komt. */
-export function uitgesloten(titel: string): string | null {
-  for (const u of RADAR_UITSLUIT) if (u.patroon.test(titel)) return u.reden;
+/** Geeft de reden van uitsluiting, of null als de titel door het filter komt. Zonder lijst geldt de standaardlijst. */
+export function uitgesloten(titel: string, lijst: { reden: string; patroon: RegExp }[] = RADAR_UITSLUIT): string | null {
+  for (const u of lijst) if (u.patroon.test(titel)) return u.reden;
   return null;
 }
 
+/** De uitsluitlijst van een radarbron: de eigen regels (ongeldige vallen af) of, zonder eigen regels, de standaardlijst. */
+export function uitsluitLijstVan(regels: UitsluitRegel[] | null | undefined): { reden: string; patroon: RegExp }[] {
+  if (!Array.isArray(regels) || !regels.length) return RADAR_UITSLUIT;
+  const uit: { reden: string; patroon: RegExp }[] = [];
+  for (const r of regels) {
+    try {
+      uit.push({ reden: String(r.reden || "uitgesloten"), patroon: new RegExp(r.patroon, /^[gimsuy]*$/.test(r.vlaggen || "") ? r.vlaggen : "i") });
+    } catch {
+      /* ongeldige regel: overslaan */
+    }
+  }
+  return uit.length ? uit : RADAR_UITSLUIT;
+}
+
 /** Alleen items van de laatste `dagen` dagen, niet in de toekomst, nieuwste eerst, ontdubbeld op url. */
-export function binnenVenster(items: SitemapItem[], nu: number, dagen = RADAR_VENSTER_DAGEN): SitemapItem[] {
+export function binnenVenster<T extends SitemapItem>(items: T[], nu: number, dagen = RADAR_VENSTER_DAGEN): T[] {
   const gezien = new Set<string>();
   return items
     .filter((i) => {
@@ -143,7 +168,8 @@ Geef voor elke GESELECTEERDE titel een object en laat alle andere weg:
 Antwoord uitsluitend met een JSON-lijst van die objecten (een lege lijst [] als niets past). Verzin geen feiten die niet in de titel staan.`;
 
 /** Valideert het modelantwoord; onbruikbare objecten vallen af. */
-export function leesSelectie(antwoord: string, batch: SitemapItem[]): Geselecteerd[] {
+export function leesSelectie(antwoord: string, batch: SitemapItem[], verboden: string[] = []): Geselecteerd[] {
+  const blokkeer = ["connexion", ...verboden.map((v) => v.toLowerCase().trim()).filter((v) => v.length >= 4)];
   const lijst = haalJson<unknown>(antwoord);
   if (!Array.isArray(lijst)) return [];
   const uit: Geselecteerd[] = [];
@@ -161,7 +187,7 @@ export function leesSelectie(antwoord: string, batch: SitemapItem[]): Geselectee
       .slice(0, 6);
     if (werktitel.length < 8 || werktitel.length > 160 || !relevantie || !zoektermen.length) continue;
     // De signaalbron mag nergens in de tekst voorkomen; de redactie ziet haar alleen in het veld signaalVan.
-    if (/connexion/i.test(`${werktitel} ${relevantie}`)) continue;
+    if (blokkeer.some((v) => `${werktitel} ${relevantie}`.toLowerCase().includes(v))) continue;
     const categorie = (RADAR_CATEGORIEEN as readonly string[]).includes(String(o.categorie)) ? (o.categorie as RadarCategorie) : "Overig";
     gezien.add(n);
     uit.push({ item: batch[n - 1], werktitel, categorie, relevantie: relevantie.slice(0, 400), zoektermen });
@@ -258,6 +284,10 @@ export interface RadarOpties {
   fetchFn?: typeof fetch;
   nu?: number;
   budgetMs?: number;
+  /** De radarbronnen (uit nv_bronnen of de terugval); zonder opgave leest de radar de lijst zelf. */
+  radarBronnen?: BronRij[];
+  /** True als `radarBronnen` uit de tabel nv_bronnen komt: dan worden laatst_gelezen en de fout per bron bijgewerkt. */
+  bronnenUitTabel?: boolean;
 }
 export interface RadarUitslag {
   ok: boolean;
@@ -301,19 +331,43 @@ export async function draaiRadar(o: RadarOpties): Promise<RadarUitslag> {
       if (e instanceof RadarOntbreekt || isRadarFout(e)) return { ...uit, detail: { overgeslagen: "tabel nv_radar ontbreekt (migratie nog niet toegepast)" } };
       throw e;
     }
-    const sm = await leesSitemap(o.fetchFn ?? fetch);
-    // Een storing aan de kant van de signaalbron is geen fout van de motor: de radar slaat deze ronde over (detail in de run).
-    if (sm.fout) return { ...uit, detail: { sitemapFout: sm.fout } };
-    const venster = binnenVenster(sm.items, nu);
+    // Radarbronnen: uit de tabel nv_bronnen (of de terugval: The Connexion). Per bron één aanvraag; alleen url, datum en titel worden gelezen.
+    let bronnen = o.radarBronnen;
+    let uitTabel = o.bronnenUitTabel ?? false;
+    if (!bronnen) {
+      const l = await laadBronnenLijst(o.opslag);
+      bronnen = actieveRadarBronnen(l.rijen);
+      uitTabel = l.uitTabel;
+    }
+    if (!bronnen.length) return { ...uit, detail: { overgeslagen: "geen radarbronnen ingesteld" } };
+    type RadarItem = SitemapItem & { uitsluit: { reden: string; patroon: RegExp }[] };
+    const alle: RadarItem[] = [];
+    const leesStatus: { id: string; gelezenOp: string; items: boolean; fout: string | null }[] = [];
+    const fouten: string[] = [];
+    for (const b of bronnen) {
+      if (klaar()) break;
+      const sm = await leesSitemap(o.fetchFn ?? fetch, b.feed);
+      leesStatus.push({ id: b.id, gelezenOp: new Date(nu).toISOString(), items: sm.items.length > 0, fout: sm.fout ?? null });
+      if (sm.fout) fouten.push(bronnen.length === 1 ? sm.fout : `${b.naam}: ${sm.fout}`);
+      else {
+        const lijst = uitsluitLijstVan(b.uitsluit);
+        alle.push(...sm.items.map((i) => ({ ...i, uitsluit: lijst })));
+      }
+    }
+    if (uitTabel && leesStatus.length) await o.opslag.bronGelezen(leesStatus).catch(() => {});
+    // Een storing aan de kant van een signaalbron is geen fout van de motor: zijn die allemaal stuk, dan slaat de radar deze ronde over (detail in de run).
+    if (!alle.length && fouten.length) return { ...uit, detail: { sitemapFout: fouten.join("; ") } };
+    const verbodenWoorden = bronnen.flatMap((b) => [b.naam.replace(/\(radar\)/i, ""), kaleHost(b.domein || b.feed).split(".")[0]]);
+    const venster = binnenVenster(alle, nu);
     let uitgesloten_ = 0;
     const reden: Record<string, number> = {};
     const doorFilter = venster.filter((i) => {
-      const r = uitgesloten(i.titel);
+      const r = uitgesloten(i.titel, i.uitsluit);
       if (r) { uitgesloten_ += 1; reden[r] = (reden[r] || 0) + 1; return false; }
       return true;
     });
     const nieuwe = doorFilter.filter((i) => !bekend.has(i.url));
-    uit.detail = { gelezen: sm.items.length, binnenVenster: venster.length, uitgesloten: uitgesloten_, uitsluitRedenen: reden, alBekend: doorFilter.length - nieuwe.length };
+    uit.detail = { radarBronnen: bronnen.length, ...(fouten.length ? { bronFouten: fouten } : {}), gelezen: alle.length, binnenVenster: venster.length, uitgesloten: uitgesloten_, uitsluitRedenen: reden, alBekend: doorFilter.length - nieuwe.length };
     if (!nieuwe.length) return uit;
 
     // Selectie: per batch van hooguit 20 titels een aanroep, hooguit 3 aanroepen per run.
@@ -327,7 +381,7 @@ export async function draaiRadar(o: RadarOpties): Promise<RadarUitslag> {
           model: modelGoedkoop(), maxTokens: 2500, system: SYSTEEM_RADAR_SELECTIE,
           user: batch.map((b, k) => `${k + 1}. ${b.titel}`).join("\n"),
         });
-        gekozen.push(...leesSelectie(antw, batch));
+        gekozen.push(...leesSelectie(antw, batch, verbodenWoorden));
       } catch {
         /* modelfout: deze batch komt de volgende run opnieuw (niet opgeslagen) */
       }

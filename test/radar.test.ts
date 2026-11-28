@@ -560,7 +560,7 @@ test("redactie-API: POST radar met ontbrekende tabel geeft 503; onbekend of al b
 
 test("harde regel (bronscan): alleen de radar, de redactie en de tests noemen The Connexion; publieke code en gegevens niet", () => {
   const root = join(__dirname, "..");
-  const toegestaan = new Set(["lib/motor/radar.ts", "lib/motor/config.ts", "lib/motor/types.ts", "lib/motor/opslag.ts", "lib/motor/motor.ts", "lib/redactie.ts", "app/api/redactie/route.ts"]);
+  const toegestaan = new Set(["lib/motor/radar.ts", "lib/motor/bronnenlijst.ts", "lib/bronbeheer.ts", "lib/motor/config.ts", "lib/motor/types.ts", "lib/motor/opslag.ts", "lib/motor/motor.ts", "lib/redactie.ts", "app/api/redactie/route.ts"]);
   const lijst: string[] = [];
   const loop = (map: string) => {
     for (const n of readdirSync(join(root, map))) {
