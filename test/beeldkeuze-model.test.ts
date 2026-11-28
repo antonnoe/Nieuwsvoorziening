@@ -85,14 +85,16 @@ test("stap 6b: vervangt Unsplash en illustratie zonder keuze model; laat keuze m
     bericht("w", { bron: "Unsplash", maker: "M" }, { redactie: "weg" }),
     bericht("oud", { bron: "Unsplash", maker: "M" }, { gepubliceerdOp: new Date(Date.now() - 40 * 864e5).toISOString() }),
   );
-  const client = nepClient((`{"id":"${HULP}"}`));
+  // Het nep-model kiest steeds de eerste kandidaat uit zijn lijst; wat al bij een nieuw bericht staat valt door de harde uitsluiting af.
+  const client: ModelClient = { async tekst(a) { return `{"id":"${(a.user.match(/id: (\S+) \|/) || [])[1]}"}`; } };
   const geenWeb = (async () => { throw new Error("geen web"); }) as unknown as typeof fetch;
   const r = await draaiOogst({ opslag, client, config: laadConfig(), bronnen: [], fetchFn: geenWeb, peil: [], generator: null });
   const per = (id: string) => opslag.berichtenLijst.find((b) => b.id === id)!;
   for (const id of ["u", "t", "tw"]) {
     assert.equal(per(id).beeldCredit?.keuze, "model", id);
-    assert.match(String(per(id).beeldUrl), new RegExp(`${HULP}\\.svg$`));
+    assert.match(String(per(id).beeldUrl), /\/illustraties\/.+\.svg$/);
   }
+  assert.equal(new Set(["u", "t", "tw"].map((id) => per(id).beeldUrl)).size, 3, "geen dubbelen onder de herkozen berichten");
   assert.equal(per("m").beeldUrl, "https://x.test/oud.svg");
   assert.equal(per("w").beeldCredit?.bron, "Unsplash");
   assert.equal(per("oud").beeldCredit?.bron, "Unsplash");

@@ -112,7 +112,7 @@ export interface Opslag {
   zetBeeld(id: string, url: string, credit: BeeldCredit | null): Promise<void>;
   /**
    * Gepubliceerde berichten sinds `sindsIso` (niet redactie "weg", nieuwste eerst) waarvan het beeld herkozen moet worden:
-   * beeld_credit.bron "Unsplash", of bron "Illustratie" zonder keuze "model" (besluit 28-11-2026).
+   * beeld_credit.bron "Unsplash", of bron "Illustratie" met keuze "trefwoord" of zonder keuze (besluit 28-11-2026; "model", "redactie" en "getekend" blijven staan).
    */
   teHerkiezenBeeld(sindsIso: string, limiet: number): Promise<OpgeslagenBericht[]>;
   /** beeld_url's van de nieuwste gepubliceerde berichten (nieuwste eerst), zodat geen foto twee keer wordt gebruikt. */
@@ -314,12 +314,12 @@ export class GeheugenOpslag implements Opslag {
   async teHerkiezenBeeld(sinds: string, limiet: number) {
     return this.berichtenLijst
       .filter((b) => b.status === "gepubliceerd" && b.redactie !== "weg" && b.gepubliceerdOp >= sinds && b.beeldCredit
-        && (b.beeldCredit.bron === "Unsplash" || (b.beeldCredit.bron === "Illustratie" && b.beeldCredit.keuze !== "model")))
+        && (b.beeldCredit.bron === "Unsplash" || (b.beeldCredit.bron === "Illustratie" && (!b.beeldCredit.keuze || b.beeldCredit.keuze === "trefwoord"))))
       .sort((a, b) => b.gepubliceerdOp.localeCompare(a.gepubliceerdOp))
       .slice(0, limiet);
   }
   async recenteBeeldUrls(limiet: number) {
-    return this.berichtenLijst.filter((b) => b.status === "gepubliceerd" && b.beeldUrl).sort((a, b) => b.gepubliceerdOp.localeCompare(a.gepubliceerdOp)).slice(0, limiet).map((b) => b.beeldUrl!);
+    return this.berichtenLijst.filter((b) => b.status === "gepubliceerd" && b.redactie !== "weg" && b.beeldUrl).sort((a, b) => b.gepubliceerdOp.localeCompare(a.gepubliceerdOp)).slice(0, limiet).map((b) => b.beeldUrl!);
   }
   async teHerschrijven(sinds: string, versie: number, limiet: number) {
     // Alles wat een beheerder handmatig corrigeerde (handmatigOp) of op "weg" zette, blijft buiten schot.
@@ -789,14 +789,16 @@ export class SupabaseOpslag implements Opslag {
     return rijen.map(naarBericht);
   }
   async teHerkiezenBeeld(sinds: string, limiet: number) {
-    const wie = encodeURIComponent("(beeld_credit->>bron.eq.Unsplash,and(beeld_credit->>bron.eq.Illustratie,beeld_credit->>keuze.is.null),and(beeld_credit->>bron.eq.Illustratie,beeld_credit->>keuze.neq.model))");
+    const wie = encodeURIComponent("(beeld_credit->>bron.eq.Unsplash,and(beeld_credit->>bron.eq.Illustratie,beeld_credit->>keuze.is.null),and(beeld_credit->>bron.eq.Illustratie,beeld_credit->>keuze.eq.trefwoord))");
     const zoek = (extra: string) => this.lees(`nv_berichten?status=eq.gepubliceerd&gepubliceerd_op=gte.${encodeURIComponent(sinds)}&or=${wie}${extra}&order=gepubliceerd_op.desc&limit=${limiet}&select=*,nv_bronnen_per_bericht(*)`);
     // "weg"-berichten blijven buiten schot (zonder migratie bestaat die kolom niet).
     const rijen = await this.metKolommen(() => zoek("&redactie=is.null"), () => zoek(""));
     return rijen.map(naarBericht);
   }
   async recenteBeeldUrls(limiet: number) {
-    const rijen = await this.lees(`nv_berichten?status=eq.gepubliceerd&beeld_url=not.is.null&order=gepubliceerd_op.desc&limit=${limiet}&select=beeld_url`);
+    // Alleen zichtbare berichten ("weg" telt niet mee; zonder migratie bestaat die kolom niet).
+    const zoek = (extra: string) => this.lees(`nv_berichten?status=eq.gepubliceerd&beeld_url=not.is.null${extra}&order=gepubliceerd_op.desc&limit=${limiet}&select=beeld_url`);
+    const rijen = await this.metKolommen(() => zoek("&redactie=is.null"), () => zoek(""));
     return rijen.map((r) => String(r.beeld_url));
   }
   async teHerschrijven(sinds: string, versie: number, limiet: number) {

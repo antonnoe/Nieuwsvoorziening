@@ -67,7 +67,10 @@ function basisUrl(): string {
   return (process.env.NIEUWS_BASIS_URL || "https://nieuws.infofrankrijk.com").replace(/\/+$/, "");
 }
 
-const pad = (u: string) => {
+/** Aantal nieuwste zichtbare berichten waarvan de illustratie bij een nieuwe keuze hard wordt uitgesloten (besluit 28-11-2026: geen dubbelen op de eerste pagina). */
+export const HARDE_UITSLUITING = 13;
+
+export const pad = (u: string) => {
   try {
     return new URL(u).pathname;
   } catch {
@@ -84,8 +87,12 @@ export interface IllustratieInvoer {
 type Kandidaat = { i: Illustratie; s: number; eigen: number; bind: number; g: number };
 
 /** Score per beeld en de volgorde-regels; gedeeld door `kiesIllustratie` en de kandidatenlijst voor het model. */
-function maakKandidaten(b: IllustratieInvoer, recent: string[], lijst: IllustratieLijst) {
-  const alle = lijst.beelden;
+function maakKandidaten(b: IllustratieInvoer, recent: string[], lijst: IllustratieLijst, uitsluit?: string[]) {
+  // Harde uitsluiting: de illustraties van de 13 nieuwste zichtbare berichten (`recent[0..12]`, of de expliciete lijst `uitsluit`).
+  // Blijft er niets over (kleine set), dan vervalt de uitsluiting: liever een herhaling dan geen beeld.
+  const uit = new Set((uitsluit ?? recent.slice(0, HARDE_UITSLUITING)).map(pad));
+  const vrij = lijst.beelden.filter((i) => !uit.has(pad(i.svg)));
+  const alle = vrij.length ? vrij : lijst.beelden;
   const tekst = `${b.kop || ""} ${b.samenvatting || ""}`;
   const voorkeur = gaatOverNederland(tekst) ? "nl" : "fr";
   const schoon = (t: string) => ` ${normaal(t).replace(/[^a-z0-9]+/g, " ")} `;
@@ -124,10 +131,10 @@ function maakKandidaten(b: IllustratieInvoer, recent: string[], lijst: Illustrat
  * Gaat het bericht over Nederland, dan krijgt een nl-beeld met minstens 1 treffer +3 punten; zijn alle scores 0, dan gaat een nl-beeld voor (eigen categorie eerst, anders de hele set).
  * Is de hoogste score 0, dan de keuze in de eigen categorie.
  */
-export function kiesIllustratie(b: IllustratieInvoer, recent: string[] = [], lijst: IllustratieLijst = ILLUSTRATIES): Illustratie | null {
+export function kiesIllustratie(b: IllustratieInvoer, recent: string[] = [], lijst: IllustratieLijst = ILLUSTRATIES, uitsluit?: string[]): Illustratie | null {
   try {
     if (!lijst.beelden.length) return null;
-    const { kandidaten, voorkeur, pak } = maakKandidaten(b, recent, lijst);
+    const { kandidaten, voorkeur, pak } = maakKandidaten(b, recent, lijst, uitsluit);
     const top = pak(kandidaten);
     if (top && top.s > 0) return top.i;
     // Alles 0: de bestaande keuze in de eigen categorie (heeft die geen beelden, dan de hele set).
@@ -149,10 +156,10 @@ export const MAX_MODEL_KANDIDATEN = 12;
  * Kandidaten voor de modelkeuze (besluit 28-11-2026): de 12 hoogste op trefwoordscore (inclusief Nederland-voorrang, score > 0);
  * zijn het er minder dan 12, dan aangevuld met beelden uit de eigen categorie van het bericht (zelfde volgorde-regels).
  */
-export function modelKandidaten(b: IllustratieInvoer, recent: string[] = [], lijst: IllustratieLijst = ILLUSTRATIES): Illustratie[] {
+export function modelKandidaten(b: IllustratieInvoer, recent: string[] = [], lijst: IllustratieLijst = ILLUSTRATIES, uitsluit?: string[]): Illustratie[] {
   try {
     if (!lijst.beelden.length) return [];
-    const { kandidaten, beter } = maakKandidaten(b, recent, lijst);
+    const { kandidaten, beter } = maakKandidaten(b, recent, lijst, uitsluit);
     const gesorteerd = [...kandidaten].sort((x, y) => (beter(x, y) ? -1 : beter(y, x) ? 1 : 0));
     const uit = gesorteerd.filter((k) => k.s > 0).slice(0, MAX_MODEL_KANDIDATEN);
     if (uit.length < MAX_MODEL_KANDIDATEN) {
@@ -176,15 +183,15 @@ Antwoord uitsluitend met JSON: {"id":"..."}`;
  * (id niet in de lijst) of zonder client: de trefwoordkeuze. `keuze` zegt hoe het beeld gekozen is.
  */
 export async function kiesIllustratieMetModel(
-  b: IllustratieInvoer, client: ModelClient | null, recent: string[] = [], lijst: IllustratieLijst = ILLUSTRATIES,
+  b: IllustratieInvoer, client: ModelClient | null, recent: string[] = [], lijst: IllustratieLijst = ILLUSTRATIES, uitsluit?: string[],
 ): Promise<{ illustratie: Illustratie; keuze: "model" | "trefwoord" } | null> {
   const terugval = () => {
-    const i = kiesIllustratie(b, recent, lijst);
+    const i = kiesIllustratie(b, recent, lijst, uitsluit);
     return i ? { illustratie: i, keuze: "trefwoord" as const } : null;
   };
   if (!client) return terugval();
   try {
-    const kand = modelKandidaten(b, recent, lijst);
+    const kand = modelKandidaten(b, recent, lijst, uitsluit);
     if (!kand.length) return terugval();
     const regels = kand.map((i, n) => `${n + 1}. id: ${i.id} | naam: ${i.naam} | beschrijving: ${i.beschrijving || "-"} | binding: ${i.binding}`).join("\n");
     const antw = await client.tekst({
@@ -201,8 +208,8 @@ export async function kiesIllustratieMetModel(
 }
 
 /** Resultaat voor opslag: absolute SVG-url en bronvermelding met categorie, naam en PNG-url. Null zonder illustratie. */
-export function illustratieResultaat(b: IllustratieInvoer, recent: string[] = [], lijst: IllustratieLijst = ILLUSTRATIES): { url: string; credit: BeeldCredit } | null {
-  const i = kiesIllustratie(b, recent, lijst);
+export function illustratieResultaat(b: IllustratieInvoer, recent: string[] = [], lijst: IllustratieLijst = ILLUSTRATIES, uitsluit?: string[]): { url: string; credit: BeeldCredit } | null {
+  const i = kiesIllustratie(b, recent, lijst, uitsluit);
   if (!i) return null;
   const basis = basisUrl();
   return {
@@ -212,8 +219,8 @@ export function illustratieResultaat(b: IllustratieInvoer, recent: string[] = []
 }
 
 /** Als `illustratieResultaat`, maar met de modelkeuze (`kiesIllustratieMetModel`); `credit.keuze` is "model" of "trefwoord". */
-export async function illustratieResultaatMetModel(b: IllustratieInvoer, client: ModelClient | null, recent: string[] = [], lijst: IllustratieLijst = ILLUSTRATIES): Promise<{ url: string; credit: BeeldCredit } | null> {
-  const k = await kiesIllustratieMetModel(b, client, recent, lijst);
+export async function illustratieResultaatMetModel(b: IllustratieInvoer, client: ModelClient | null, recent: string[] = [], lijst: IllustratieLijst = ILLUSTRATIES, uitsluit?: string[]): Promise<{ url: string; credit: BeeldCredit } | null> {
+  const k = await kiesIllustratieMetModel(b, client, recent, lijst, uitsluit);
   if (!k) return null;
   const i = k.illustratie;
   const basis = basisUrl();
@@ -221,4 +228,35 @@ export async function illustratieResultaatMetModel(b: IllustratieInvoer, client:
     url: `${basis}${i.svg}`,
     credit: { bron: "Illustratie", maker: "Communities Abroad", categorie: i.categorie, naam: i.naam, png: `${basis}${i.png}`, keuze: k.keuze },
   };
+}
+
+/** Het resultaat voor een beeld dat de redactie uit de beeldbank koos: `keuze` is "redactie" en blijft dus buiten de automatische herkeuze (stap 6b). */
+export function illustratieKeuzeRedactie(i: Illustratie): { url: string; credit: BeeldCredit } {
+  const basis = basisUrl();
+  return { url: `${basis}${i.svg}`, credit: { bron: "Illustratie", maker: "Communities Abroad", categorie: i.categorie, naam: i.naam, png: `${basis}${i.png}`, keuze: "redactie" } };
+}
+
+/** Zoekt een beeld uit de beeldbank op id (voor de redactie); null als het niet bestaat. */
+export function illustratieMetId(id: string, lijst: IllustratieLijst = ILLUSTRATIES): Illustratie | null {
+  return lijst.beelden.find((i) => i.id === id) ?? null;
+}
+
+/**
+ * Dubbelen op de eerste pagina: `berichten` zijn de nieuwste zichtbare berichten (nieuwste eerst). Geeft per beeld dat al bij een
+ * nieuwer bericht staat het oudere bericht terug, tenzij dat een handmatige keuze heeft (redactie of getekend); dan het nieuwere,
+ * tenzij dat ook handmatig is. Alleen eigen illustraties (Unsplash-foto's worden elders ontdubbeld).
+ */
+export function dubbeleBeelden<T extends { id: string; beeldUrl: string | null; beeldCredit?: BeeldCredit | null }>(berichten: T[]): T[] {
+  const handmatig = (b: T) => b.beeldCredit?.keuze === "redactie" || b.beeldCredit?.keuze === "getekend";
+  const eerste = new Map<string, T>();
+  const uit: T[] = [];
+  for (const b of berichten) {
+    if (!b.beeldUrl || b.beeldCredit?.bron !== "Illustratie") continue;
+    const p = pad(b.beeldUrl);
+    const voor = eerste.get(p);
+    if (!voor) { eerste.set(p, b); continue; }
+    const kies = !handmatig(b) ? b : !handmatig(voor) ? voor : null;
+    if (kies && !uit.includes(kies)) uit.push(kies);
+  }
+  return uit;
 }

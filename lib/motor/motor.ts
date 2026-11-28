@@ -7,8 +7,10 @@ import { aantalBronnen, clusterItems } from "./cluster";
 import { oogstBronnen, type OogstBronResultaat } from "./feeds";
 import { schoneZoektermen, beeldResultaat, fotoSleutel, type BeeldGenerator, actieveGenerator } from "./beeld";
 import "./beeld-unsplash";
-import { illustratieResultaatMetModel } from "./illustraties";
+import { illustratieResultaatMetModel, dubbeleBeelden, pad, HARDE_UITSLUITING } from "./illustraties";
 
+/** Stap 6b: hooguit zoveel dubbele illustraties op de eerste pagina per run herkiezen. */
+export const MAX_DUBBEL_HERSTELLEN_PER_RUN = 3;
 /** Stap 6b: hooguit zoveel berichten per run krijgen een nieuw beeld (Unsplash of trefwoordkeuze vervangen door modelkeuze). */
 export const MAX_BEELD_HERKIEZEN_PER_RUN = 25;
 export const BEELD_HERKIES_DAGEN = 30;
@@ -385,7 +387,25 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
           }
         }
         aantallen.beeldHerkozen = herkozen;
-        noteer({ stap: "beeld_aanvullen", ok: true, aantal: aangevuld, detail: { herkozen } });
+        // Dubbelen op de eerste pagina (besluit 28-11-2026): dezelfde illustratie bij twee van de 13 nieuwste zichtbare berichten.
+        // Het oudere bericht krijgt een nieuwe keuze met de andere 12 als harde uitsluiting; handmatige keuzes blijven staan.
+        let dubbelHersteld = 0;
+        try {
+          const eerste = await o.opslag.berichten({ limiet: HARDE_UITSLUITING });
+          for (const b of dubbeleBeelden(eerste).slice(0, MAX_DUBBEL_HERSTELLEN_PER_RUN)) {
+            if (!tijdOver()) break;
+            const uitsluit = eerste.filter((x) => x.id !== b.id && x.beeldUrl).map((x) => x.beeldUrl as string);
+            const r = await illustratieResultaatMetModel({ kop: b.kop, samenvatting: b.samenvatting, categorie: b.categorie }, o.client, recent, undefined, uitsluit);
+            if (!r || pad(r.url) === pad(b.beeldUrl || "")) continue;
+            await o.opslag.zetBeeld(b.id, r.url, r.credit);
+            recent.unshift(r.url);
+            dubbelHersteld += 1;
+          }
+        } catch (e) {
+          noteer({ stap: "beeld_dubbel", ok: false, fout: fout(e) });
+        }
+        aantallen.beeldDubbelHersteld = dubbelHersteld;
+        noteer({ stap: "beeld_aanvullen", ok: true, aantal: aangevuld, detail: { herkozen, dubbelHersteld } });
       } catch (e) {
         noteer({ stap: "beeld_aanvullen", ok: false, fout: fout(e) });
       }

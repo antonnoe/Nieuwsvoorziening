@@ -86,9 +86,13 @@ export interface BeeldCredit {
   categorie?: string;
   naam?: string;
   /** Absolute PNG-url (voor e-mail, die geen SVG toont). */
-  png?: string;
-  /** Alleen bij bron "Illustratie": hoe het beeld gekozen is (modelkeuze of trefwoordscore). Ontbreekt bij oude berichten. */
-  keuze?: "model" | "trefwoord";
+  png?: string | null;
+  /**
+   * Alleen bij bron "Illustratie": hoe het beeld gekozen is. "model" (modelkeuze) en "trefwoord" (trefwoordscore) kan de motor later
+   * herkiezen; "redactie" (uit de beeldbank gekozen) en "getekend" (voor dit bericht getekend, png is null) zijn handmatig en
+   * blijven altijd staan. Ontbreekt bij oude berichten.
+   */
+  keuze?: "model" | "trefwoord" | "redactie" | "getekend";
 }
 
 export interface Synthese {

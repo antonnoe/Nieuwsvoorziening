@@ -47,15 +47,14 @@ test("trefwoordscore: accent- en hoofdletterongevoelig, de meeste treffers winne
   assert.equal(kiesIllustratie(b("Pharmacíe sluit", "", "algemeen"), [], accent)?.id, "a-fr");
 });
 
-test("gelijke stand: het langst niet gebruikte beeld, nooit gebruikt telt als langst, daarna vaste volgorde", () => {
+test("gelijke stand: het langst niet gebruikte beeld (buiten de 13 nieuwste), nooit gebruikt telt als langst, daarna vaste volgorde", () => {
   const u = (id: string) => `https://nieuws.infofrankrijk.com/illustraties/${id}.svg`;
+  const vul = Array.from({ length: 13 }, (_, n) => u(`vulling-${n}`)); // de 13 nieuwste berichten staan met andere beelden
   assert.equal(kiesIllustratie(b("Neutraal"), [], lijst)?.id, "v-tol-fr", "vaste volgorde");
-  assert.equal(kiesIllustratie(b("Neutraal"), [u("v-tol-fr")], lijst)?.id, "v-trein-fr", "nooit gebruikt gaat voor");
-  assert.equal(kiesIllustratie(b("Neutraal"), [u("v-tol-fr"), u("v-trein-fr")], lijst)?.id, "v-trein-fr", "trein is langer geleden dan tol");
-  const nl = ["x", "y"];
-  assert.ok(nl.length);
+  assert.equal(kiesIllustratie(b("Neutraal"), [...vul, u("v-tol-fr")], lijst)?.id, "v-trein-fr", "nooit gebruikt gaat voor");
+  assert.equal(kiesIllustratie(b("Neutraal"), [...vul, u("v-tol-fr"), u("v-trein-fr")], lijst)?.id, "v-trein-fr", "trein is langer geleden dan tol");
   // trefwoorden gaan voor recentheid
-  assert.equal(kiesIllustratie(b("Tol"), [u("v-trein-fr")], lijst)?.id, "v-tol-fr");
+  assert.equal(kiesIllustratie(b("Tol"), [...vul, u("v-trein-fr")], lijst)?.id, "v-tol-fr");
 });
 
 test("resultaat: absolute SVG-url, credit met bron, maker, categorie, naam en PNG; basis uit NIEUWS_BASIS_URL", () => {
