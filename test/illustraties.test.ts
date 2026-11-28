@@ -216,7 +216,7 @@ test("nieuwe reeksen: echte koppen kiezen het passende beeld", () => {
 });
 
 test("index: geen dubbele id's en geen verboden korte trefwoorden (woordbegin-matches)", () => {
-  const verboden = new Set(["weg", "dal", "ai", "top", "wet", "bos", "vis", "ov", "app", "eu", "gas", "lek", "ev", "x", "lot", "caf"]);
+  const verboden = new Set(["weg", "dal", "ai", "top", "wet", "bos", "vis", "ov", "app", "eu", "gas", "lek", "ev", "x", "lot", "caf", "pers", "nederland"]);
   const ids = ILLUSTRATIES.beelden.map((i) => i.id);
   assert.equal(new Set(ids).size, ids.length);
   for (const i of ILLUSTRATIES.beelden) {

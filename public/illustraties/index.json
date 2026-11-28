@@ -1603,7 +1603,6 @@
    "naam": "Tv-camera",
    "binding": "fr",
    "trefwoorden": [
-    "pers",
     "media",
     "journalisten",
     "televisie",
@@ -1612,7 +1611,9 @@
     "persvrijheid",
     "nieuwszender",
     "omroep",
-    "interview"
+    "interview",
+    "persconferentie",
+    "journalist"
    ],
    "svg": "/illustraties/algemeen-tv-camera-pers-fr.svg",
    "png": "/illustraties/algemeen-tv-camera-pers-fr.png"
