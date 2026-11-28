@@ -21,26 +21,35 @@ export default function Beeldmateriaal() {
         <p className="rechten">
           Alle illustraties op deze pagina zijn eigen werk van Communities Abroad. Ze zijn vrij te gebruiken op de eigen platforms van Communities Abroad: Nederlanders.fr, Infofrankrijk, nieuws.infofrankrijk.com en Infopoche. Gebruik door anderen is alleen toegestaan met schriftelijke toestemming. Vermeld bij gebruik: &ldquo;illustratie Communities Abroad&rdquo;.
         </p>
+        <p className="uitleglink"><a href="/illustraties/LEESMIJ.md">Uitleg voor ontwikkelaars en AI-agents</a></p>
         {secties.map((s) => (
           <section key={s.categorie} className="beeldsectie" aria-labelledby={`cat-${s.categorie.replace(/\s+/g, "-")}`}>
             <h3 id={`cat-${s.categorie.replace(/\s+/g, "-")}`}>
               {s.kop} <span className="aantal">({s.beelden.length} {s.beelden.length === 1 ? "beeld" : "beelden"})</span>
             </h3>
-            <ul className="beeldraster">
-              {s.beelden.map((b) => (
-                <li key={b.id}>
-                  <a className="beeldlink" href={b.svg} target="_blank" rel="noopener" aria-label={`${b.naam}, SVG op volle grootte openen`}>
-                    <img src={b.svg} alt={b.naam} loading="lazy" width={240} height={180} />
-                  </a>
-                  <span className="bnaam">{b.naam}{b.binding === "nl" ? <span className="nlbe"> NL/BE</span> : null}</span>
-                  <span className="bdl">
-                    <a href={b.svg} download aria-label={`${b.naam} downloaden als SVG`}>SVG</a>
-                    {" · "}
-                    <a href={b.png} download aria-label={`${b.naam} downloaden als PNG`}>PNG</a>
-                  </span>
-                </li>
-              ))}
-            </ul>
+            {s.groepen.map((g) => (
+              <div key={g.groep} className="beeldgroep">
+                <h4>
+                  {g.kop} <span className="aantal">({g.beelden.length})</span>
+                </h4>
+                <ul className="beeldraster">
+                  {g.beelden.map((b) => (
+                    <li key={b.id}>
+                      <a className="beeldlink" href={b.svg} target="_blank" rel="noopener" aria-label={`${b.naam}, SVG op volle grootte openen`}>
+                        <img src={b.svg} alt={b.naam} loading="lazy" width={240} height={180} />
+                      </a>
+                      <span className="bnaam">{b.naam}{b.binding === "nl" ? <span className="nlbe"> NL/BE</span> : null}</span>
+                      {b.beschrijving ? <span className="bbeschrijving">{b.beschrijving}</span> : null}
+                      <span className="bdl">
+                        <a href={b.svg} download aria-label={`${b.naam} downloaden als SVG`}>SVG</a>
+                        {" · "}
+                        <a href={b.png} download aria-label={`${b.naam} downloaden als PNG`}>PNG</a>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </section>
         ))}
       </main>

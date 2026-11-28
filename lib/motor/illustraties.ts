@@ -9,6 +9,10 @@ export interface Illustratie {
   id: string;
   categorie: string;
   naam: string;
+  /** Subcategorie (bijv. steden, justitie), vooral voor AI-agents die het meest geschikte beeld zoeken. Optioneel. */
+  groep?: string;
+  /** Eén zin: wat staat erop en waar past het bij. Optioneel. */
+  beschrijving?: string;
   binding: "fr" | "nl";
   trefwoorden: string[];
   svg: string;
@@ -31,7 +35,10 @@ export function leesIllustraties(ruw: unknown): IllustratieLijst {
       if (!b || typeof b.id !== "string" || typeof b.categorie !== "string" || typeof b.naam !== "string" || typeof b.svg !== "string" || typeof b.png !== "string") continue;
       if (!b.svg.startsWith("/") || !b.png.startsWith("/")) continue;
       beelden.push({
-        id: b.id, categorie: b.categorie, naam: b.naam, binding: b.binding === "nl" ? "nl" : "fr",
+        id: b.id, categorie: b.categorie, naam: b.naam,
+        ...(typeof b.groep === "string" && b.groep ? { groep: b.groep } : {}),
+        ...(typeof b.beschrijving === "string" && b.beschrijving ? { beschrijving: b.beschrijving } : {}),
+        binding: b.binding === "nl" ? "nl" : "fr",
         trefwoorden: Array.isArray(b.trefwoorden) ? b.trefwoorden.filter((t): t is string => typeof t === "string") : [],
         svg: b.svg, png: b.png,
       });

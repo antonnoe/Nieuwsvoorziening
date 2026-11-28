@@ -4,7 +4,9 @@
   {
    "id": "algemeen-alpinopet-stokbrood-fr",
    "categorie": "algemeen",
+   "groep": "symbolen",
    "naam": "Alpinopet en stokbrood",
+   "beschrijving": "Zwarte alpinopet en stokbrood op tafel; luchtig Frans cliché, voor lichte berichten over Franse gewoonten.",
    "binding": "fr",
    "trefwoorden": [
     "alpinopet",
@@ -20,7 +22,9 @@
   {
    "id": "algemeen-ambulance-nacht-fr",
    "categorie": "algemeen",
+   "groep": "veiligheid en hulpdiensten",
    "naam": "Ambulance in de nacht",
+   "beschrijving": "Ambulance met zwaailicht in een nachtelijke straat; ongevallen, spoedhulp, gewonden.",
    "binding": "fr",
    "trefwoorden": [
     "ambulance",
@@ -39,7 +43,9 @@
   {
    "id": "algemeen-apotheek-fr",
    "categorie": "algemeen",
+   "groep": "zorg",
    "naam": "Apotheek",
+   "beschrijving": "Franse apotheek met groen kruis en etalage; medicijnen, tekorten, apothekers.",
    "binding": "fr",
    "trefwoorden": [
     "apotheek",
@@ -56,7 +62,9 @@
   {
    "id": "algemeen-arc-de-triomphe-fr",
    "categorie": "algemeen",
+   "groep": "symbolen",
    "naam": "Arc de Triomphe",
+   "beschrijving": "Arc de Triomphe met driekleur; nationale herdenkingen, 11 november, 14 juli, Parijs.",
    "binding": "fr",
    "trefwoorden": [
     "arc de triomphe",
@@ -72,7 +80,9 @@
   {
    "id": "algemeen-atomium-be",
    "categorie": "algemeen",
+   "groep": "symbolen",
    "naam": "Atomium",
+   "beschrijving": "Het Atomium in Brussel; nieuws over België, Brussel en Belgen.",
    "binding": "nl",
    "trefwoorden": [
     "atomium",
@@ -87,7 +97,9 @@
   {
    "id": "algemeen-bakkerij-dorp-fr",
    "categorie": "algemeen",
+   "groep": "dagelijks leven",
    "naam": "Bakkerij in het dorp",
+   "beschrijving": "Dorpsbakkerij met broden in de etalage; dorpsleven, middenstand, brood.",
    "binding": "fr",
    "trefwoorden": [
     "bakker",
@@ -105,7 +117,9 @@
   {
    "id": "algemeen-belastingkantoor-fr",
    "categorie": "algemeen",
+   "groep": "overheid en loketten",
    "naam": "Belastingkantoor",
+   "beschrijving": "Statig overheidsgebouw met vlag en brievenbus; belastingdienst, aanslagen, fiscus.",
    "binding": "fr",
    "trefwoorden": [
     "belastingkantoor",
@@ -121,7 +135,9 @@
   {
    "id": "algemeen-boormachine-fr",
    "categorie": "algemeen",
+   "groep": "wonen en klussen",
    "naam": "Boormachine",
+   "beschrijving": "Groene accuboormachine als hoofdvoorwerp; klussen, doe-het-zelf, gereedschap.",
    "binding": "fr",
    "trefwoorden": [
     "boormachine",
@@ -135,7 +151,9 @@
   {
    "id": "algemeen-brandweerkazerne-fr",
    "categorie": "algemeen",
+   "groep": "veiligheid en hulpdiensten",
    "naam": "Brandweerkazerne",
+   "beschrijving": "Brandweerkazerne met rode wagen; brandweer, uitrukken, hulpdiensten.",
    "binding": "fr",
    "trefwoorden": [
     "brandweer",
@@ -152,7 +170,9 @@
   {
    "id": "algemeen-brugse-reien-be",
    "categorie": "algemeen",
+   "groep": "symbolen",
    "naam": "Brugse reien",
+   "beschrijving": "Vlaamse gevels aan een kanaal; Vlaanderen, Brugge, Gent, Belgen.",
    "binding": "nl",
    "trefwoorden": [
     "brugge",
@@ -168,7 +188,9 @@
   {
    "id": "algemeen-caf-loket-fr",
    "categorie": "algemeen",
+   "groep": "overheid en loketten",
    "naam": "CAF-loket",
+   "beschrijving": "Loketten van een uitkeringsinstantie met wachtenden; CAF, toeslagen, kinderbijslag, RSA.",
    "binding": "fr",
    "trefwoorden": [
     "kinderbijslag",
@@ -188,7 +210,9 @@
   {
    "id": "algemeen-collegezaal-studenten-fr",
    "categorie": "algemeen",
+   "groep": "onderwijs",
    "naam": "Collegezaal",
+   "beschrijving": "Collegezaal met studenten en schoolbord; universiteit, studenten, tentamens.",
    "binding": "fr",
    "trefwoorden": [
     "studenten",
@@ -206,7 +230,9 @@
   {
    "id": "algemeen-commissariaat-police-fr",
    "categorie": "algemeen",
+   "groep": "veiligheid en hulpdiensten",
    "naam": "Commissariaat",
+   "beschrijving": "Commissariaat van de police nationale met blauwe accenten; politie in de stad, aangifte.",
    "binding": "fr",
    "trefwoorden": [
     "police nationale",
@@ -221,7 +247,9 @@
   {
    "id": "algemeen-consulaat-paspoort-nl",
    "categorie": "algemeen",
+   "groep": "overheid en loketten",
    "naam": "Consulaat en paspoort",
+   "beschrijving": "Groot Nederlands paspoort voor een consulaat met Nederlandse vlag; documenten, consulaire zaken, Nederlanders in het buitenland.",
    "binding": "nl",
    "trefwoorden": [
     "consulaat",
@@ -239,7 +267,9 @@
   {
    "id": "algemeen-eiffeltoren-fr",
    "categorie": "algemeen",
+   "groep": "symbolen",
    "naam": "Eiffeltoren",
+   "beschrijving": "Eiffeltoren tussen bomen; Parijs, Frankrijk algemeen, toerisme.",
    "binding": "fr",
    "trefwoorden": [
     "eiffeltoren",
@@ -254,7 +284,9 @@
   {
    "id": "algemeen-fiets-bij-brug-nl",
    "categorie": "algemeen",
+   "groep": "symbolen",
    "naam": "Fiets bij een brug",
+   "beschrijving": "Fiets op een brug over een gracht; Nederland, fietscultuur.",
    "binding": "nl",
    "trefwoorden": [
     "fiets",
@@ -269,7 +301,9 @@
   {
    "id": "algemeen-france-travail-fr",
    "categorie": "algemeen",
+   "groep": "overheid en loketten",
    "naam": "France Travail",
+   "beschrijving": "Kantoor van het arbeidsbureau met vacaturebord; werkloosheid, banen, France Travail.",
    "binding": "fr",
    "trefwoorden": [
     "france travail",
@@ -286,7 +320,9 @@
   {
    "id": "algemeen-franse-lelie-fr",
    "categorie": "algemeen",
+   "groep": "symbolen",
    "naam": "Franse lelie",
+   "beschrijving": "Gouden Franse lelie op blauw; geschiedenis, monarchie, erfgoed.",
    "binding": "fr",
    "trefwoorden": [
     "lelie",
@@ -301,7 +337,9 @@
   {
    "id": "algemeen-functie-boer-fr",
    "categorie": "algemeen",
+   "groep": "beroepen",
    "naam": "Boer",
+   "beschrijving": "Boer met hooivork en tractor in een graanveld; landbouw, boerenprotest.",
    "binding": "fr",
    "trefwoorden": [
     "boer",
@@ -316,7 +354,9 @@
   {
    "id": "algemeen-functie-bouwvakker-fr",
    "categorie": "algemeen",
+   "groep": "beroepen",
    "naam": "Bouwvakker",
+   "beschrijving": "Bouwvakker met helm naast een muur in aanbouw; bouwsector, ambachten.",
    "binding": "fr",
    "trefwoorden": [
     "bouwvakker",
@@ -333,7 +373,9 @@
   {
    "id": "algemeen-functie-brandweer-fr",
    "categorie": "algemeen",
+   "groep": "beroepen",
    "naam": "Brandweerman",
+   "beschrijving": "Brandweerman met helm naast brandweerwagen met ladder; brandweer, redding.",
    "binding": "fr",
    "trefwoorden": [
     "brandweerman",
@@ -347,7 +389,9 @@
   {
    "id": "algemeen-functie-gendarme-fr",
    "categorie": "algemeen",
+   "groep": "beroepen",
    "naam": "Gendarme",
+   "beschrijving": "Gendarme met kepie naast blauw busje; gendarmerie, controles, platteland.",
    "binding": "fr",
    "trefwoorden": [
     "gendarme",
@@ -362,7 +406,9 @@
   {
    "id": "algemeen-functie-hotelier-fr",
    "categorie": "algemeen",
+   "groep": "beroepen",
    "naam": "Hotelier",
+   "beschrijving": "Hotelier achter de receptie met sleutelbord; hotels, gastvrijheid.",
    "binding": "fr",
    "trefwoorden": [
     "hotelier",
@@ -377,7 +423,9 @@
   {
    "id": "algemeen-functie-kok-fr",
    "categorie": "algemeen",
+   "groep": "beroepen",
    "naam": "Kok",
+   "beschrijving": "Kok met koksmuts bij het fornuis; restaurants, gastronomie.",
    "binding": "fr",
    "trefwoorden": [
     "kok",
@@ -393,7 +441,9 @@
   {
    "id": "algemeen-functie-leraar-fr",
    "categorie": "algemeen",
+   "groep": "beroepen",
    "naam": "Leraar",
+   "beschrijving": "Leraar bij een schoolbord; onderwijs, leraren, staking in het onderwijs.",
    "binding": "fr",
    "trefwoorden": [
     "leraar",
@@ -409,7 +459,9 @@
   {
    "id": "algemeen-functie-ober-fr",
    "categorie": "algemeen",
+   "groep": "beroepen",
    "naam": "Ober",
+   "beschrijving": "Ober met dienblad en schort; horeca, café, personeel.",
    "binding": "fr",
    "trefwoorden": [
     "ober",
@@ -424,7 +476,9 @@
   {
    "id": "algemeen-functie-postbode-fr",
    "categorie": "algemeen",
+   "groep": "beroepen",
    "naam": "Postbode",
+   "beschrijving": "Postbode met tas bij gele brievenbus; post, bezorging.",
    "binding": "fr",
    "trefwoorden": [
     "postbode",
@@ -438,7 +492,9 @@
   {
    "id": "algemeen-functie-president-fr",
    "categorie": "algemeen",
+   "groep": "beroepen",
    "naam": "President",
+   "beschrijving": "Silhouet met presidentiële sjerp en vlag; de president, het staatshoofd.",
    "binding": "fr",
    "trefwoorden": [
     "president",
@@ -453,7 +509,9 @@
   {
    "id": "algemeen-functie-rechter-fr",
    "categorie": "algemeen",
+   "groep": "beroepen",
    "naam": "Rechter",
+   "beschrijving": "Rechter in toga achter de rechtersbank; rechters, vonnissen.",
    "binding": "fr",
    "trefwoorden": [
     "rechter",
@@ -468,7 +526,9 @@
   {
    "id": "algemeen-functie-verpleegkundige-fr",
    "categorie": "algemeen",
+   "groep": "beroepen",
    "naam": "Verpleegkundige",
+   "beschrijving": "Verpleegkundige met kapje en stethoscoop; verpleging, zorgpersoneel.",
    "binding": "fr",
    "trefwoorden": [
     "verpleegkundige",
@@ -483,7 +543,9 @@
   {
    "id": "algemeen-gemeentehuis-fr",
    "categorie": "algemeen",
+   "groep": "overheid en loketten",
    "naam": "Gemeentehuis",
+   "beschrijving": "Mairie met klokje en driekleur in een dorp; gemeente, burgemeester, lokaal bestuur.",
    "binding": "fr",
    "trefwoorden": [
     "gemeente",
@@ -501,7 +563,9 @@
   {
    "id": "algemeen-gendarmerie-fr",
    "categorie": "algemeen",
+   "groep": "veiligheid en hulpdiensten",
    "naam": "Gendarmerie",
+   "beschrijving": "Gendarmeriegebouw met blauwe bus; gendarmerie, veiligheid op het platteland.",
    "binding": "fr",
    "trefwoorden": [
     "politie",
@@ -522,7 +586,9 @@
   {
    "id": "algemeen-geneesmiddelen-doosjes-fr",
    "categorie": "algemeen",
+   "groep": "zorg",
    "naam": "Geneesmiddelen",
+   "beschrijving": "Medicijndoosjes en pillen; geneesmiddelen, vergoedingen, tekorten.",
    "binding": "fr",
    "trefwoorden": [
     "geneesmiddelen",
@@ -541,7 +607,9 @@
   {
    "id": "algemeen-gereedschapskist-fr",
    "categorie": "algemeen",
+   "groep": "wonen en klussen",
    "naam": "Gereedschapskist",
+   "beschrijving": "Rode gereedschapskist; klussen, reparaties.",
    "binding": "fr",
    "trefwoorden": [
     "gereedschap",
@@ -556,7 +624,9 @@
   {
    "id": "algemeen-gevangenis-fr",
    "categorie": "algemeen",
+   "groep": "justitie",
    "naam": "Gevangenis",
+   "beschrijving": "Gevangenis met wachttorens en tralies; gevangenissen, detentie, celstraf.",
    "binding": "fr",
    "trefwoorden": [
     "gevangenis",
@@ -573,7 +643,9 @@
   {
    "id": "algemeen-grachtenpanden-nl",
    "categorie": "algemeen",
+   "groep": "symbolen",
    "naam": "Grachtenpanden",
+   "beschrijving": "Grachtenpanden aan een gracht; Nederlandse steden.",
    "binding": "nl",
    "trefwoorden": [
     "amsterdam",
@@ -589,7 +661,9 @@
   {
    "id": "algemeen-haan-fr",
    "categorie": "algemeen",
+   "groep": "symbolen",
    "naam": "Haan",
+   "beschrijving": "Blauwe Gallische haan; Frans nationaal symbool, sport, Les Bleus.",
    "binding": "fr",
    "trefwoorden": [
     "haan",
@@ -604,7 +678,9 @@
   {
    "id": "algemeen-helikopter-fr",
    "categorie": "algemeen",
+   "groep": "defensie",
    "naam": "Helikopter",
+   "beschrijving": "Legerhelikopter boven het land; defensie, reddingen, crashes.",
    "binding": "fr",
    "trefwoorden": [
     "helikopter",
@@ -621,7 +697,9 @@
   {
    "id": "algemeen-herdenking-kaarsen-bloemen-fr",
    "categorie": "algemeen",
+   "groep": "veiligheid en hulpdiensten",
    "naam": "Herdenking",
+   "beschrijving": "Kaarsen en bloemen bij een gedenkplaats; herdenking, slachtoffers, rouw.",
    "binding": "fr",
    "trefwoorden": [
     "herdenking",
@@ -641,7 +719,9 @@
   {
    "id": "algemeen-huisarts-fr",
    "categorie": "algemeen",
+   "groep": "zorg",
    "naam": "Huisarts",
+   "beschrijving": "Dokterstas en stethoscoop; huisarts, gezondheid, zorg.",
    "binding": "fr",
    "trefwoorden": [
     "huisarts",
@@ -662,7 +742,9 @@
   {
    "id": "algemeen-kazerne-fr",
    "categorie": "algemeen",
+   "groep": "defensie",
    "naam": "Kazerne",
+   "beschrijving": "Kazerne met vlag en hek; defensie, leger, militairen.",
    "binding": "fr",
    "trefwoorden": [
     "kazerne",
@@ -679,7 +761,9 @@
   {
    "id": "algemeen-klus-badkamer-fr",
    "categorie": "algemeen",
+   "groep": "wonen en klussen",
    "naam": "Badkamer",
+   "beschrijving": "Badkamer met bad en douche; renovatie, sanitair.",
    "binding": "fr",
    "trefwoorden": [
     "badkamer",
@@ -694,7 +778,9 @@
   {
    "id": "algemeen-klus-dubbel-glas-fr",
    "categorie": "algemeen",
+   "groep": "wonen en klussen",
    "naam": "Dubbel glas",
+   "beschrijving": "Raam met dubbel glas; isolatie, ramen, energiebesparing.",
    "binding": "fr",
    "trefwoorden": [
     "dubbel glas",
@@ -709,7 +795,9 @@
   {
    "id": "algemeen-klus-energielabel-dpe-fr",
    "categorie": "algemeen",
+   "groep": "wonen en klussen",
    "naam": "Energielabel",
+   "beschrijving": "Energielabel met gekleurde balken zonder letters; DPE, energieprestatie, verhuurverbod.",
    "binding": "fr",
    "trefwoorden": [
     "dpe",
@@ -725,7 +813,9 @@
   {
    "id": "algemeen-klus-keuken-fr",
    "categorie": "algemeen",
+   "groep": "wonen en klussen",
    "naam": "Keuken",
+   "beschrijving": "Keuken met kasten en aanrecht; keukenrenovatie, wonen.",
    "binding": "fr",
    "trefwoorden": [
     "keuken",
@@ -739,7 +829,9 @@
   {
    "id": "algemeen-klus-lekkage-fr",
    "categorie": "algemeen",
+   "groep": "wonen en klussen",
    "naam": "Lekkage",
+   "beschrijving": "Druppelend plafond met emmer; lekkage, waterschade, verzekering.",
    "binding": "fr",
    "trefwoorden": [
     "lekkage",
@@ -755,7 +847,9 @@
   {
    "id": "algemeen-klus-loodgieter-fr",
    "categorie": "algemeen",
+   "groep": "wonen en klussen",
    "naam": "Loodgieter",
+   "beschrijving": "Loodgieter onder de gootsteen; sanitair, leidingen.",
    "binding": "fr",
    "trefwoorden": [
     "loodgieter",
@@ -771,7 +865,9 @@
   {
    "id": "algemeen-klus-metselen-fr",
    "categorie": "algemeen",
+   "groep": "wonen en klussen",
    "naam": "Metselen",
+   "beschrijving": "Muur in aanbouw met troffel; metselen, verbouwen.",
    "binding": "fr",
    "trefwoorden": [
     "metselen",
@@ -786,7 +882,9 @@
   {
    "id": "algemeen-klus-natuurstenen-muur-fr",
    "categorie": "algemeen",
+   "groep": "wonen en klussen",
    "naam": "Natuurstenen muur",
+   "beschrijving": "Natuurstenen muur met voegijzer; oude huizen, restauratie.",
    "binding": "fr",
    "trefwoorden": [
     "natuursteen",
@@ -801,7 +899,9 @@
   {
    "id": "algemeen-klus-stopcontact-fr",
    "categorie": "algemeen",
+   "groep": "wonen en klussen",
    "naam": "Stopcontact",
+   "beschrijving": "Frans stopcontact met stekker; elektriciteit, bedrading.",
    "binding": "fr",
    "trefwoorden": [
     "stopcontact",
@@ -816,7 +916,9 @@
   {
    "id": "algemeen-klus-stoppenkast-fr",
    "categorie": "algemeen",
+   "groep": "wonen en klussen",
    "naam": "Stoppenkast",
+   "beschrijving": "Groepenkast met automaten; elektra-installatie, keuring.",
    "binding": "fr",
    "trefwoorden": [
     "stoppenkast",
@@ -832,7 +934,9 @@
   {
    "id": "algemeen-klus-tegelvloer-fr",
    "categorie": "algemeen",
+   "groep": "wonen en klussen",
    "naam": "Tegelvloer",
+   "beschrijving": "Terracotta tegelvloer; vloeren, tegels.",
    "binding": "fr",
    "trefwoorden": [
     "tegels",
@@ -847,7 +951,9 @@
   {
    "id": "algemeen-klus-warmtepomp-fr",
    "categorie": "algemeen",
+   "groep": "wonen en klussen",
    "naam": "Warmtepomp",
+   "beschrijving": "Huis met buitenunit van een warmtepomp; verwarming, subsidies, energie.",
    "binding": "fr",
    "trefwoorden": [
     "warmtepomp",
@@ -862,7 +968,9 @@
   {
    "id": "algemeen-klus-zolderisolatie-fr",
    "categorie": "algemeen",
+   "groep": "wonen en klussen",
    "naam": "Zolderisolatie",
+   "beschrijving": "Zolder met isolatiemateriaal; dakisolatie, energiebesparing.",
    "binding": "fr",
    "trefwoorden": [
     "isolatie",
@@ -877,7 +985,9 @@
   {
    "id": "algemeen-klus-zonnepanelen-fr",
    "categorie": "algemeen",
+   "groep": "wonen en klussen",
    "naam": "Zonnepanelen",
+   "beschrijving": "Huis met zonnepanelen op het dak; zonne-energie.",
    "binding": "fr",
    "trefwoorden": [
     "zonnepanelen",
@@ -891,7 +1001,9 @@
   {
    "id": "algemeen-krantenstapel-fr",
    "categorie": "algemeen",
+   "groep": "media en technologie",
    "naam": "Kranten",
+   "beschrijving": "Stapel kranten; pers, publicaties, onthullingen.",
    "binding": "fr",
    "trefwoorden": [
     "krant",
@@ -912,7 +1024,9 @@
   {
    "id": "algemeen-laptop-slot-cyber-fr",
    "categorie": "algemeen",
+   "groep": "media en technologie",
    "naam": "Cyberveiligheid",
+   "beschrijving": "Laptop met hangslot op het scherm; cyberaanvallen, datalekken, oplichting online.",
    "binding": "fr",
    "trefwoorden": [
     "cyberaanval",
@@ -934,7 +1048,9 @@
   {
    "id": "algemeen-legertruck-fr",
    "categorie": "algemeen",
+   "groep": "defensie",
    "naam": "Legertruck",
+   "beschrijving": "Legertruck in het veld; leger, troepen, oorlog.",
    "binding": "fr",
    "trefwoorden": [
     "leger",
@@ -953,7 +1069,9 @@
   {
    "id": "algemeen-manneken-pis-be",
    "categorie": "algemeen",
+   "groep": "symbolen",
    "naam": "Manneken Pis",
+   "beschrijving": "Manneken Pis in Brussel; België, Brussel, Belgen.",
    "binding": "nl",
    "trefwoorden": [
     "brussel",
@@ -968,7 +1086,9 @@
   {
    "id": "algemeen-marianne-borstbeeld-fr",
    "categorie": "algemeen",
+   "groep": "symbolen",
    "naam": "Marianne",
+   "beschrijving": "Borstbeeld van Marianne met sjerp; de Republiek, Franse waarden.",
    "binding": "fr",
    "trefwoorden": [
     "marianne",
@@ -984,7 +1104,9 @@
   {
    "id": "algemeen-marineschip-fr",
    "categorie": "algemeen",
+   "groep": "defensie",
    "naam": "Marineschip",
+   "beschrijving": "Grijs marineschip op zee; marine, defensie, onderscheppingen.",
    "binding": "fr",
    "trefwoorden": [
     "marine",
@@ -1003,7 +1125,9 @@
   {
    "id": "algemeen-mobiele-telefoon-fr",
    "categorie": "algemeen",
+   "groep": "media en technologie",
    "naam": "Mobiele telefoon",
+   "beschrijving": "Smartphone met app-tegels; telefoon, apps, bereikbaarheid.",
    "binding": "fr",
    "trefwoorden": [
     "telefoon",
@@ -1019,7 +1143,9 @@
   {
    "id": "algemeen-nieuwsbrief-mailbox-fr",
    "categorie": "algemeen",
+   "groep": "media en technologie",
    "naam": "Nieuwsbrief",
+   "beschrijving": "Mailprogramma met nieuwsbrief; e-mail, nieuwsbrieven.",
    "binding": "fr",
    "trefwoorden": [
     "nieuwsbrief",
@@ -1035,7 +1161,9 @@
   {
    "id": "algemeen-podcastmicrofoon-fr",
    "categorie": "algemeen",
+   "groep": "media en technologie",
    "naam": "Podcast",
+   "beschrijving": "Studiomicrofoon; podcasts, interviews, radio.",
    "binding": "fr",
    "trefwoorden": [
     "podcast",
@@ -1050,7 +1178,9 @@
   {
    "id": "algemeen-politielint-fr",
    "categorie": "algemeen",
+   "groep": "veiligheid en hulpdiensten",
    "naam": "Politielint",
+   "beschrijving": "Politielint en politiebus in een straat; plaats delict, onderzoek, geweld.",
    "binding": "fr",
    "trefwoorden": [
     "politie-onderzoek",
@@ -1070,7 +1200,9 @@
   {
    "id": "algemeen-postkantoor-dorp-fr",
    "categorie": "algemeen",
+   "groep": "overheid en loketten",
    "naam": "Postkantoor in het dorp",
+   "beschrijving": "Postkantoor met gele brievenbus in een dorp; post, sluiting van diensten.",
    "binding": "fr",
    "trefwoorden": [
     "post",
@@ -1088,7 +1220,9 @@
   {
    "id": "algemeen-puntzak-friet-be",
    "categorie": "algemeen",
+   "groep": "symbolen",
    "naam": "Puntzak friet",
+   "beschrijving": "Puntzak friet; België, Belgen, Belgisch eten.",
    "binding": "nl",
    "trefwoorden": [
     "friet",
@@ -1104,7 +1238,9 @@
   {
    "id": "algemeen-radio-fr",
    "categorie": "algemeen",
+   "groep": "media en technologie",
    "naam": "Radio",
+   "beschrijving": "Rode retroradio; radio, omroep.",
    "binding": "fr",
    "trefwoorden": [
     "radio",
@@ -1119,7 +1255,9 @@
   {
    "id": "algemeen-rechtbank-gang-fr",
    "categorie": "algemeen",
+   "groep": "justitie",
    "naam": "Gang van de rechtbank",
+   "beschrijving": "Lange gang in een rechtbank met bank; zittingen, verhoren.",
    "binding": "fr",
    "trefwoorden": [
     "rechtbank",
@@ -1137,7 +1275,9 @@
   {
    "id": "algemeen-satelliet-fr",
    "categorie": "algemeen",
+   "groep": "media en technologie",
    "naam": "Satelliet",
+   "beschrijving": "Satelliet boven de aarde; ruimtevaart, telecom.",
    "binding": "fr",
    "trefwoorden": [
     "satelliet",
@@ -1156,7 +1296,9 @@
   {
    "id": "algemeen-schaatsers-ijs-nl",
    "categorie": "algemeen",
+   "groep": "symbolen",
    "naam": "Schaatsers op het ijs",
+   "beschrijving": "Schaatsers op natuurijs met molen; Nederland, winter, Elfstedentocht.",
    "binding": "nl",
    "trefwoorden": [
     "schaatsen",
@@ -1171,7 +1313,9 @@
   {
    "id": "algemeen-school-fr",
    "categorie": "algemeen",
+   "groep": "onderwijs",
    "naam": "School",
+   "beschrijving": "Schoolgebouw met kinderen; scholen, onderwijs, schoolvakanties.",
    "binding": "fr",
    "trefwoorden": [
     "school",
@@ -1190,7 +1334,9 @@
   {
    "id": "algemeen-schoolhek-protest-fr",
    "categorie": "algemeen",
+   "groep": "onderwijs",
    "naam": "Protest bij de school",
+   "beschrijving": "Scholieren met spandoeken bij het schoolhek; blokkades, scholierenprotest.",
    "binding": "fr",
    "trefwoorden": [
     "scholieren",
@@ -1208,7 +1354,9 @@
   {
    "id": "algemeen-schroevendraaier-fr",
    "categorie": "algemeen",
+   "groep": "wonen en klussen",
    "naam": "Schroevendraaier",
+   "beschrijving": "Schroevendraaier als hoofdvoorwerp; klussen, reparaties.",
    "binding": "fr",
    "trefwoorden": [
     "schroevendraaier",
@@ -1222,7 +1370,9 @@
   {
    "id": "algemeen-serverkast-fr",
    "categorie": "algemeen",
+   "groep": "media en technologie",
    "naam": "Datacenter",
+   "beschrijving": "Rijen servers in een datacenter; AI, cloud, technologie.",
    "binding": "fr",
    "trefwoorden": [
     "datacenter",
@@ -1241,7 +1391,9 @@
   {
    "id": "algemeen-sociale-media-telefoon-fr",
    "categorie": "algemeen",
+   "groep": "media en technologie",
    "naam": "Sociale media",
+   "beschrijving": "Telefoon met sociale-mediatijdlijn; sociale media, influencers, online.",
    "binding": "fr",
    "trefwoorden": [
     "sociale media",
@@ -1258,7 +1410,9 @@
   {
    "id": "algemeen-sport-rugby-fr",
    "categorie": "algemeen",
+   "groep": "sport",
    "naam": "Rugby",
+   "beschrijving": "Rugbyveld met palen en bal; rugby.",
    "binding": "fr",
    "trefwoorden": [
     "rugby",
@@ -1273,7 +1427,9 @@
   {
    "id": "algemeen-sport-schaatsen-fr",
    "categorie": "algemeen",
+   "groep": "sport",
    "naam": "Schaatsen",
+   "beschrijving": "Twee schaatsen op het ijs; schaatssport.",
    "binding": "fr",
    "trefwoorden": [
     "schaatsen",
@@ -1287,7 +1443,9 @@
   {
    "id": "algemeen-sport-skien-fr",
    "categorie": "algemeen",
+   "groep": "sport",
    "naam": "Skiën",
+   "beschrijving": "Skiër op een helling; skiën, wintersport.",
    "binding": "fr",
    "trefwoorden": [
     "skien",
@@ -1302,7 +1460,9 @@
   {
    "id": "algemeen-sport-tennis-fr",
    "categorie": "algemeen",
+   "groep": "sport",
    "naam": "Tennis",
+   "beschrijving": "Gravelbaan met racket en bal; tennis, Roland Garros.",
    "binding": "fr",
    "trefwoorden": [
     "tennis",
@@ -1316,7 +1476,9 @@
   {
    "id": "algemeen-sport-wielrennen-fr",
    "categorie": "algemeen",
+   "groep": "sport",
    "naam": "Wielrennen",
+   "beschrijving": "Wielrenner op een racefiets; wielrennen, Tour de France.",
    "binding": "fr",
    "trefwoorden": [
     "wielrennen",
@@ -1332,7 +1494,9 @@
   {
    "id": "algemeen-sport-zeilen-fr",
    "categorie": "algemeen",
+   "groep": "sport",
    "naam": "Zeilen",
+   "beschrijving": "Zeilboot op zee; zeilen, regatta's.",
    "binding": "fr",
    "trefwoorden": [
     "zeilen",
@@ -1347,7 +1511,9 @@
   {
    "id": "algemeen-sport-zwemmen-fr",
    "categorie": "algemeen",
+   "groep": "sport",
    "naam": "Zwemmen",
+   "beschrijving": "Zwembad met banen en zwemmer; zwemmen.",
    "binding": "fr",
    "trefwoorden": [
     "zwemmen",
@@ -1361,7 +1527,9 @@
   {
    "id": "algemeen-stad-bordeaux-fr",
    "categorie": "algemeen",
+   "groep": "steden",
    "naam": "Bordeaux",
+   "beschrijving": "Place de la Bourse met waterspiegel; Bordeaux.",
    "binding": "fr",
    "trefwoorden": [
     "bordeaux",
@@ -1375,7 +1543,9 @@
   {
    "id": "algemeen-stad-dijon-fr",
    "categorie": "algemeen",
+   "groep": "steden",
    "naam": "Dijon",
+   "beschrijving": "Gebouw met Bourgondisch geglazuurd dak; Dijon, Bourgondië.",
    "binding": "fr",
    "trefwoorden": [
     "dijon",
@@ -1389,7 +1559,9 @@
   {
    "id": "algemeen-stad-lille-fr",
    "categorie": "algemeen",
+   "groep": "steden",
    "naam": "Lille",
+   "beschrijving": "Belfort en Vlaamse trapgevels; Lille, Noord-Frankrijk.",
    "binding": "fr",
    "trefwoorden": [
     "lille",
@@ -1405,7 +1577,9 @@
   {
    "id": "algemeen-stad-lyon-fr",
    "categorie": "algemeen",
+   "groep": "steden",
    "naam": "Lyon",
+   "beschrijving": "Basiliek op de heuvel en kleurrijke gevels aan de rivier; Lyon.",
    "binding": "fr",
    "trefwoorden": [
     "lyon",
@@ -1421,7 +1595,9 @@
   {
    "id": "algemeen-stad-marseille-fr",
    "categorie": "algemeen",
+   "groep": "steden",
    "naam": "Marseille",
+   "beschrijving": "Oude haven met zeilboten en basiliek op de heuvel; Marseille.",
    "binding": "fr",
    "trefwoorden": [
     "marseille",
@@ -1436,7 +1612,9 @@
   {
    "id": "algemeen-stad-montpellier-fr",
    "categorie": "algemeen",
+   "groep": "steden",
    "naam": "Montpellier",
+   "beschrijving": "Okerkleurige gevels, boog en tram; Montpellier.",
    "binding": "fr",
    "trefwoorden": [
     "montpellier",
@@ -1449,7 +1627,9 @@
   {
    "id": "algemeen-stad-nantes-fr",
    "categorie": "algemeen",
+   "groep": "steden",
    "naam": "Nantes",
+   "beschrijving": "Hertogelijk kasteel; Nantes.",
    "binding": "fr",
    "trefwoorden": [
     "nantes",
@@ -1462,7 +1642,9 @@
   {
    "id": "algemeen-stad-nice-fr",
    "categorie": "algemeen",
+   "groep": "steden",
    "naam": "Nice",
+   "beschrijving": "Promenade met blauwe stoelen en palmen; Nice, Côte d'Azur.",
    "binding": "fr",
    "trefwoorden": [
     "nice",
@@ -1477,7 +1659,9 @@
   {
    "id": "algemeen-stad-parijs-fr",
    "categorie": "algemeen",
+   "groep": "steden",
    "naam": "Parijs",
+   "beschrijving": "Eiffeltoren en Parijse gevels aan de Seine; Parijs.",
    "binding": "fr",
    "trefwoorden": [
     "parijs",
@@ -1493,7 +1677,9 @@
   {
    "id": "algemeen-stad-rennes-fr",
    "categorie": "algemeen",
+   "groep": "steden",
    "naam": "Rennes",
+   "beschrijving": "Kleurrijke vakwerkhuizen; Rennes, Bretagne.",
    "binding": "fr",
    "trefwoorden": [
     "rennes",
@@ -1506,7 +1692,9 @@
   {
    "id": "algemeen-stad-straatsburg-fr",
    "categorie": "algemeen",
+   "groep": "steden",
    "naam": "Straatsburg",
+   "beschrijving": "Kathedraal en vakwerkhuizen; Straatsburg, Elzas.",
    "binding": "fr",
    "trefwoorden": [
     "straatsburg",
@@ -1522,7 +1710,9 @@
   {
    "id": "algemeen-stad-toulouse-fr",
    "categorie": "algemeen",
+   "groep": "steden",
    "naam": "Toulouse",
+   "beschrijving": "Roze bakstenen en brug over de Garonne; Toulouse.",
    "binding": "fr",
    "trefwoorden": [
     "toulouse",
@@ -1536,7 +1726,9 @@
   {
    "id": "algemeen-stadion-fr",
    "categorie": "algemeen",
+   "groep": "sport",
    "naam": "Stadion",
+   "beschrijving": "Voetbalstadion met tribunes; voetbal, wedstrijden, supporters.",
    "binding": "fr",
    "trefwoorden": [
     "voetbal",
@@ -1556,7 +1748,9 @@
   {
    "id": "algemeen-tijdschrift-fr",
    "categorie": "algemeen",
+   "groep": "media en technologie",
    "naam": "Tijdschrift",
+   "beschrijving": "Twee tijdschriften op tafel; bladen, media.",
    "binding": "fr",
    "trefwoorden": [
     "tijdschrift",
@@ -1570,7 +1764,9 @@
   {
    "id": "algemeen-tribunal-fr",
    "categorie": "algemeen",
+   "groep": "justitie",
    "naam": "Tribunal",
+   "beschrijving": "Gerechtsgebouw met zuilen en trappen; rechtbank, rechtszaken.",
    "binding": "fr",
    "trefwoorden": [
     "tribunal",
@@ -1585,7 +1781,9 @@
   {
    "id": "algemeen-tulpen-nl",
    "categorie": "algemeen",
+   "groep": "symbolen",
    "naam": "Tulpen",
+   "beschrijving": "Tulpenvelden met molen; Nederland, lente.",
    "binding": "nl",
    "trefwoorden": [
     "tulpen",
@@ -1600,7 +1798,9 @@
   {
    "id": "algemeen-tv-camera-pers-fr",
    "categorie": "algemeen",
+   "groep": "media en technologie",
    "naam": "Tv-camera",
+   "beschrijving": "Televisiecamera op statief; televisie, pers, interviews.",
    "binding": "fr",
    "trefwoorden": [
     "media",
@@ -1621,7 +1821,9 @@
   {
    "id": "algemeen-verhuisdozen-emigratie-nl",
    "categorie": "algemeen",
+   "groep": "overheid en loketten",
    "naam": "Verhuisdozen",
+   "beschrijving": "Verhuisdozen voor een Frans huis met auto met geel kenteken; emigratie, verhuizen naar Frankrijk.",
    "binding": "nl",
    "trefwoorden": [
     "emigratie",
@@ -1639,7 +1841,9 @@
   {
    "id": "algemeen-windmolen-nl",
    "categorie": "algemeen",
+   "groep": "symbolen",
    "naam": "Windmolen",
+   "beschrijving": "Hollandse windmolen aan het water; Nederland.",
    "binding": "nl",
    "trefwoorden": [
     "windmolen",
@@ -1653,7 +1857,9 @@
   {
    "id": "algemeen-ziekenhuis-fr",
    "categorie": "algemeen",
+   "groep": "zorg",
    "naam": "Ziekenhuis",
+   "beschrijving": "Ziekenhuisgebouw met ambulance; ziekenhuizen, spoed, zorg.",
    "binding": "fr",
    "trefwoorden": [
     "ziekenhuis",
@@ -1671,7 +1877,9 @@
   {
    "id": "economie-autofabriek-lopende-band-fr",
    "categorie": "economie en ondernemen",
+   "groep": "industrie en landbouw",
    "naam": "Autofabriek",
+   "beschrijving": "Auto's op een lopende band met robotarmen; auto-industrie.",
    "binding": "fr",
    "trefwoorden": [
     "autofabriek",
@@ -1689,7 +1897,9 @@
   {
    "id": "economie-bankzaken-twee-landen-nl",
    "categorie": "economie en ondernemen",
+   "groep": "geld en bedrijven",
    "naam": "Bankzaken in twee landen",
+   "beschrijving": "Twee bankpassen en munten; bankzaken in Nederland en Frankrijk.",
    "binding": "nl",
    "trefwoorden": [
     "bank",
@@ -1708,7 +1918,9 @@
   {
    "id": "economie-belastingbrief-fr",
    "categorie": "economie en ondernemen",
+   "groep": "geld en bedrijven",
    "naam": "Belastingbrief",
+   "beschrijving": "Officiële belastingbrief met munt; belastingen, aangifte.",
    "binding": "fr",
    "trefwoorden": [
     "belasting",
@@ -1726,7 +1938,9 @@
   {
    "id": "economie-beursgrafiek-fr",
    "categorie": "economie en ondernemen",
+   "groep": "geld en bedrijven",
    "naam": "Beursgrafiek",
+   "beschrijving": "Beursgrafiek met kaarsen; beurs, aandelen, markten.",
    "binding": "fr",
    "trefwoorden": [
     "beurs",
@@ -1746,7 +1960,9 @@
   {
    "id": "economie-bouwmarkt-fr",
    "categorie": "economie en ondernemen",
+   "groep": "wonen en klussen",
    "naam": "Bouwmarkt",
+   "beschrijving": "Oranje bouwmarkt met winkelwagen; doe-het-zelf, bouwmarkten.",
    "binding": "fr",
    "trefwoorden": [
     "bouwmarkt",
@@ -1761,7 +1977,9 @@
   {
    "id": "economie-centrale-bank-fr",
    "categorie": "economie en ondernemen",
+   "groep": "geld en bedrijven",
    "naam": "Centrale bank",
+   "beschrijving": "Bankgebouw met zuilen en sterrenembleem; centrale bank, rente, euro.",
    "binding": "fr",
    "trefwoorden": [
     "ecb",
@@ -1780,7 +1998,9 @@
   {
    "id": "economie-contract-overname-fr",
    "categorie": "economie en ondernemen",
+   "groep": "geld en bedrijven",
    "naam": "Contract",
+   "beschrijving": "Twee contracten met pen; overnames, akkoorden, deals.",
    "binding": "fr",
    "trefwoorden": [
     "overname",
@@ -1799,7 +2019,9 @@
   {
    "id": "economie-energiemeter-fr",
    "categorie": "economie en ondernemen",
+   "groep": "dagelijks leven",
    "naam": "Energiemeter",
+   "beschrijving": "Digitale energiemeter met bliksem; energierekening, stroom, gas.",
    "binding": "fr",
    "trefwoorden": [
     "energie",
@@ -1820,7 +2042,9 @@
   {
    "id": "economie-fabriek-fr",
    "categorie": "economie en ondernemen",
+   "groep": "industrie en landbouw",
    "naam": "Fabriek",
+   "beschrijving": "Fabriek met schoorstenen; industrie, banen, productie.",
    "binding": "fr",
    "trefwoorden": [
     "industrie",
@@ -1839,7 +2063,9 @@
   {
    "id": "economie-graanakker-fr",
    "categorie": "economie en ondernemen",
+   "groep": "industrie en landbouw",
    "naam": "Graanakker",
+   "beschrijving": "Rijpe graanakker met schuur; landbouw, oogst.",
    "binding": "fr",
    "trefwoorden": [
     "landbouw",
@@ -1857,7 +2083,9 @@
   {
    "id": "economie-haven-containers-fr",
    "categorie": "economie en ondernemen",
+   "groep": "industrie en landbouw",
    "naam": "Haven",
+   "beschrijving": "Containerhaven met kraan en schip; handel, export, havens.",
    "binding": "fr",
    "trefwoorden": [
     "haven",
@@ -1876,7 +2104,9 @@
   {
    "id": "economie-kantoortoren-fr",
    "categorie": "economie en ondernemen",
+   "groep": "geld en bedrijven",
    "naam": "Kantoortorens",
+   "beschrijving": "Kantoortorens; grote bedrijven, concerns.",
    "binding": "fr",
    "trefwoorden": [
     "bedrijf",
@@ -1895,7 +2125,9 @@
   {
    "id": "economie-markthal-fr",
    "categorie": "economie en ondernemen",
+   "groep": "dagelijks leven",
    "naam": "Markthal",
+   "beschrijving": "Overdekte markthal met kramen; prijzen, boodschappen, koopkracht.",
    "binding": "fr",
    "trefwoorden": [
     "markt",
@@ -1913,7 +2145,9 @@
   {
    "id": "economie-pakketjes-online-fr",
    "categorie": "economie en ondernemen",
+   "groep": "dagelijks leven",
    "naam": "Pakketjes",
+   "beschrijving": "Laptop met webwinkel en pakketten; online winkelen, bezorging.",
    "binding": "fr",
    "trefwoorden": [
     "online",
@@ -1934,7 +2168,9 @@
   {
    "id": "economie-pensioenbrief-twee-landen-nl",
    "categorie": "economie en ondernemen",
+   "groep": "geld en bedrijven",
    "naam": "Pensioenbrief uit twee landen",
+   "beschrijving": "Twee brieven met Nederlandse en Franse postzegel; pensioen, AOW, uitkeringen uit twee landen.",
    "binding": "nl",
    "trefwoorden": [
     "pensioen",
@@ -1952,7 +2188,9 @@
   {
    "id": "economie-speelgoed-fr",
    "categorie": "economie en ondernemen",
+   "groep": "dagelijks leven",
    "naam": "Speelgoed",
+   "beschrijving": "Blokken, beer en speelgoedauto; speelgoed, kerstinkopen, veiligheid.",
    "binding": "fr",
    "trefwoorden": [
     "speelgoed",
@@ -1969,7 +2207,9 @@
   {
    "id": "economie-supermarkt-fr",
    "categorie": "economie en ondernemen",
+   "groep": "dagelijks leven",
    "naam": "Supermarkt",
+   "beschrijving": "Supermarktschappen met winkelwagen; boodschappen, prijzen.",
    "binding": "fr",
    "trefwoorden": [
     "supermarkt",
@@ -1985,7 +2225,9 @@
   {
    "id": "economie-tankstation-fr",
    "categorie": "economie en ondernemen",
+   "groep": "dagelijks leven",
    "naam": "Tankstation",
+   "beschrijving": "Tankstation met pompen; brandstofprijzen.",
    "binding": "fr",
    "trefwoorden": [
     "benzine",
@@ -2003,7 +2245,9 @@
   {
    "id": "economie-vismarkt-fr",
    "categorie": "economie en ondernemen",
+   "groep": "dagelijks leven",
    "naam": "Vismarkt",
+   "beschrijving": "Viskraam met verse vis; visserij, markt.",
    "binding": "fr",
    "trefwoorden": [
     "vismarkt",
@@ -2018,7 +2262,9 @@
   {
    "id": "economie-winkelstraat-rolluiken-fr",
    "categorie": "economie en ondernemen",
+   "groep": "dagelijks leven",
    "naam": "Winkelstraat",
+   "beschrijving": "Winkelstraat met dichte rolluiken; leegstand, crisis, faillissementen.",
    "binding": "fr",
    "trefwoorden": [
     "winkels",
@@ -2037,7 +2283,9 @@
   {
    "id": "economie-zeldzame-metalen-mijn-fr",
    "categorie": "economie en ondernemen",
+   "groep": "industrie en landbouw",
    "naam": "Mijn",
+   "beschrijving": "Mijn in de bergen met kiepwagen; grondstoffen, metalen.",
    "binding": "fr",
    "trefwoorden": [
     "zeldzame aardmetalen",
@@ -2055,7 +2303,9 @@
   {
    "id": "merkwaardig-baguette-fiets-fr",
    "categorie": "merkwaardig",
+   "groep": "frans eigenaardig",
    "naam": "Fiets met baguettes",
+   "beschrijving": "Fiets met mand vol stokbroden; Franse clichés, brood.",
    "binding": "fr",
    "trefwoorden": [
     "baguette",
@@ -2071,7 +2321,9 @@
   {
    "id": "merkwaardig-eend-2cv-fr",
    "categorie": "merkwaardig",
+   "groep": "frans eigenaardig",
    "naam": "Eend (2CV)",
+   "beschrijving": "Lichtblauwe 2CV op een landweg; oldtimers, nostalgie.",
    "binding": "fr",
    "trefwoorden": [
     "2cv",
@@ -2088,7 +2340,9 @@
   {
    "id": "merkwaardig-haan-dorpsplein-fr",
    "categorie": "merkwaardig",
+   "groep": "frans eigenaardig",
    "naam": "Haan op het dorpsplein",
+   "beschrijving": "Haan op een paal op het dorpsplein; plattelandsgeluiden, dorpsrel.",
    "binding": "fr",
    "trefwoorden": [
     "haan",
@@ -2106,7 +2360,9 @@
   {
    "id": "merkwaardig-jeu-de-boules-fr",
    "categorie": "merkwaardig",
+   "groep": "frans eigenaardig",
    "naam": "Jeu de boules",
+   "beschrijving": "Spelers met jeu de boules-ballen onder platanen; pétanque, dorpsleven.",
    "binding": "fr",
    "trefwoorden": [
     "jeu de boules",
@@ -2121,7 +2377,9 @@
   {
    "id": "merkwaardig-kaaswiel-fr",
    "categorie": "merkwaardig",
+   "groep": "frans eigenaardig",
    "naam": "Kaaswiel",
+   "beschrijving": "Groot kaaswiel met mes; kaas, gastronomie.",
    "binding": "fr",
    "trefwoorden": [
     "kaas",
@@ -2138,7 +2396,9 @@
   {
    "id": "merkwaardig-klompen-voor-franse-deur-nl",
    "categorie": "merkwaardig",
+   "groep": "nederlanders en belgen",
    "naam": "Klompen voor een Franse deur",
+   "beschrijving": "Klompen voor een groene Franse deur; Nederlanders in Frankrijk, integratie.",
    "binding": "nl",
    "trefwoorden": [
     "nederlanders",
@@ -2155,7 +2415,9 @@
   {
    "id": "merkwaardig-oranje-terras-nl",
    "categorie": "merkwaardig",
+   "groep": "nederlanders en belgen",
    "naam": "Oranje terras",
+   "beschrijving": "Terras met oranje luifel en vlaggetjes; Koningsdag, oranjefeest, voetbal.",
    "binding": "nl",
    "trefwoorden": [
     "oranje",
@@ -2174,7 +2436,9 @@
   {
    "id": "merkwaardig-tractor-op-straat-fr",
    "categorie": "merkwaardig",
+   "groep": "frans eigenaardig",
    "naam": "Tractor in het dorp",
+   "beschrijving": "Rode tractor in een dorpsstraat; boeren, platteland.",
    "binding": "fr",
    "trefwoorden": [
     "tractor",
@@ -2190,7 +2454,9 @@
   {
    "id": "merkwaardig-truffelhond-fr",
    "categorie": "merkwaardig",
+   "groep": "frans eigenaardig",
    "naam": "Truffelhond",
+   "beschrijving": "Hond die in het bos truffels vindt; truffels, Périgord.",
    "binding": "fr",
    "trefwoorden": [
     "truffel",
@@ -2205,7 +2471,9 @@
   {
    "id": "merkwaardig-vuurtoren-fr",
    "categorie": "merkwaardig",
+   "groep": "frans eigenaardig",
    "naam": "Vuurtoren",
+   "beschrijving": "Rood-witte vuurtoren met lichtbundel; kust, Bretagne.",
    "binding": "fr",
    "trefwoorden": [
     "vuurtoren",
@@ -2221,7 +2489,9 @@
   {
    "id": "natuur-aardbeving-scheur-fr",
    "categorie": "natuur en rampen",
+   "groep": "weer en rampen",
    "naam": "Aardbeving",
+   "beschrijving": "Gescheurde huizen en weg; aardbeving.",
    "binding": "fr",
    "trefwoorden": [
     "aardbeving",
@@ -2238,7 +2508,9 @@
   {
    "id": "natuur-aardverschuiving-fr",
    "categorie": "natuur en rampen",
+   "groep": "weer en rampen",
    "naam": "Aardverschuiving",
+   "beschrijving": "Modderstroom over een weg; aardverschuiving, afgesloten weg.",
    "binding": "fr",
    "trefwoorden": [
     "aardverschuiving",
@@ -2254,7 +2526,9 @@
   {
    "id": "natuur-bocage-fr",
    "categorie": "natuur en rampen",
+   "groep": "landschappen",
    "naam": "Bocage",
+   "beschrijving": "Weilanden met heggen en koeien; platteland, landbouw.",
    "binding": "fr",
    "trefwoorden": [
     "platteland",
@@ -2272,7 +2546,9 @@
   {
    "id": "natuur-bosbrand-blusvliegtuig-fr",
    "categorie": "natuur en rampen",
+   "groep": "weer en rampen",
    "naam": "Bosbrand",
+   "beschrijving": "Bosbrand met blusvliegtuig; bosbranden, droogte.",
    "binding": "fr",
    "trefwoorden": [
     "bosbrand",
@@ -2290,7 +2566,9 @@
   {
    "id": "natuur-droogte-akker-fr",
    "categorie": "natuur en rampen",
+   "groep": "weer en rampen",
    "naam": "Droogte",
+   "beschrijving": "Gebarsten droge akker; droogte, watertekort.",
    "binding": "fr",
    "trefwoorden": [
     "droogte",
@@ -2306,7 +2584,9 @@
   {
    "id": "natuur-garrigue-zuiden-fr",
    "categorie": "natuur en rampen",
+   "groep": "landschappen",
    "naam": "Garrigue",
+   "beschrijving": "Droog heuvellandschap met struiken; Zuid-Frankrijk, Provence, Occitanie.",
    "binding": "fr",
    "trefwoorden": [
     "garrigue",
@@ -2323,7 +2603,9 @@
   {
    "id": "natuur-gestrand-schip-fr",
    "categorie": "natuur en rampen",
+   "groep": "weer en rampen",
    "naam": "Gestrand schip",
+   "beschrijving": "Scheefgezakt vrachtschip op het strand; scheepvaartongeluk.",
    "binding": "fr",
    "trefwoorden": [
     "schip",
@@ -2342,7 +2624,9 @@
   {
    "id": "natuur-gletsjer-fr",
    "categorie": "natuur en rampen",
+   "groep": "weer en rampen",
    "naam": "Gletsjer",
+   "beschrijving": "Gletsjer tussen bergen; klimaat, opwarming.",
    "binding": "fr",
    "trefwoorden": [
     "gletsjer",
@@ -2360,7 +2644,9 @@
   {
    "id": "natuur-hagel-wijngaard-fr",
    "categorie": "natuur en rampen",
+   "groep": "weer en rampen",
    "naam": "Hagel in de wijngaard",
+   "beschrijving": "Hagel boven een wijngaard; onweer, schade aan oogst.",
    "binding": "fr",
    "trefwoorden": [
     "hagel",
@@ -2377,7 +2663,9 @@
   {
    "id": "natuur-hittegolf-fr",
    "categorie": "natuur en rampen",
+   "groep": "weer en rampen",
    "naam": "Hittegolf",
+   "beschrijving": "Felle zon en thermometer; hitte, hittegolf.",
    "binding": "fr",
    "trefwoorden": [
     "hitte",
@@ -2394,7 +2682,9 @@
   {
    "id": "natuur-hooggebergte-fr",
    "categorie": "natuur en rampen",
+   "groep": "landschappen",
    "naam": "Hooggebergte",
+   "beschrijving": "Besneeuwde bergtoppen met chalet; Alpen, Pyreneeën.",
    "binding": "fr",
    "trefwoorden": [
     "bergen",
@@ -2411,7 +2701,9 @@
   {
    "id": "natuur-kustlijn-fr",
    "categorie": "natuur en rampen",
+   "groep": "landschappen",
    "naam": "Kustlijn",
+   "beschrijving": "Kliffen en zee met vuurtoren; kust, Bretagne, Normandië.",
    "binding": "fr",
    "trefwoorden": [
     "kust",
@@ -2428,7 +2720,9 @@
   {
    "id": "natuur-lege-kom-droog-land-fr",
    "categorie": "natuur en rampen",
+   "groep": "internationaal",
    "naam": "Lege kom",
+   "beschrijving": "Lege kom op droog land; honger, El Niño, voedseltekort.",
    "binding": "fr",
    "trefwoorden": [
     "honger",
@@ -2446,7 +2740,9 @@
   {
    "id": "natuur-olievlek-strand-fr",
    "categorie": "natuur en rampen",
+   "groep": "weer en rampen",
    "naam": "Olievlek",
+   "beschrijving": "Olievlek voor de kust; vervuiling, milieuramp.",
    "binding": "fr",
    "trefwoorden": [
     "olievlek",
@@ -2465,7 +2761,9 @@
   {
    "id": "natuur-overstroming-dorp-fr",
    "categorie": "natuur en rampen",
+   "groep": "weer en rampen",
    "naam": "Overstroming in het dorp",
+   "beschrijving": "Dorpsstraat onder water met platanen; overstromingen, noodweer.",
    "binding": "fr",
    "trefwoorden": [
     "overstroming",
@@ -2483,7 +2781,9 @@
   {
    "id": "natuur-rivier-hoogwater-fr",
    "categorie": "natuur en rampen",
+   "groep": "weer en rampen",
    "naam": "Hoogwater in de rivier",
+   "beschrijving": "Rivier met hoog water tegen de brug; hoogwater, peilschaal.",
    "binding": "fr",
    "trefwoorden": [
     "hoogwater",
@@ -2502,7 +2802,9 @@
   {
    "id": "natuur-rivierdal-fr",
    "categorie": "natuur en rampen",
+   "groep": "landschappen",
    "naam": "Rivierdal",
+   "beschrijving": "Rivier door een groen dal met dorp; Frans platteland.",
    "binding": "fr",
    "trefwoorden": [
     "rivier",
@@ -2516,7 +2818,9 @@
   {
    "id": "natuur-smog-stad-fr",
    "categorie": "natuur en rampen",
+   "groep": "weer en rampen",
    "naam": "Smog",
+   "beschrijving": "Stad in een smognevel; luchtvervuiling.",
    "binding": "fr",
    "trefwoorden": [
     "smog",
@@ -2533,7 +2837,9 @@
   {
    "id": "natuur-sneeuw-bergpas-fr",
    "categorie": "natuur en rampen",
+   "groep": "weer en rampen",
    "naam": "Sneeuw in de bergen",
+   "beschrijving": "Bergweg in de sneeuw; winter, afgesloten passen.",
    "binding": "fr",
    "trefwoorden": [
     "sneeuw",
@@ -2551,7 +2857,9 @@
   {
    "id": "natuur-stadsrand-fr",
    "categorie": "natuur en rampen",
+   "groep": "landschappen",
    "naam": "Stadsrand",
+   "beschrijving": "Flats en bedrijfshallen aan de stadsrand; banlieue, wijken.",
    "binding": "fr",
    "trefwoorden": [
     "banlieue",
@@ -2568,7 +2876,9 @@
   {
    "id": "natuur-storm-kust-fr",
    "categorie": "natuur en rampen",
+   "groep": "weer en rampen",
    "naam": "Storm aan de kust",
+   "beschrijving": "Storm aan de kust met vuurtoren; storm, windstoten.",
    "binding": "fr",
    "trefwoorden": [
     "storm",
@@ -2586,7 +2896,9 @@
   {
    "id": "natuur-stormschade-landhuis-nl",
    "categorie": "natuur en rampen",
+   "groep": "weer en rampen",
    "naam": "Stormschade aan een landhuis",
+   "beschrijving": "Landhuis met dakschade en omgewaaide boom; stormschade, verzekering, tweede huis.",
    "binding": "nl",
    "trefwoorden": [
     "stormschade",
@@ -2604,7 +2916,9 @@
   {
    "id": "natuur-voedselhulp-zakken-fr",
    "categorie": "natuur en rampen",
+   "groep": "internationaal",
    "naam": "Voedselhulp",
+   "beschrijving": "Zakken voedselhulp en een truck; honger, humanitaire hulp.",
    "binding": "fr",
    "trefwoorden": [
     "voedselhulp",
@@ -2624,7 +2938,9 @@
   {
    "id": "natuur-zwembad-leeg-droogte-nl",
    "categorie": "natuur en rampen",
+   "groep": "weer en rampen",
    "naam": "Leeg zwembad",
+   "beschrijving": "Leeg zwembad in de zon; droogte, waterbeperking, tweede huis.",
    "binding": "nl",
    "trefwoorden": [
     "zwembad",
@@ -2641,7 +2957,9 @@
   {
    "id": "politiek-briefstem-buitenland-nl",
    "categorie": "politiek",
+   "groep": "verkiezingen en campagne",
    "naam": "Stemmen vanuit het buitenland",
+   "beschrijving": "Envelop met Nederlandse postzegel en stembiljet; stemmen vanuit het buitenland.",
    "binding": "nl",
    "trefwoorden": [
     "stemmen buitenland",
@@ -2657,7 +2975,9 @@
   {
    "id": "politiek-burgemeester-sjerp-fr",
    "categorie": "politiek",
+   "groep": "bestuur",
    "naam": "Burgemeester",
+   "beschrijving": "Burgemeester met driekleurige sjerp; burgemeesters, gemeenteraad.",
    "binding": "fr",
    "trefwoorden": [
     "burgemeester",
@@ -2673,7 +2993,9 @@
   {
    "id": "politiek-campagnepodium-fr",
    "categorie": "politiek",
+   "groep": "verkiezingen en campagne",
    "naam": "Campagnepodium",
+   "beschrijving": "Spreekgestoelte met publiek en bordjes; campagne, kandidaten.",
    "binding": "fr",
    "trefwoorden": [
     "campagne",
@@ -2692,7 +3014,9 @@
   {
    "id": "politiek-congreszaal-burgemeesters-fr",
    "categorie": "politiek",
+   "groep": "bestuur",
    "naam": "Congres",
+   "beschrijving": "Congreszaal met groot embleem en publiek; congressen, bijeenkomsten.",
    "binding": "fr",
    "trefwoorden": [
     "congres",
@@ -2710,7 +3034,9 @@
   {
    "id": "politiek-debatstudio-fr",
    "categorie": "politiek",
+   "groep": "verkiezingen en campagne",
    "naam": "Debat",
+   "beschrijving": "Tv-studio met twee debatpodia; debatten, interviews.",
    "binding": "fr",
    "trefwoorden": [
     "debat",
@@ -2729,7 +3055,9 @@
   {
    "id": "politiek-demonstratie-fr",
    "categorie": "politiek",
+   "groep": "verkiezingen en campagne",
    "naam": "Demonstratie",
+   "beschrijving": "Demonstranten met blanco borden; demonstraties, protest, stakingen.",
    "binding": "fr",
    "trefwoorden": [
     "demonstratie",
@@ -2747,7 +3075,9 @@
   {
    "id": "politiek-elysee-fr",
    "categorie": "politiek",
+   "groep": "bestuur",
    "naam": "Élysée",
+   "beschrijving": "Élysée met hek en vlag; president, regering.",
    "binding": "fr",
    "trefwoorden": [
     "elysee",
@@ -2765,7 +3095,9 @@
   {
    "id": "politiek-eu-gebouw-fr",
    "categorie": "politiek",
+   "groep": "internationaal",
    "naam": "Europese Unie",
+   "beschrijving": "Glazen EU-gebouw met Europese vlaggen; Europese Unie, Brussel.",
    "binding": "fr",
    "trefwoorden": [
     "europa",
@@ -2781,7 +3113,9 @@
   {
    "id": "politiek-eu-top-vlaggenrij-fr",
    "categorie": "politiek",
+   "groep": "internationaal",
    "naam": "Europese top",
+   "beschrijving": "Rij vlaggen voor een modern gebouw; Europese top, lidstaten.",
    "binding": "fr",
    "trefwoorden": [
     "europese top",
@@ -2800,7 +3134,9 @@
   {
    "id": "politiek-gerechtshof-trappen-fr",
    "categorie": "politiek",
+   "groep": "justitie",
    "naam": "Gerechtshof",
+   "beschrijving": "Hooggerechtshof met trappen en zuilen; hoger beroep, cassatie, grondwettelijk hof.",
    "binding": "fr",
    "trefwoorden": [
     "hof",
@@ -2820,7 +3156,9 @@
   {
    "id": "politiek-grondwet-boek-fr",
    "categorie": "politiek",
+   "groep": "justitie",
    "naam": "Grondwet",
+   "beschrijving": "Opengeslagen wetboek; grondwet, instituties.",
    "binding": "fr",
    "trefwoorden": [
     "grondwet",
@@ -2839,7 +3177,9 @@
   {
    "id": "politiek-huiszoeking-dossiers-fr",
    "categorie": "politiek",
+   "groep": "justitie",
    "naam": "Huiszoeking en dossiers",
+   "beschrijving": "Archiefkasten en dozen met dossiers; huiszoeking, onderzoek, justitie.",
    "binding": "fr",
    "trefwoorden": [
     "huiszoeking",
@@ -2861,7 +3201,9 @@
   {
    "id": "politiek-onderhandelingstafel-fr",
    "categorie": "politiek",
+   "groep": "internationaal",
    "naam": "Onderhandelingstafel",
+   "beschrijving": "Ovale onderhandelingstafel met vlaggen; overleg, akkoorden, diplomatie.",
    "binding": "fr",
    "trefwoorden": [
     "onderhandelingen",
@@ -2881,7 +3223,9 @@
   {
    "id": "politiek-parlement-fr",
    "categorie": "politiek",
+   "groep": "bestuur",
    "naam": "Parlement",
+   "beschrijving": "Halfronde vergaderzaal; parlement, wetten, begroting.",
    "binding": "fr",
    "trefwoorden": [
     "parlement",
@@ -2900,7 +3244,9 @@
   {
    "id": "politiek-peilingsgrafiek-fr",
    "categorie": "politiek",
+   "groep": "verkiezingen en campagne",
    "naam": "Peiling",
+   "beschrijving": "Staafdiagram met lijn; peilingen.",
    "binding": "fr",
    "trefwoorden": [
     "peiling",
@@ -2918,7 +3264,9 @@
   {
    "id": "politiek-prefectuur-fr",
    "categorie": "politiek",
+   "groep": "bestuur",
    "naam": "Prefectuur",
+   "beschrijving": "Prefectuur met hek en vlag; prefect, verboden, verblijfsvergunningen.",
    "binding": "fr",
    "trefwoorden": [
     "prefectuur",
@@ -2936,7 +3284,9 @@
   {
    "id": "politiek-presidentsvliegtuig-rode-loper-fr",
    "categorie": "politiek",
+   "groep": "internationaal",
    "naam": "Staatsbezoek",
+   "beschrijving": "Regeringsvliegtuig met rode loper; staatsbezoek, buitenlandse reis.",
    "binding": "fr",
    "trefwoorden": [
     "staatsbezoek",
@@ -2959,7 +3309,9 @@
   {
    "id": "politiek-rechtszaal-fr",
    "categorie": "politiek",
+   "groep": "justitie",
    "naam": "Rechtszaal",
+   "beschrijving": "Rechtszaal met rechter, aanklager en verdediging; processen, veroordelingen.",
    "binding": "fr",
    "trefwoorden": [
     "rechter",
@@ -2984,7 +3336,9 @@
   {
    "id": "politiek-senaat-fr",
    "categorie": "politiek",
+   "groep": "bestuur",
    "naam": "Senaat",
+   "beschrijving": "Senaatsgebouw met koepel; Senaat, wetgeving.",
    "binding": "fr",
    "trefwoorden": [
     "senaat",
@@ -2999,7 +3353,9 @@
   {
    "id": "politiek-spanje-parlement-fr",
    "categorie": "politiek",
+   "groep": "internationaal",
    "naam": "Spaans parlement",
+   "beschrijving": "Parlementsgebouw met Spaanse vlag; Spanje, Spaanse politiek.",
    "binding": "fr",
    "trefwoorden": [
     "spanje",
@@ -3017,7 +3373,9 @@
   {
    "id": "politiek-stembus-fr",
    "categorie": "politiek",
+   "groep": "verkiezingen en campagne",
    "naam": "Stembus",
+   "beschrijving": "Doorzichtige stembus met stemhokje; verkiezingen, stemmen.",
    "binding": "fr",
    "trefwoorden": [
     "verkiezingen",
@@ -3036,7 +3394,9 @@
   {
    "id": "politiek-wetboek-fr",
    "categorie": "politiek",
+   "groep": "justitie",
    "naam": "Wetboek",
+   "beschrijving": "Rood wetboek op tafel; wetten, decreten, rechtspraak.",
    "binding": "fr",
    "trefwoorden": [
     "wetboek",
@@ -3054,7 +3414,9 @@
   {
    "id": "toerisme-bioscoopzaal-fr",
    "categorie": "toerisme en evenementen",
+   "groep": "cultuur en uitgaan",
    "naam": "Bioscoop",
+   "beschrijving": "Bioscoopzaal met rode stoelen; film, bioscoop.",
    "binding": "fr",
    "trefwoorden": [
     "film",
@@ -3073,7 +3435,9 @@
   {
    "id": "toerisme-boekenprijs-stapel-fr",
    "categorie": "toerisme en evenementen",
+   "groep": "cultuur en uitgaan",
    "naam": "Boekenprijs",
+   "beschrijving": "Stapel boeken met prijsmedaille; literatuur, boekenprijzen.",
    "binding": "fr",
    "trefwoorden": [
     "boek",
@@ -3092,7 +3456,9 @@
   {
    "id": "toerisme-brocante-fr",
    "categorie": "toerisme en evenementen",
+   "groep": "cultuur en uitgaan",
    "naam": "Brocante",
+   "beschrijving": "Brocante-tafel met spullen onder de bomen; rommelmarkt, vide-grenier.",
    "binding": "fr",
    "trefwoorden": [
     "brocante",
@@ -3108,7 +3474,9 @@
   {
    "id": "toerisme-camping-nl",
    "categorie": "toerisme en evenementen",
+   "groep": "vakantie en verblijf",
    "naam": "Camping",
+   "beschrijving": "Camping met tent en caravan; kamperen, vakantie.",
    "binding": "nl",
    "trefwoorden": [
     "camping",
@@ -3126,7 +3494,9 @@
   {
    "id": "toerisme-chambre-d-hotes-nl",
    "categorie": "toerisme en evenementen",
+   "groep": "vakantie en verblijf",
    "naam": "Chambre d'hôtes",
+   "beschrijving": "Landhuis met bloemen en bordje; chambre d'hôtes, gîte, verhuur.",
    "binding": "nl",
    "trefwoorden": [
     "chambre d'hotes",
@@ -3144,7 +3514,9 @@
   {
    "id": "toerisme-dorpsfeest-fr",
    "categorie": "toerisme en evenementen",
+   "groep": "cultuur en uitgaan",
    "naam": "Dorpsfeest",
+   "beschrijving": "Dorpsplein met vlaggetjes en kraam; dorpsfeest, evenement.",
    "binding": "fr",
    "trefwoorden": [
     "feest",
@@ -3162,7 +3534,9 @@
   {
    "id": "toerisme-festivalpodium-fr",
    "categorie": "toerisme en evenementen",
+   "groep": "cultuur en uitgaan",
    "naam": "Festivalpodium",
+   "beschrijving": "Festivalpodium met lichtbundels en publiek; concerten, festivals.",
    "binding": "fr",
    "trefwoorden": [
     "festival",
@@ -3181,7 +3555,9 @@
   {
    "id": "toerisme-hotel-fr",
    "categorie": "toerisme en evenementen",
+   "groep": "vakantie en verblijf",
    "naam": "Hotel",
+   "beschrijving": "Hotelgevel met luifel; hotels, overnachtingen.",
    "binding": "fr",
    "trefwoorden": [
     "hotel",
@@ -3196,7 +3572,9 @@
   {
    "id": "toerisme-kasteel-loire-fr",
    "categorie": "toerisme en evenementen",
+   "groep": "vakantie en verblijf",
    "naam": "Kasteel aan de Loire",
+   "beschrijving": "Kasteel aan het water; Loire, erfgoed.",
    "binding": "fr",
    "trefwoorden": [
     "kasteel",
@@ -3213,7 +3591,9 @@
   {
    "id": "toerisme-kerstmarkt-fr",
    "categorie": "toerisme en evenementen",
+   "groep": "cultuur en uitgaan",
    "naam": "Kerstmarkt",
+   "beschrijving": "Kerstmarkt met kraampjes en boom; kerst, feestdagen.",
    "binding": "fr",
    "trefwoorden": [
     "kerst",
@@ -3229,7 +3609,9 @@
   {
    "id": "toerisme-kledingmarkt-fr",
    "categorie": "toerisme en evenementen",
+   "groep": "dagelijks leven",
    "naam": "Kledingmarkt",
+   "beschrijving": "Marktkramen met kleding; weekmarkt.",
    "binding": "fr",
    "trefwoorden": [
     "kleding",
@@ -3244,7 +3626,9 @@
   {
    "id": "toerisme-museum-fr",
    "categorie": "toerisme en evenementen",
+   "groep": "cultuur en uitgaan",
    "naam": "Museum",
+   "beschrijving": "Museumzaal met schilderijen en beeld; tentoonstellingen, kunst.",
    "binding": "fr",
    "trefwoorden": [
     "museum",
@@ -3261,7 +3645,9 @@
   {
    "id": "toerisme-restaurant-fr",
    "categorie": "toerisme en evenementen",
+   "groep": "vakantie en verblijf",
    "naam": "Restaurant",
+   "beschrijving": "Restaurant met luifel en terras; uit eten, horeca.",
    "binding": "fr",
    "trefwoorden": [
     "restaurant",
@@ -3277,7 +3663,9 @@
   {
    "id": "toerisme-skigebied-fr",
    "categorie": "toerisme en evenementen",
+   "groep": "vakantie en verblijf",
    "naam": "Skigebied",
+   "beschrijving": "Besneeuwde berg met skilift; wintersport.",
    "binding": "fr",
    "trefwoorden": [
     "ski",
@@ -3295,7 +3683,9 @@
   {
    "id": "toerisme-strand-fr",
    "categorie": "toerisme en evenementen",
+   "groep": "vakantie en verblijf",
    "naam": "Strand",
+   "beschrijving": "Strand met parasol en zee; zomer, badplaatsen.",
    "binding": "fr",
    "trefwoorden": [
     "strand",
@@ -3313,7 +3703,9 @@
   {
    "id": "toerisme-theatergordijn-fr",
    "categorie": "toerisme en evenementen",
+   "groep": "cultuur en uitgaan",
    "naam": "Theater",
+   "beschrijving": "Theaterpodium met rode gordijnen; theater, voorstellingen.",
    "binding": "fr",
    "trefwoorden": [
     "theater",
@@ -3331,7 +3723,9 @@
   {
    "id": "toerisme-wijnoogst-fr",
    "categorie": "toerisme en evenementen",
+   "groep": "vakantie en verblijf",
    "naam": "Wijnoogst",
+   "beschrijving": "Wijngaard met druivenkist; wijnoogst, wijnbouw.",
    "binding": "fr",
    "trefwoorden": [
     "wijn",
@@ -3349,7 +3743,9 @@
   {
    "id": "verkeer-apk-keuring-fr",
    "categorie": "reizen en verkeer",
+   "groep": "wegen en verkeer",
    "naam": "Autokeuring",
+   "beschrijving": "Auto in een keuringsstation met vinkje; contrôle technique.",
    "binding": "fr",
    "trefwoorden": [
     "apk",
@@ -3366,7 +3762,9 @@
   {
    "id": "verkeer-bromfiets-fr",
    "categorie": "reizen en verkeer",
+   "groep": "wegen en verkeer",
    "naam": "Bromfiets",
+   "beschrijving": "Rode bromfiets op de weg; scooters, tweewielers.",
    "binding": "fr",
    "trefwoorden": [
     "bromfiets",
@@ -3382,7 +3780,9 @@
   {
    "id": "verkeer-caravan-geel-kenteken-nl",
    "categorie": "reizen en verkeer",
+   "groep": "wegen en verkeer",
    "naam": "Caravan met geel kenteken",
+   "beschrijving": "Auto met caravan en geel kenteken; Nederlandse vakantiegangers op de weg.",
    "binding": "nl",
    "trefwoorden": [
     "nederlanders",
@@ -3400,7 +3800,9 @@
   {
    "id": "verkeer-fietser-dorpsweg-nl",
    "categorie": "reizen en verkeer",
+   "groep": "wegen en verkeer",
    "naam": "Fietser op een dorpsweg",
+   "beschrijving": "Fietser op een landweg; fietsen, fietstoerisme.",
    "binding": "nl",
    "trefwoorden": [
     "fiets",
@@ -3416,7 +3818,9 @@
   {
    "id": "verkeer-laadpaal-fr",
    "categorie": "reizen en verkeer",
+   "groep": "wegen en verkeer",
    "naam": "Laadpaal",
+   "beschrijving": "Elektrische auto aan de laadpaal; elektrisch rijden.",
    "binding": "fr",
    "trefwoorden": [
     "laadpaal",
@@ -3431,7 +3835,9 @@
   {
    "id": "verkeer-landweg-platanen-fr",
    "categorie": "reizen en verkeer",
+   "groep": "wegen en verkeer",
    "naam": "Landweg met platanen",
+   "beschrijving": "Landweg met platanen; Franse landwegen, verkeersveiligheid.",
    "binding": "fr",
    "trefwoorden": [
     "landweg",
@@ -3446,7 +3852,9 @@
   {
    "id": "verkeer-metro-staking-fr",
    "categorie": "reizen en verkeer",
+   "groep": "openbaar vervoer en reizen",
    "naam": "Metro bij staking",
+   "beschrijving": "Metroperron met gesloten loket; ov-staking, metro.",
    "binding": "fr",
    "trefwoorden": [
     "metro",
@@ -3463,7 +3871,9 @@
   {
    "id": "verkeer-oversteekplaats-fr",
    "categorie": "reizen en verkeer",
+   "groep": "wegen en verkeer",
    "naam": "Oversteekplaats",
+   "beschrijving": "Zebrapad met voetgangers; voetgangers, verkeersregels.",
    "binding": "fr",
    "trefwoorden": [
     "voetgangers",
@@ -3477,7 +3887,9 @@
   {
    "id": "verkeer-perron-tgv-fr",
    "categorie": "reizen en verkeer",
+   "groep": "openbaar vervoer en reizen",
    "naam": "Treinperron",
+   "beschrijving": "Perron met hogesnelheidstrein; treinen, SNCF.",
    "binding": "fr",
    "trefwoorden": [
     "trein",
@@ -3495,7 +3907,9 @@
   {
    "id": "verkeer-rotonde-fr",
    "categorie": "reizen en verkeer",
+   "groep": "wegen en verkeer",
    "naam": "Rotonde",
+   "beschrijving": "Rotonde van bovenaf; verkeersregels.",
    "binding": "fr",
    "trefwoorden": [
     "rotonde",
@@ -3511,7 +3925,9 @@
   {
    "id": "verkeer-snelweg-file-fr",
    "categorie": "reizen en verkeer",
+   "groep": "wegen en verkeer",
    "naam": "Snelweg met file",
+   "beschrijving": "File op de snelweg met borden; vakantieverkeer, ongevallen.",
    "binding": "fr",
    "trefwoorden": [
     "snelweg",
@@ -3530,7 +3946,9 @@
   {
    "id": "verkeer-stoplicht-fr",
    "categorie": "reizen en verkeer",
+   "groep": "wegen en verkeer",
    "naam": "Stoplicht",
+   "beschrijving": "Stoplicht bij een zebrapad; kruispunten.",
    "binding": "fr",
    "trefwoorden": [
     "stoplicht",
@@ -3544,7 +3962,9 @@
   {
    "id": "verkeer-tolpoort-fr",
    "categorie": "reizen en verkeer",
+   "groep": "wegen en verkeer",
    "naam": "Tolpoort",
+   "beschrijving": "Tolpoortjes op de autoroute; péage, tolwegen.",
    "binding": "fr",
    "trefwoorden": [
     "tol",
@@ -3560,7 +3980,9 @@
   {
    "id": "verkeer-veerboot-kanaal-fr",
    "categorie": "reizen en verkeer",
+   "groep": "openbaar vervoer en reizen",
    "naam": "Veerboot",
+   "beschrijving": "Veerboot op zee; overtocht, Kanaal.",
    "binding": "fr",
    "trefwoorden": [
     "veerboot",
@@ -3578,7 +4000,9 @@
   {
    "id": "verkeer-vliegveld-fr",
    "categorie": "reizen en verkeer",
+   "groep": "openbaar vervoer en reizen",
    "naam": "Vliegveld",
+   "beschrijving": "Vliegtuig bij de terminal; luchtvaart, vluchten.",
    "binding": "fr",
    "trefwoorden": [
     "vliegveld",
@@ -3596,7 +4020,9 @@
   {
    "id": "verkeer-vrachtwagen-fr",
    "categorie": "reizen en verkeer",
+   "groep": "wegen en verkeer",
    "naam": "Vrachtwagen",
+   "beschrijving": "Vrachtwagen met oplegger; vrachtverkeer, transport.",
    "binding": "fr",
    "trefwoorden": [
     "vrachtwagen",
