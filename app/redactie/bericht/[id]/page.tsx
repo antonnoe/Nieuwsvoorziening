@@ -6,8 +6,8 @@ import Uitklap from "../../_componenten/Uitklap";
 import TekenKnop from "./TekenKnop";
 import { ID_VORM, beeldbankKeuzes } from "@/lib/redactie-acties";
 import { eisToegang, leesMelding } from "@/lib/redactie-pagina";
-import { UITLEG_NIET_GEPLAATST, magTochPlaatsen } from "@/lib/redactie-vandaag";
-import { CATEGORIE_VOL, aantalBronnen } from "@/lib/site";
+import { UITLEG_VOORSTELLEN, magTochPlaatsen } from "@/lib/redactie-vandaag";
+import { CATEGORIE_VOL, HERFORMULERING, aantalBronnen } from "@/lib/site";
 
 type SP = Promise<{ m?: string; ok?: string }>;
 
@@ -36,12 +36,13 @@ export default async function BerichtScherm({ params, searchParams }: { params: 
       <details className="tekst">
         <summary>Tekst lezen</summary>
         {alinea.map((a, n) => <p key={n}>{a}</p>)}
+        <p className="herformulering">{HERFORMULERING}</p>
       </details>
 
       {magTochPlaatsen(b) && (
         <form method="post" action="/redactie/actie">
           <Terugvelden actie="plaats" id={id} terug="/redactie" />
-          <p className="stil">{UITLEG_NIET_GEPLAATST}</p>
+          <p className="stil">{UITLEG_VOORSTELLEN}</p>
           <button type="submit" className="rd-knop hoofd">Toch plaatsen</button>
         </form>
       )}

@@ -43,7 +43,7 @@ test("herschrijven: oud bericht krijgt nieuwe tekst, regelversie 2, zelfde id en
   assert.ok(opgehaald.includes("https://a.test/m1") && opgehaald.includes("https://b.test/m1"));
   const aanroep = client.aanroepen.find((c) => c.system.includes("eindredacteur"))!;
   assert.match(aanroep.user, /Grève des éboueurs à Marseille/);
-  assert.ok(!aanroep.user.includes("Krant A"), "bronnen blijven geanonimiseerd");
+  assert.ok(!aanroep.user.split("Namen die u in de openingszin mag noemen")[0].includes("Krant A"), "bronnen blijven geanonimiseerd");
   assert.equal(r.aantallen.herschreven, 1);
   // tweede run: niets meer te doen
   const client2 = klein([nieuw()]);

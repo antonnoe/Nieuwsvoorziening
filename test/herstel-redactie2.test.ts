@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { GeheugenOpslag, SupabaseOpslag, type OpgeslagenBericht } from "../lib/motor/opslag";
-import { UITLEG_NIET_GEPLAATST, magTochPlaatsen, miniBeeldUrl, verdeelVandaag } from "../lib/redactie-vandaag";
+import { UITLEG_VOORSTELLEN, magTochPlaatsen, miniBeeldUrl, verdeelVandaag } from "../lib/redactie-vandaag";
 import { MELDING_GEEN_OVERHEIDSLINK, MELDING_LINK_ONLEESBAAR, maakBerichtUitTip, toonLinkVeld } from "../lib/redactie-maak-bericht";
 import { voerActieUit } from "../lib/redactie-acties";
 import { TIJDELIJK_MELDING } from "../lib/redactie-melding";
@@ -61,10 +61,11 @@ test("Vandaag: live bevat alleen gepubliceerde, niet-weggehaalde berichten, nieu
   const v = verdeelVandaag(lijst);
   assert.deepEqual(v.live.map((b) => b.kop), ["Kop 1", "Kop 3"], "nieuwste eerst");
   assert.ok(v.live.every((b) => b.status === "gepubliceerd" && b.redactie !== "weg"));
-  assert.deepEqual(v.nietGeplaatst.map((b) => b.kop), ["Kop 4", "Kop 5"]);
+  assert.deepEqual(v.voorstellen.map((b) => b.kop), ["Kop 5"], "alleen concepten die de poort niet tegenhield");
+  assert.deepEqual(v.tegengehouden.map((b) => b.kop), ["Kop 4"], "geblokkeerd of poortreden: alleen voor de beheerder");
   assert.deepEqual(v.weg.map((b) => b.kop), ["Kop 2", "Kop 6"]);
-  assert.equal(v.live.length + v.nietGeplaatst.length + v.weg.length, lijst.length);
-  assert.equal(UITLEG_NIET_GEPLAATST, "Deze vond de machine niet goed of niet belangrijk genoeg. U hoeft hier niets mee.");
+  assert.equal(v.live.length + v.voorstellen.length + v.tegengehouden.length + v.weg.length, lijst.length);
+  assert.equal(UITLEG_VOORSTELLEN, "De machine twijfelde over deze berichten. Tik op Plaatsen als u het de moeite waard vindt.");
 });
 
 test("de rij toont geen label 'concept' meer, ook niet los achter '2 bronnen'", () => {

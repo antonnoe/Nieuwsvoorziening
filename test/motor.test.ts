@@ -35,9 +35,10 @@ test("volledige run: oogst, cluster, synthese, poort, publicatie, bronnenblok", 
   assert.deepEqual(b.bronnen.map((x) => x.naam).sort(), ["Le Monde — À la une", "Sud Ouest"]);
   assert.ok(b.bronnen.every((x) => x.url && x.origineleKop && x.datum));
   assert.match(String(b.beeldUrl), /^https:\/\/nieuws\.infofrankrijk\.com\/illustraties\/.*\.svg$/, "zonder generator een eigen illustratie");
-  // Het model kreeg geanonimiseerde bronnen: geen krantennaam in de invoer.
+  // Het model kreeg geanonimiseerde bronnen: geen krantennaam in de bronblokken; de namen staan alleen in de aparte lijst voor de openingszin.
   const syn = client.aanroepen.find((c) => !c.system.includes("groepeert"))!;
-  assert.ok(!syn.user.includes("Sud Ouest") && !syn.user.includes("Le Monde"));
+  const bronblokken = syn.user.split("Namen die u in de openingszin mag noemen")[0];
+  assert.ok(!bronblokken.includes("Sud Ouest") && !bronblokken.includes("Le Monde"));
   assert.equal(syn.model, "claude-sonnet-5-5");
   assert.equal(client.aanroepen.find((c) => c.system.includes("groepeert"))!.model, "claude-haiku-4-5");
   // Fout van een bron is gemeld, maar de run ging door.

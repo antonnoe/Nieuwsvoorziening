@@ -162,3 +162,6 @@ export function onderschrift(credit: { bron?: string; maker?: string; naam?: str
   }
   return { soort: "foto", maker: credit.maker || "", bron: credit.bron || "Unsplash" };
 }
+
+/** Vaste regel onder de tekst op de artikelpagina en in de redactie-app (weergave, geen deel van de opgeslagen tekst; besluit 28-11-2026). */
+export const HERFORMULERING = "Dit bericht is een eigen herformulering en vertaling van berichtgeving uit de bronnen hieronder.";

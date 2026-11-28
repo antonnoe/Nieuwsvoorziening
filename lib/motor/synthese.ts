@@ -6,12 +6,13 @@ import { haalJson, type ModelClient } from "./ai";
 import { modelSynthese } from "./config";
 import { CATEGORIEEN, leesSignaal, type Categorie, type Cluster, type Synthese } from "./types";
 import { DEFINITIE_SIGNAAL } from "./signaal";
+import { namenVoorOpeningszin } from "./poort";
 
 export const SYSTEEM_SYNTHESE = `Je bent eindredacteur van een Nederlandstalige nieuwsdienst over Frankrijk voor Nederlanders en Belgen die in Frankrijk wonen of er vaak komen. Je schrijft één korte, feitelijke nieuwssynthese in eigen woorden over het onderwerp dat de aangeleverde bronnen delen.
 
 Regels:
 1. Gebruik uitsluitend wat in de aangeleverde koppen, omschrijvingen en artikelteksten staat. Verzin niets: geen bedragen, data, namen, oorzaken of cijfers die er niet staan. Neem een bedrag of percentage alleen over als het letterlijk in een bron staat.
-2. Noem nooit de naam van een krant, tijdschrift, omroep, website of persbureau en plaats geen links, ook niet als dat medium zelf onderwerp van het nieuws is. Omschrijf het dan ("een publieke omroep", "een economische krant"). Schrijf ook nooit "volgens de bronnen" of iets vergelijkbaars; de bronnen worden apart getoond.
+2. Noem nooit de naam van een krant, tijdschrift, omroep, website of persbureau en plaats geen links, ook niet als dat medium zelf onderwerp van het nieuws is. Omschrijf het dan ("een publieke omroep", "een economische krant"). In kop en samenvatting komt nooit een mediumnaam voor. Eén uitzondering voor de tekst: staat onder de bronnen een regel "Namen die u in de openingszin mag noemen", dan MAG (u hoeft niet) de tekst beginnen met precies één zin waarin alle genoemde namen samen staan, in de vorm "<Naam>, <Naam> en <Naam> melden dat ..." (komma's tussen de namen, "en" voor de laatste, gevolgd door de kern van het nieuws in eigen woorden). Gebruik alleen namen uit die regel, noem elke naam hooguit één keer, en noem nergens anders in de tekst een medium. Staat die regel er niet, noem dan nooit een naam. Schrijf nooit "volgens de bronnen" of iets vergelijkbaars; de bronnen worden apart getoond.
 3. Praat nooit over je invoer: niet over "de tekst", "het bericht", "de bronnen die ik kreeg", "beschikbare informatie" of wat ontbreekt. Is er te weinig om een bericht van te maken, geef dan publiceren=false.
 4. Schrijf in helder, zakelijk Nederlands, 200 tot 300 woorden in drie tot vijf alinea's (gescheiden door een lege regel), zonder opsommingstekens en zonder lange streepjes (gebruik een komma). Schrijf alles in eigen woorden: neem nooit een zin of een lange woordreeks letterlijk over uit een bron. Als de bronnen een concreet gevolg geven voor wie in Frankrijk woont of er reist (geld, regels, verkeer, gezondheid, wonen), sluit dan af met een alinea die begint met "Wat betekent dit voor u:" en alleen dat gevolg noemt; verzin geen gevolgen en laat die alinea weg als de bronnen er niets over zeggen. Is er alleen een kop en een korte omschrijving, schrijf dan korter (minstens 70 woorden) in plaats van op te vullen. Schrijf Franse eigennamen en instellingen in het Frans, met zo nodig een korte Nederlandse uitleg. Kop en samenvatting zijn volledig Nederlands: geen Franse woorden of citaten (dus niet "très compromise" of "zones industrielles à fort potentiel", maar de Nederlandse omschrijving). In de tekst komt een Franse term alleen voor ná de Nederlandse omschrijving en hooguit één keer. Leg afkortingen en Franse politieke begrippen uit in gewoon Nederlands (artikel 49.3 is de regeling waarmee de regering een wet doorzet zonder stemming; schrijf partijafkortingen voluit). Een tekst van meer dan 120 woorden heeft minstens twee alinea's, gescheiden door een lege regel.
 5. Kop: feitelijk, hoogstens 90 tekens, geen clickbait, niet letterlijk de brontitel. Samenvatting: één zin van hoogstens 220 tekens.
@@ -30,6 +31,12 @@ export function bouwInvoer(c: Cluster): string {
   return c.items
     .map((i, n) => `Bron ${n + 1} (${[i.taal, i.gepubliceerdOp.slice(0, 10)].filter(Boolean).join(", ")})\nKop: ${i.titel}\nOmschrijving: ${i.samenvatting || "(geen)"}${i.artikelTekst ? `\nArtikeltekst:\n${i.artikelTekst}` : ""}`)
     .join("\n\n");
+}
+
+/** De regel met de echte namen van de persbronnen (alleen bij twee of meer verschillende media); de bronnen zelf blijven geanonimiseerd. */
+export function namenRegel(c: Cluster): string {
+  const namen = namenVoorOpeningszin(c);
+  return namen.length >= 2 ? `\n\nNamen die u in de openingszin mag noemen: ${namen.join(", ")}` : "";
 }
 
 export function leesSynthese(ruw: string): Synthese | null {
@@ -55,6 +62,6 @@ export const ONDERWERP_AANWIJZING = "Onderwerp van het bericht (alleen een aanwi
 
 export async function synthetiseer(c: Cluster, client: ModelClient, onderwerp?: string): Promise<Synthese | null> {
   const aanwijzing = onderwerp && onderwerp.trim() ? `\n\n${ONDERWERP_AANWIJZING}: ${onderwerp.trim().slice(0, 200)}` : "";
-  const antw = await client.tekst({ model: modelSynthese(), system: SYSTEEM_SYNTHESE, user: `${bouwInvoer(c)}${aanwijzing}`, maxTokens: 2200 });
+  const antw = await client.tekst({ model: modelSynthese(), system: SYSTEEM_SYNTHESE, user: `${bouwInvoer(c)}${namenRegel(c)}${aanwijzing}`, maxTokens: 2200 });
   return leesSynthese(antw);
 }

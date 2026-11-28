@@ -5,15 +5,19 @@ import { poortBlokkade } from "@/lib/redactie";
 import { veiligeUrl } from "@/lib/site";
 
 export const VANDAAG_DAGEN = 2;
-export const UITLEG_NIET_GEPLAATST = "Deze vond de machine niet goed of niet belangrijk genoeg. U hoeft hier niets mee.";
+export const UITLEG_VOORSTELLEN = "De machine twijfelde over deze berichten. Tik op Plaatsen als u het de moeite waard vindt.";
 
 const nieuwsteEerst = (a: OpgeslagenBericht, b: OpgeslagenBericht) => b.gepubliceerdOp.localeCompare(a.gepubliceerdOp);
 
-/** Live = gepubliceerd en niet weggehaald; niet geplaatst = concept of geblokkeerd, niet weggehaald; weg = alles wat is weggehaald. */
+/**
+ * Live = gepubliceerd en niet weggehaald; voorstellen = concepten die de kwaliteitspoort niet tegenhield (redacteur mag plaatsen);
+ * tegengehouden = niet geplaatst en door de poort tegengehouden (alleen voor de beheerder, zonder knop); weg = alles wat is weggehaald.
+ */
 export function verdeelVandaag(lijst: OpgeslagenBericht[]) {
   return {
     live: lijst.filter((b) => b.status === "gepubliceerd" && b.redactie !== "weg").sort(nieuwsteEerst),
-    nietGeplaatst: lijst.filter((b) => b.status !== "gepubliceerd" && b.redactie !== "weg").sort(nieuwsteEerst),
+    voorstellen: lijst.filter(magTochPlaatsen).sort(nieuwsteEerst),
+    tegengehouden: lijst.filter((b) => b.status !== "gepubliceerd" && b.redactie !== "weg" && !magTochPlaatsen(b)).sort(nieuwsteEerst),
     weg: lijst.filter((b) => b.redactie === "weg").sort(nieuwsteEerst),
   };
 }

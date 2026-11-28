@@ -103,3 +103,6 @@ body:has(.rd) .net, body:has(.rd) footer, body:has(.rd) .sla-over { display: non
 .rd .rij-blok { display: flex; flex-direction: column; gap: 6px; }
 .rd .rij-blok form { margin: 0; }
 .rd .rij-blok .plaats-knop { width: 100%; min-height: 48px; }
+.rd .voorstellen { margin-top: 20px; }
+.rd .voorstellen h2 { font-size: 18px; margin-bottom: 4px; }
+.rd .herformulering { font-size: 13px; color: var(--grijs); margin-top: 16px; }

@@ -4,7 +4,7 @@ import PeilRegel from "../../_componenten/PeilRegel";
 import Kaart, { Beeld } from "../../_componenten/Kaart";
 import Kop from "../../_componenten/Kop";
 import { NIEUWSBRIEF_URL } from "@/lib/netwerkbalk";
-import { BASIS_URL, CATEGORIE_VOL, aantalBronnen, categorieSlug, datumLang, laadBericht, laadVerwant, leestijd, peilWeergave, veiligeUrl } from "@/lib/site";
+import { BASIS_URL, CATEGORIE_VOL, HERFORMULERING, aantalBronnen, categorieSlug, datumLang, laadBericht, laadVerwant, leestijd, peilWeergave, veiligeUrl } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 type P = Promise<{ id: string }>;
@@ -49,6 +49,7 @@ export default async function BerichtPagina({ params }: { params: P }) {
             <div className="tekst">
               {alinea.map((a, i) => <p key={i}>{a}</p>)}
               <PeilRegel peil={peilWeergave(b)} metLinks />
+              <p className="herformulering">{HERFORMULERING}</p>
             </div>
             <div className="deel">
               <a className="pil" href={delen}>Deel dit bericht</a>

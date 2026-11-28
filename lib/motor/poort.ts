@@ -43,6 +43,66 @@ export function persNamenVoor(c: Cluster | null): string[] {
   return [...uit].filter((x) => x.length >= 3);
 }
 
+/** Namen (genormaliseerd, kort en lang) van de persbronnen die echt in het bronnenblok van dit cluster staan. */
+export function bronnenblokPersNamen(c: Cluster | null): Set<string> {
+  const uit = new Set<string>();
+  if (!c) return uit;
+  for (const i of c.items) {
+    if (i.regime !== "pers") continue;
+    const n = i.bronNaam.trim();
+    if (n.length >= 3) uit.add(normaliseer(n));
+    const kort = n.split(/\s[—–-]\s/)[0].trim();
+    if (kort.length >= 4) uit.add(normaliseer(kort));
+  }
+  return uit;
+}
+
+/**
+ * Namen die het model in de openingszin mag noemen (besluit 28-11-2026): de korte namen van de persbronnen in het bronnenblok,
+ * alleen bij minstens twee verschillende media; anders een lege lijst. Overheidsbronnen tellen niet.
+ */
+export function namenVoorOpeningszin(c: Cluster | null): string[] {
+  if (!c) return [];
+  const gezien = new Set<string>();
+  const uit: string[] = [];
+  for (const i of c.items) {
+    if (i.regime !== "pers") continue;
+    const n = i.bronNaam.trim();
+    const kort = n.split(/\s[—–-]\s/)[0].trim();
+    const naam = kort.length >= 4 ? kort : n;
+    const sleutel = normaliseer(naam);
+    if (naam.length < 3 || gezien.has(sleutel)) continue;
+    gezien.add(sleutel);
+    uit.push(naam);
+  }
+  return uit.length >= 2 ? uit : [];
+}
+
+/** Alle persnamen die in een (genormaliseerde) zin staan; een naam die in een andere gevonden naam zit telt niet apart. */
+function persNamenInZin(zin: string, namen: string[]): string[] {
+  const gevonden = namen.map(normaliseer).filter((n, i, a) => a.indexOf(n) === i && woordRegex(n).test(zin));
+  return gevonden.filter((n) => !gevonden.some((m) => m !== n && m.includes(n)));
+}
+
+/**
+ * De ene toegestane bronvermeldingszin: "<Naam>, <Naam> en <Naam> melden dat ...": minstens twee namen, allemaal media uit het
+ * bronnenblok, samen vóór "melden dat" (komma's, "en" voor de laatste), geen naam erna.
+ */
+export function isBronvermelding(zin: string, gevonden: string[], bronnenblok: Set<string>): boolean {
+  if (gevonden.length < 2) return false;
+  if (!gevonden.every((n) => bronnenblok.has(n))) return false;
+  const m = /\bmelden (?:alle (?:twee|drie|vier) )?dat\b/.exec(zin);
+  if (!m) return false;
+  let voor = zin.slice(0, m.index).trim();
+  const erna = zin.slice(m.index);
+  if (gevonden.some((n) => woordRegex(n).test(erna))) return false;
+  for (const n of [...gevonden].sort((a, b) => b.length - a.length)) {
+    const e = n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    voor = voor.replace(new RegExp(`(^|[^a-z0-9])${e}(?=[^a-z0-9]|$)`, "g"), "$1N");
+  }
+  return /^N(, N)* en N$/.test(voor);
+}
+
 /** Bedragen en percentages in een tekst, genormaliseerd naar cijferreeksen. */
 export function bedragenIn(tekst: string): string[] {
   const uit: string[] = [];
@@ -92,7 +152,21 @@ export function kwaliteitsPoort(s: Synthese, c: Cluster | null, cfg: Pick<MotorC
   const alles = normaliseer(`${kop}\n${samenvatting}\n${tekst}`);
   for (const z of META_ZINNEN) if (alles.includes(normaliseer(z))) redenen.push(`model praat over invoer: "${z}"`);
 
-  for (const naam of persNamenVoor(c)) if (woordRegex(naam).test(alles)) redenen.push(`krantennaam buiten bronnenblok: "${naam}"`);
+  // Kop en samenvatting: nooit een krantennaam. Tekst: één losse naam blokkeert; alleen één bronvermeldingszin met twee of meer
+  // media uit het bronnenblok mag (besluit 28-11-2026).
+  const alleNamen = persNamenVoor(c);
+  const kopEnSamenvatting = normaliseer(`${kop}\n${samenvatting}`);
+  for (const naam of alleNamen) if (woordRegex(naam).test(kopEnSamenvatting)) redenen.push(`krantennaam buiten bronnenblok: "${naam}"`);
+  const bronnenblok = bronnenblokPersNamen(c);
+  let bronvermeldingen = 0;
+  for (const zin of tekst.split(/(?<=[.!?])\s+|\n+/)) {
+    const z = normaliseer(zin);
+    const gevonden = persNamenInZin(z, alleNamen);
+    if (!gevonden.length) continue;
+    if (isBronvermelding(z, gevonden, bronnenblok)) { bronvermeldingen++; continue; }
+    for (const naam of gevonden) redenen.push(`krantennaam buiten bronnenblok: "${naam}"`);
+  }
+  if (bronvermeldingen > 1) redenen.push("krantennaam buiten bronnenblok: meer dan één bronvermeldingszin");
   if (/https?:\/\/|www\.|\b[a-z0-9-]+\.(?:fr|nl|be|com|org|info|eu)\b/i.test(`${kop} ${samenvatting} ${tekst}`)) redenen.push("link of domeinnaam in tekst");
 
   // Verzonnen bedragen: elk bedrag in de tekst moet in een bron voorkomen.

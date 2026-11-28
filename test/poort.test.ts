@@ -80,3 +80,74 @@ test("blokkeert letterlijk overgenomen tekst uit een artikel", () => {
   const u = kwaliteitsPoort({ ...goed, tekst: `${goedeTekst} Ook ${zin}.` }, c2 as any, cfg);
   assert.ok(u.redenen.some((r) => r.includes("letterlijk")), u.redenen.join(";"));
 });
+
+// ---- Bronvermeldingszin (besluit 28-11-2026) ----
+import { readFileSync } from "node:fs";
+import { namenVoorOpeningszin } from "../lib/motor/poort";
+import { namenRegel } from "../lib/motor/synthese";
+
+const echt = JSON.parse(readFileSync(new URL("./fixtures/echte-berichten-2026-11.json", import.meta.url), "utf8")) as Record<string, { kop: string; samenvatting: string; tekst: string }>;
+const echtBericht = Object.values(echt)[0];
+const bron = (naam: string, id: string) => item({ bronNaam: naam, bronId: id, url: `https://voorbeeld.test/${id}`, regime: "pers" });
+const drie: Cluster = { sleutel: "d", items: [bron("Le Monde — International", "a"), bron("Midi Libre", "b"), bron("Le Figaro", "c")] };
+const echteTekst = echtBericht.tekst;
+const met = (zin: string, tekst = echteTekst) => `${zin} ${tekst}`;
+const echteSyn: Synthese = { kop: echtBericht.kop, samenvatting: echtBericht.samenvatting, tekst: echteTekst, categorie: "economie en ondernemen", relevantie: 70 };
+const krant = (u: { redenen: string[] }) => u.redenen.filter((r) => r.includes("krantennaam"));
+
+test("echte berichttekst zonder krantennaam komt door (basis voor de volgende tests)", () => {
+  const u = kwaliteitsPoort(echteSyn, { ...drie, items: drie.items.map((i) => ({ ...i, artikelTekst: "" })) }, cfg);
+  assert.deepEqual(krant(u), [], u.redenen.join(";"));
+});
+
+test("bronvermelding: twee of drie namen uit het bronnenblok in één melden-zin is toegestaan", () => {
+  for (const zin of ["Le Monde, Midi Libre en Le Figaro melden dat de regering het besluit heeft gepubliceerd.", "Le Monde, Midi Libre en Le Figaro melden alle drie dat de regering het besluit heeft gepubliceerd.", "Midi Libre en Le Figaro melden dat de regering het besluit heeft gepubliceerd."]) {
+    const u = kwaliteitsPoort({ ...echteSyn, tekst: met(zin) }, drie, cfg);
+    assert.deepEqual(krant(u), [], zin + " " + u.redenen.join(";"));
+  }
+});
+
+test("bronvermelding: één naam is een blokkade, ook in de vorm 'meldt dat'", () => {
+  for (const zin of ["Le Monde meldt dat de regering het besluit heeft gepubliceerd.", "Dat meldt Le Figaro."]) {
+    assert.ok(krant(kwaliteitsPoort({ ...echteSyn, tekst: met(zin) }, drie, cfg)).length > 0, zin);
+  }
+});
+
+test("bronvermelding: twee namen waarvan één niet in het bronnenblok is een blokkade", () => {
+  const u = kwaliteitsPoort({ ...echteSyn, tekst: met("Le Monde en Ouest-France melden dat de regering het besluit heeft gepubliceerd.") }, drie, cfg);
+  assert.ok(krant(u).some((r) => r.includes("ouest")), u.redenen.join(";"));
+  assert.deepEqual(krant(kwaliteitsPoort({ ...echteSyn, tekst: met("Le Monde en Midi Libre melden dat de regering het besluit heeft gepubliceerd.") }, drie, cfg)), [], "dezelfde zin met alleen namen uit het bronnenblok mag wel");
+  // Zonder cluster (geen bronnenblok) is nooit een naam toegestaan.
+  assert.ok(krant(kwaliteitsPoort({ ...echteSyn, tekst: met("Le Monde en Le Figaro melden dat het waar is.") }, null, cfg)).length > 0);
+});
+
+test("bronvermelding: een naam in kop of samenvatting is altijd een blokkade, ook bij een geldige openingszin", () => {
+  const zin = "Le Monde, Midi Libre en Le Figaro melden dat de regering het besluit heeft gepubliceerd.";
+  assert.ok(krant(kwaliteitsPoort({ ...echteSyn, kop: "Le Monde en Le Figaro melden hoger minimumloon", tekst: met(zin) }, drie, cfg)).length > 0);
+  assert.ok(krant(kwaliteitsPoort({ ...echteSyn, samenvatting: `${echtBericht.samenvatting} Aldus Le Figaro.`, tekst: met(zin) }, drie, cfg)).length > 0);
+});
+
+test("bronvermelding: twee aparte zinnen met elk één naam, of twee vermeldingszinnen, zijn een blokkade", () => {
+  const apart = kwaliteitsPoort({ ...echteSyn, tekst: met("Le Monde meldt dat het besluit is gepubliceerd. Midi Libre meldt hetzelfde.") }, drie, cfg);
+  assert.ok(krant(apart).length >= 2, apart.redenen.join(";"));
+  const dubbel = kwaliteitsPoort({ ...echteSyn, tekst: met("Le Monde en Midi Libre melden dat het besluit is gepubliceerd. Le Figaro en Midi Libre melden dat het in december ingaat.") }, drie, cfg);
+  assert.ok(krant(dubbel).some((r) => r.includes("meer dan één")), dubbel.redenen.join(";"));
+});
+
+test("bronvermelding: een naam elders in dezelfde zin, of een andere vorm, is geen geldige vermelding", () => {
+  for (const zin of [
+    "Le Monde, Midi Libre en Le Figaro melden dat de regering het besluit heeft gepubliceerd, aldus Le Figaro.",
+    "Volgens Le Monde en Le Figaro is het besluit gepubliceerd.",
+    "Le Monde en Midi Libre schrijven dat het besluit is gepubliceerd.",
+    "De regering meldt dat Le Monde en Midi Libre het besluit hebben gepubliceerd.",
+  ]) assert.ok(krant(kwaliteitsPoort({ ...echteSyn, tekst: met(zin) }, drie, cfg)).length > 0, zin);
+});
+
+test("overheidsbronnen tellen niet als krant bij de namenlijst; één persbron geeft geen lijst", () => {
+  const ov: Cluster = { sleutel: "o", items: [{ ...bron("Service-Public", "o1"), regime: "overheid" }, bron("Le Monde", "o2")] };
+  assert.deepEqual(namenVoorOpeningszin(ov), []);
+  assert.equal(namenRegel(ov), "");
+  assert.deepEqual(namenVoorOpeningszin(drie), ["Le Monde", "Midi Libre", "Le Figaro"]);
+  assert.equal(namenRegel(drie), "\n\nNamen die u in de openingszin mag noemen: Le Monde, Midi Libre, Le Figaro");
+  assert.deepEqual(namenVoorOpeningszin({ sleutel: "x", items: [bron("Le Monde", "1"), bron("Le Monde — Economie", "2")] }), [], "twee items van hetzelfde medium zijn niet twee media");
+});
