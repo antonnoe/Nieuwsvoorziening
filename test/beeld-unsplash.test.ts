@@ -152,3 +152,20 @@ test("herstelronde 2: elke zoekterm krijgt France, de drempel is 7 en de pasvorm
   const r6 = await beeldResultaat({ ...invoer, zoektermen: ["flooded street"], client: modelMet('{"keuze":1,"cijfer":6}') }, maakUnsplashGenerator(g.f, () => "test"));
   assert.ok(r6 && !r6.url.split("?")[0].endsWith("x1"));
 });
+
+test("vaste terugval al gebruikt: ongebruikte neutrale zoekfoto, nooit een bericht zonder foto (28-11-2026)", async () => {
+  const vermijd = new Set<string>(TERUGVAL["economie en ondernemen"].map((t) => `images.unsplash.com/${t.id}`));
+  const { f, log } = nepUnsplash({ zoek: [[mk("x1", "a chart")], [mk("x1", "a chart")], [mk("x1", "a chart")], [mk("n1", "a quiet french village street")]] });
+  const r = await beeldResultaat({ kop: "Frankrijk officieel in recessie", samenvatting: "De economie krimpt.", categorie: "economie en ondernemen", zoektermen: ["economy decline", "shop closed", "empty street"], client: modelMet('{"keuze":1,"cijfer":3}'), vermijd }, maakUnsplashGenerator(f, () => "test"));
+  assert.ok(r, "er komt een foto");
+  assert.ok(r!.url.split("?")[0].endsWith("n1"), "de neutrale zoekfoto");
+  assert.ok(log.some((u) => u.includes("query=french+market+town+street")));
+});
+
+test("alles al gebruikt: laatste vangnet is een vaste terugvalfoto, opnieuw", async () => {
+  const ids = TERUGVAL.algemeen.map((t) => t.id);
+  const vermijd = new Set<string>([...ids.map((id) => `images.unsplash.com/${id}`), "images.unsplash.com/x1"]);
+  const { f } = nepUnsplash({ zoek: [[mk("x1", "a street")]] });
+  const r = await beeldResultaat({ kop: "Vrachtwagen op middenberm A9", samenvatting: "Verkeer staat stil.", categorie: "algemeen", zoektermen: ["truck highway"], client: modelMet('{"keuze":1,"cijfer":2}'), vermijd }, maakUnsplashGenerator(f, () => "test"));
+  assert.ok(r && ids.some((id) => r.url.split("?")[0].endsWith(id)));
+});
