@@ -76,7 +76,7 @@ test("de echte set: elke categorie geeft altijd een beeld, bestanden bestaan", a
   const { existsSync } = await import("node:fs");
   assert.ok(ILLUSTRATIES.beelden.length >= 70);
   for (const c of CATEGORIEEN) {
-    for (const kop of ["Gewoon nieuws", "Nederlanders in Frankrijk", "Tol en trein"]) {
+    for (const kop of ["Gewoon nieuws", "Qqqq", "Zzzz Nederland"]) {
       const i = kiesIllustratie({ kop, samenvatting: "", categorie: c });
       assert.ok(i && i.categorie === c, `${c}: ${kop}`);
       assert.ok(existsSync(`public${i.svg}`) && existsSync(`public${i.png}`), i.id);
@@ -138,4 +138,13 @@ test("publieke API: beeldPng achteraan voor illustraties, null voor foto's", () 
   const f = publiekBericht({ ...basis, beeldUrl: "https://images.unsplash.com/a", beeldCredit: { bron: "Unsplash", maker: "M", makerUrl: "u", bronUrl: "b" } }, false) as Record<string, unknown>;
   assert.equal(f.beeldPng, null);
   assert.equal((publiekBericht(basis, false) as Record<string, unknown>).beeldPng, null);
+});
+
+test("0 treffers in de eigen categorie: hoogste trefwoordscore over de hele set (echte berichten)", () => {
+  const a9 = kiesIllustratie({ kop: "Vrachtwagen belandt op middenberm A9 bij Gigean, verkeer richting Montpellier verstoord", samenvatting: "", categorie: "algemeen" });
+  assert.equal(a9?.id, "verkeer-snelweg-file-fr");
+  const tanker = kiesIllustratie({ kop: "Gekapseisde tanker bij Ibiza wordt naar Cartagena gesleept", samenvatting: "De tanker wordt naar de Spaanse haven Cartagena gesleept.", categorie: "natuur en rampen" });
+  assert.equal(tanker?.id, "economie-haven-containers-fr");
+  // alles 0: blijft in de eigen categorie
+  assert.equal(kiesIllustratie({ kop: "Qqqq", samenvatting: "", categorie: "politiek" })?.categorie, "politiek");
 });

@@ -34,7 +34,7 @@ test("volledige run: oogst, cluster, synthese, poort, publicatie, bronnenblok", 
   assert.equal(b.bronnen.length, 2);
   assert.deepEqual(b.bronnen.map((x) => x.naam).sort(), ["Le Monde — À la une", "Sud Ouest"]);
   assert.ok(b.bronnen.every((x) => x.url && x.origineleKop && x.datum));
-  assert.match(String(b.beeldUrl), /^https:\/\/nieuws\.infofrankrijk\.com\/illustraties\/algemeen-.*\.svg$/, "zonder generator een eigen illustratie");
+  assert.match(String(b.beeldUrl), /^https:\/\/nieuws\.infofrankrijk\.com\/illustraties\/.*\.svg$/, "zonder generator een eigen illustratie");
   // Het model kreeg geanonimiseerde bronnen: geen krantennaam in de invoer.
   const syn = client.aanroepen.find((c) => !c.system.includes("groepeert"))!;
   assert.ok(!syn.user.includes("Sud Ouest") && !syn.user.includes("Le Monde"));

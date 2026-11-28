@@ -73,7 +73,7 @@ export interface IllustratieInvoer {
 }
 
 /**
- * Kiest een illustratie: alleen de categorie van het bericht (is die er niet, dan de hele set),
+ * Kiest een illustratie: eerst de categorie van het bericht; heeft de beste daarin 0 trefwoordtreffers, dan de hoogste score over de hele set (blijft alles 0, dan de keuze in de eigen categorie);
  * bij Nederland-onderwerpen eerst binding nl, anders eerst fr; daarbinnen de meeste trefwoorden in
  * kop en samenvatting; bij gelijke stand het langst niet gebruikte beeld (`recent` = beeld-urls,
  * nieuwste eerst; nooit gebruikt telt als het langst geleden), daarna de vaste volgorde.
@@ -82,12 +82,8 @@ export function kiesIllustratie(b: IllustratieInvoer, recent: string[] = [], lij
   try {
     const alle = lijst.beelden;
     if (!alle.length) return null;
-    const inCat = alle.filter((i) => i.categorie === b.categorie);
-    let kand = inCat.length ? inCat : alle;
     const tekst = `${b.kop || ""} ${b.samenvatting || ""}`;
     const voorkeur = gaatOverNederland(tekst) ? "nl" : "fr";
-    const metVoorkeur = kand.filter((i) => i.binding === voorkeur);
-    if (metVoorkeur.length) kand = metVoorkeur;
     const haystack = ` ${normaal(tekst).replace(/[^a-z0-9]+/g, " ")} `;
     const score = (i: Illustratie) => i.trefwoorden.filter((t) => {
       const n = normaal(t).replace(/[^a-z0-9]+/g, " ").trim();
@@ -99,15 +95,25 @@ export function kiesIllustratie(b: IllustratieInvoer, recent: string[] = [], lij
       if (!gebruikPlek.has(p)) gebruikPlek.set(p, n);
     });
     const geleden = (i: Illustratie) => gebruikPlek.get(pad(i.svg)) ?? Infinity;
-    let beste: Illustratie | null = null;
-    let bs = -1;
-    let bg = -1;
-    for (const i of kand) {
-      const s = score(i);
-      const g = geleden(i);
-      if (s > bs || (s === bs && g > bg)) ((beste = i), (bs = s), (bg = g));
-    }
-    return beste;
+    const beste = (pool: Illustratie[]): { i: Illustratie; s: number } | null => {
+      const metVoorkeur = pool.filter((i) => i.binding === voorkeur);
+      const kand = metVoorkeur.length ? metVoorkeur : pool;
+      let uit: { i: Illustratie; s: number } | null = null;
+      let bg = -1;
+      for (const i of kand) {
+        const s = score(i);
+        const g = geleden(i);
+        if (!uit || s > uit.s || (s === uit.s && g > bg)) ((uit = { i, s }), (bg = g));
+      }
+      return uit;
+    };
+    const inCat = alle.filter((i) => i.categorie === b.categorie);
+    const eigen = inCat.length ? beste(inCat) : null;
+    if (eigen && eigen.s > 0) return eigen.i;
+    // Geen treffer in de eigen categorie: de hoogste trefwoordscore over de hele set, zo die er is.
+    const overal = beste(alle);
+    if (overal && overal.s > 0) return overal.i;
+    return (eigen ?? overal)?.i ?? null;
   } catch {
     return null;
   }
