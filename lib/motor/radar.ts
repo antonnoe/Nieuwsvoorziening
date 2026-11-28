@@ -29,6 +29,13 @@ export const RADAR_MAX_BEVESTIG_AANROEPEN = 10;
 export const RADAR_BUDGET_MS = 90_000;
 export const GEEN_BRON_TEKST = "Primaire bron niet beschikbaar — handmatige controle vereist";
 export const SIGNAAL_BRON_NAAM = "The Connexion";
+/** Weergavenaam van een signaalbron per domein (alleen voor de redactie, in signaalVan). Onbekend domein: de kale hostnaam. */
+const SIGNAAL_NAMEN: [string, string][] = [["connexionfrance.com", "The Connexion"], ["frankrijkactueel.nl", "Frankrijk Actueel"]];
+export function signaalBronNaam(url: string | null | undefined): string {
+  const h = kaleHost(url);
+  if (!h) return SIGNAAL_BRON_NAAM;
+  return SIGNAAL_NAMEN.find(([d]) => h === d || h.endsWith(`.${d}`))?.[1] ?? h;
+}
 
 // ---- 1. Sitemap lezen ----------------------------------------------------------------------------------
 
@@ -117,6 +124,12 @@ export const RADAR_UITSLUIT: { reden: string; patroon: RegExp }[] = [
   { reden: "brits-franse verdragen", patroon: /le touquet|\btreaty\b.*\b(?:france|uk|britain)\b|\b(?:france|uk|britain)\b.*\btreaty\b|channel (?:crossing|tunnel deal)|small boats?/i },
   { reden: "human interest/opinie", patroon: /\bopinion\b|\bcolumn\b|\beditorial\b|\bletters?\b|\bobituary\b|\bin memoriam\b|\bmy (?:life|story)\b|\bmeet the\b|\bheart-?warming\b|\bviral\b|\bcelebrity\b|\bcouple (?:who|from)\b/i },
   { reden: "lifestyle/recept/reizen", patroon: /\brecipes?\b|\bcooking\b|\bwines?\b|\bvineyards?\b|\blifestyle\b|\bhow to make\b|\bbest (?:places|villages|beaches|restaurants)\b|\bthings to do\b|\btravel tips?\b|\bweekend (?:in|break)\b|\bholiday (?:ideas|tips)\b|\bhoroscope\b|\bfashion\b/i },
+  // Nederlandstalige tipgevers (frankrijkactueel.nl): dezelfde uitsluitingen in het Nederlands.
+  { reden: "brexit/britten (nl)", patroon: /\bbrits(?:e|en)?\b|\bbritten\b|\bverenigd koninkrijk\b|\bengelse?\b/i },
+  { reden: "visum/ees/etias (nl)", patroon: /\bvisum\b|\bvisa\b|\bverblijfsvergunning voor (?:britten|niet-eu)|\b90[ -]?(?:\/|-|dagen)[ -]?180\b/i },
+  { reden: "human interest/opinie (nl)", patroon: /\bopinie\b|\bcolumn\b|\bin memoriam\b|\bhoroscoop\b|\bmijn (?:leven|verhaal)\b|\bhartverwarmend\b|\bbekende nederlander\b/i },
+  { reden: "lifestyle/recept/reizen (nl)", patroon: /\brecept(?:en)?\b|\bkoken\b|\bwijnen?\b|\bwijngaarden?\b|\blifestyle\b|\bmooiste (?:dorpjes|stranden|plekken)\b|\bvakantietips?\b|\breistips?\b|\bweekendje\b|\bwat te doen in\b/i },
+  { reden: "sport (nl)", patroon: /\bvoetbal\b|\bwielrennen\b|\bwielrenner\b|\btour de france\b|\btennis\b|\bolympische\b|\bformule 1\b|\bhandbal\b|\bbasketbal\b|\bmarathon\b/i },
   { reden: "sport", patroon: /\brugby\b|\bfootball\b|\bsoccer\b|\bligue 1\b|\btour de france\b|\bcycling\b|\btennis\b|\broland[- ]garros\b|\bolympics?\b|\bparalympics?\b|\bformula (?:1|one)\b|\bgolf\b|\bmarathon\b|\bhandball\b|\bbasketball\b|\bsailing race\b/i },
 ];
 
@@ -161,15 +174,26 @@ export interface Geselecteerd {
   zoektermen: string[];
 }
 
-export const SYSTEEM_RADAR_SELECTIE = `Je bent redacteur van een Nederlandstalige nieuwsdienst voor Nederlanders en Belgen die in Frankrijk wonen: EU-burgers, huiseigenaren, verhuurders, bezitters van een tweede huis en gepensioneerden. Je krijgt een genummerde lijst met titels van berichten en beoordeelt ALLEEN op de titel of een titel praktisch impactnieuws is: een nieuwe of gewijzigde regel, tarief, belasting, premie, subsidie, verplichting, verbod, prijs of procedure die deze lezers concreet raakt. Geen human interest, opinie, lifestyle, sport, recepten, reistips of nieuws dat alleen Britten of niet-EU-burgers raakt.
+export const SYSTEEM_RADAR_SELECTIE = `Je bent redacteur van een Nederlandstalige nieuwsdienst voor Nederlanders en Belgen die in Frankrijk wonen: EU-burgers, huiseigenaren, verhuurders, bezitters van een tweede huis en gepensioneerden. Je krijgt een genummerde lijst met titels van berichten (de taal van de titels wisselt: Engels, Frans of Nederlands) en beoordeelt ALLEEN op de titel of een titel praktisch impactnieuws is: een nieuwe of gewijzigde regel, tarief, belasting, premie, subsidie, verplichting, verbod, prijs of procedure die deze lezers concreet raakt. Geen human interest, opinie, lifestyle, sport, recepten, reistips of nieuws dat alleen Britten of niet-EU-burgers raakt.
 Categorieën (precies een van): Vastgoed, Belastingen, Zorg, Verkeer, Energie, Consumentenrecht, Overig.
 Geef voor elke GESELECTEERDE titel een object en laat alle andere weg:
-{"n": <nummer>, "werktitel": "korte feitelijke Nederlandse titel in je eigen woorden, geen vertaling van de kop, geen onnodige hoofdletters, geen krantennaam", "categorie": "...", "relevantie": "een of twee zinnen: waarom dit Nederlanders en Belgen in Frankrijk raakt", "zoektermen": ["3 tot 6 Franse zoektermen of korte zinnen waarmee je de bijbehorende Franse overheidsmaatregel zou vinden, bijvoorbeeld de naam van de regeling of belasting"]}
+{"n": <nummer>, "werktitel": "korte feitelijke Nederlandse titel in je eigen woorden, nooit de kop overnemen of vertalen (ook niet als de kop al Nederlands is: formuleer het onderwerp opnieuw), geen onnodige hoofdletters, geen krantennaam", "categorie": "...", "relevantie": "een of twee zinnen: waarom dit Nederlanders en Belgen in Frankrijk raakt", "zoektermen": ["3 tot 6 Franse zoektermen of korte zinnen waarmee je de bijbehorende Franse overheidsmaatregel zou vinden, bijvoorbeeld de naam van de regeling of belasting"]}
 Antwoord uitsluitend met een JSON-lijst van die objecten (een lege lijst [] als niets past). Verzin geen feiten die niet in de titel staan.`;
+
+const kopWoorden = (t: string) => new Set(normaliseer(t).replace(/[^a-z0-9]+/g, " ").split(" ").filter((w) => w.length >= 3));
+/** Is de werktitel (vrijwel) de kop van de tipgever? Gelijk na normalisatie, of minstens 80% van de woorden van de kortste komt in de andere voor. */
+export function lijktOpKop(werktitel: string, kop: string): boolean {
+  const a = kopWoorden(werktitel), b = kopWoorden(kop);
+  if (!a.size || !b.size) return false;
+  const [klein_, groot] = a.size <= b.size ? [a, b] : [b, a];
+  let gelijk = 0;
+  for (const w of klein_) if (groot.has(w)) gelijk += 1;
+  return klein_.size >= 3 && gelijk / klein_.size >= 0.8;
+}
 
 /** Valideert het modelantwoord; onbruikbare objecten vallen af. */
 export function leesSelectie(antwoord: string, batch: SitemapItem[], verboden: string[] = []): Geselecteerd[] {
-  const blokkeer = ["connexion", ...verboden.map((v) => v.toLowerCase().trim()).filter((v) => v.length >= 4)];
+  const blokkeer = ["connexion", "frankrijkactueel", "frankrijk actueel", ...verboden.map((v) => v.toLowerCase().trim()).filter((v) => v.length >= 4)];
   const lijst = haalJson<unknown>(antwoord);
   if (!Array.isArray(lijst)) return [];
   const uit: Geselecteerd[] = [];
@@ -186,6 +210,8 @@ export function leesSelectie(antwoord: string, batch: SitemapItem[], verboden: s
       .map((z) => z.trim().slice(0, 80))
       .slice(0, 6);
     if (werktitel.length < 8 || werktitel.length > 160 || !relevantie || !zoektermen.length) continue;
+    // De werktitel gaat als aanwijzing naar de synthese: een kop van een tipgever (ook een Nederlandse) mag daar nooit letterlijk of bijna letterlijk in terechtkomen.
+    if (lijktOpKop(werktitel, batch[n - 1].titel)) continue;
     // De signaalbron mag nergens in de tekst voorkomen; de redactie ziet haar alleen in het veld signaalVan.
     if (blokkeer.some((v) => `${werktitel} ${relevantie}`.toLowerCase().includes(v))) continue;
     const categorie = (RADAR_CATEGORIEEN as readonly string[]).includes(String(o.categorie)) ? (o.categorie as RadarCategorie) : "Overig";
@@ -441,12 +467,12 @@ export async function draaiRadar(o: RadarOpties): Promise<RadarUitslag> {
 }
 
 /** De vorm voor de redactie in GET /api/redactie (veld "radar"): alleen daar komt de signaalbron voor, in één vaste zin. */
-export function radarVorm(r: { id: string; werktitel: string; categorie: string; signaalDatum: string; relevantie: string; primaireBron: RadarBron[] | null; status: RadarStatus; berichtId: string | null }) {
+export function radarVorm(r: { signaalUrl?: string; id: string; werktitel: string; categorie: string; signaalDatum: string; relevantie: string; primaireBron: RadarBron[] | null; status: RadarStatus; berichtId: string | null }) {
   return {
     id: r.id,
     onderwerp: r.werktitel,
     categorie: r.categorie,
-    signaalVan: `${SIGNAAL_BRON_NAAM} (${datumDeel(r.signaalDatum)}), uitsluitend gebruikt als onderwerpsignaal`,
+    signaalVan: `${signaalBronNaam(r.signaalUrl)} (${datumDeel(r.signaalDatum)}), uitsluitend gebruikt als onderwerpsignaal`,
     relevantie: r.relevantie,
     primaireBronnen: (r.primaireBron || []).map((b) => ({ naam: b.naam, url: b.url, datum: b.datum })),
     status: r.status,

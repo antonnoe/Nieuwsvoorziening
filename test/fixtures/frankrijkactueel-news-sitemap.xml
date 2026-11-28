@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="//frankrijkactueel.nl/wp-content/plugins/wordpress-seo/css/main-sitemap.xsl"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">
+  <url>
+    <loc>https://frankrijkactueel.nl/belasting/hogere-opslag-tweede-woning-2027/</loc>
+    <news:news>
+      <news:publication><news:name>Frankrijk Actueel</news:name><news:language>nl</news:language></news:publication>
+      <news:publication_date>2026-11-27T08:15:00+01:00</news:publication_date>
+      <news:title>Hogere belasting op tweede woningen in Frankrijk: wat verandert er voor eigenaren?</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://frankrijkactueel.nl/zorg/carte-vitale-huisarts/</loc>
+    <news:news>
+      <news:publication><news:name>Frankrijk Actueel</news:name><news:language>nl</news:language></news:publication>
+      <news:publication_date>2026-11-27T10:30:00+01:00</news:publication_date>
+      <news:title><![CDATA[Huisartsbezoek in Frankrijk wordt duurder: vergoeding via de carte vitale &amp; mutuelle]]></news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://frankrijkactueel.nl/sport/tour-de-france-route/</loc>
+    <news:news>
+      <news:publication><news:name>Frankrijk Actueel</news:name><news:language>nl</news:language></news:publication>
+      <news:publication_date>2026-11-27T12:00:00+01:00</news:publication_date>
+      <news:title>Tour de France 2027: de route is bekend</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://frankrijkactueel.nl/lifestyle/recept-coq-au-vin/</loc>
+    <news:news>
+      <news:publication><news:name>Frankrijk Actueel</news:name><news:language>nl</news:language></news:publication>
+      <news:publication_date>2026-11-27T13:00:00+01:00</news:publication_date>
+      <news:title>Recept: coq au vin zoals in Bourgogne</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://frankrijkactueel.nl/brexit/britten-visum/</loc>
+    <news:news>
+      <news:publication><news:name>Frankrijk Actueel</news:name><news:language>nl</news:language></news:publication>
+      <news:publication_date>2026-11-26T09:00:00+01:00</news:publication_date>
+      <news:title>Britten in Frankrijk: nieuwe visumregels na de Brexit</news:title>
+    </news:news>
+  </url>
+</urlset>

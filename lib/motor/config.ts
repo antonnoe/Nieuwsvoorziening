@@ -75,12 +75,12 @@ export function laadBronnen(): Bron[] {
 export const CONNEXION_SITEMAP_URL = "https://www.connexionfrance.com/tag/news?lab_viewport=newssitemap";
 
 /**
- * Harde regel (besluit 28-11-2026): deze domeinen zijn NOOIT bron. The Connexion is uitsluitend onderwerpsignaal voor de
+ * Harde regel (besluit 28-11-2026, uitgebreid 28-11-2026 met frankrijkactueel.nl als tweede tipgever): deze domeinen zijn NOOIT bron. The Connexion en Frankrijk Actueel zijn uitsluitend onderwerpsignaal voor de
  * radar (lib/motor/radar.ts) en komt nergens in bronnen, bronnenblok, nv_bron_items, clustering, synthese, artikelophaling,
  * beeld of publicatie. Deze controle staat op elke plek waar een bron-url de motor in komt of eruit gaat.
  * Dit is de vaste lijst: ze geldt altijd, ook als de database onbereikbaar is.
  */
-export const VERBODEN_BRONDOMEINEN = ["connexionfrance.com"];
+export const VERBODEN_BRONDOMEINEN = ["connexionfrance.com", "frankrijkactueel.nl"];
 
 // Radar-domeinen uit de database (tabel nv_bronnen, soort 'radar'): een domein dat radarbron is, kan nooit nieuwsbron zijn.
 // Wordt gezet door `zetRadarDomeinen` zodra de bronnenlijst is gelezen (oogstrun, redactiepagina's). Faalt de lezing, dan blijft
