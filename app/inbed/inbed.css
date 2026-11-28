@@ -21,3 +21,25 @@ body:has(.ib) { background: var(--kaart); }
 .ib-alles a { display: inline-flex; align-items: center; min-height: 48px; padding: 0 22px; border: 1.5px solid var(--maroon); color: var(--maroon); border-radius: 999px; font-weight: 700; }
 @media (min-width: 700px) { .ib-lijst { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 400px) { .ib-beeld { width: 72px; height: 56px; } .ib-kop nav a { padding: 0 10px; font-size: 14px; } }
+
+/* Zijbalk /inbed/zijbalk: smal (300 tot 360 px), alleen variabelen uit huisstijl.css. */
+.zb { max-width: 360px; padding: 0 10px 14px; }
+.zb-kop { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; padding: 12px 0 8px; border-bottom: 1px solid var(--lijn); }
+.zb-kop h1 { margin: 0; font-size: 17px; line-height: 1.2; color: var(--maroon); }
+.zb-peil { margin: 12px 0 0; padding: 10px; border: 1.5px solid var(--maroon); border-radius: 12px; background: var(--wit); }
+.zb-peil h2 { margin: 0 0 6px; font-size: 14px; color: var(--maroon); }
+.zb-peil ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.zb-peil li { display: flex; flex-direction: column; gap: 1px; font-size: 13px; line-height: 1.35; }
+.zb-datum { font-size: 12px; font-weight: 700; color: var(--grijs); }
+.zb-zin { color: var(--inkt); }
+.zb-tool { font-size: 12px; color: var(--grijs); }
+.zb-tool a, .zb-peilalles a, .zb-meer a { color: var(--maroon); font-weight: 700; }
+.zb-peilalles { margin: 8px 0 0; font-size: 13px; }
+.zb-lijst { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 8px; }
+.zb-lijst li a { display: flex; gap: 10px; padding: 8px; border: 1px solid var(--lijn); border-radius: 12px; background: var(--kaart); color: var(--inkt); }
+.zb-lijst li a:hover b { color: var(--maroon); }
+.zb-beeld { flex: none; width: 64px; height: 52px; background: var(--wit); border-radius: 8px; overflow: hidden; }
+.zb-beeld img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.zb .ib-tekst b { font-size: 14px; }
+.zb-chip { align-self: flex-start; margin-top: 2px; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 700; line-height: 1.5; background: var(--wit); color: var(--maroon); border: 1px solid var(--maroon); }
+.zb-meer { margin: 12px 0 0; text-align: center; font-size: 14px; }

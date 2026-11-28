@@ -22,3 +22,39 @@ Aandachtspunten
 - Alleen de volgende sites mogen de pagina in een iframe tonen (Content-Security-Policy `frame-ancestors`): www.nederlanders.fr, nederlanders.fr, *.ning.com, infofrankrijk.com, *.infofrankrijk.com en infopoche.fr. Elke andere site krijgt een leeg vak.
 - Het tabblad "NL'ers in FR" leest tijdelijk uit nlfr-menu (`/api/actueel`, tegels infofrankrijk en verenigingen) tot die bronnen naar deze motor zijn verhuisd.
 - Links openen in een nieuw tabblad; de tabs blijven binnen de iframe.
+
+## Zijbalk (vervangt nlfr-menu /sidebar-nieuws)
+
+`https://nieuws.infofrankrijk.com/inbed/zijbalk` is een smalle pagina (ontworpen voor 300 tot 360 px): bovenaan "Wat verandert er voor u" (de eerstvolgende 3 aankondigingen uit PEIL), daaronder de 6 nieuwste berichten met een chip "PEIL: <titel>" of "€ raakt uw portemonnee". De pagina stuurt de hoogte als `{type:"nv-hoogte", hoogte}` en ook als `{nlfrNieuwsHeight: hoogte}`; het script accepteert alleen origin https://nieuws.infofrankrijk.com.
+
+Nederlanders.fr (kanaal zijbalk):
+
+```html
+<iframe id="nlfr-nieuws" src="https://nieuws.infofrankrijk.com/inbed/zijbalk" title="Nieuws over Frankrijk" width="100%" height="900" style="border:0;width:100%;" loading="lazy"></iframe>
+<script>
+window.addEventListener("message", function (e) {
+  if (e.origin !== "https://nieuws.infofrankrijk.com") return;
+  var d = e.data || {};
+  var h = Number(d.type === "nv-hoogte" ? d.hoogte : d.nlfrNieuwsHeight);
+  if (!(h > 100 && h < 5000)) return;
+  document.getElementById("nlfr-nieuws").style.height = Math.ceil(h) + "px";
+});
+</script>
+```
+
+Infofrankrijk (kanaal infofrankrijk, via `?kanaal=infofrankrijk`):
+
+```html
+<iframe id="nlfr-nieuws" src="https://nieuws.infofrankrijk.com/inbed/zijbalk?kanaal=infofrankrijk" title="Nieuws over Frankrijk" width="100%" height="900" style="border:0;width:100%;" loading="lazy"></iframe>
+<script>
+window.addEventListener("message", function (e) {
+  if (e.origin !== "https://nieuws.infofrankrijk.com") return;
+  var d = e.data || {};
+  var h = Number(d.type === "nv-hoogte" ? d.hoogte : d.nlfrNieuwsHeight);
+  if (!(h > 100 && h < 5000)) return;
+  document.getElementById("nlfr-nieuws").style.height = Math.ceil(h) + "px";
+});
+</script>
+```
+
+Zonder script blijft de vaste hoogte van 900px staan. Dezelfde frame-ancestors als `/inbed`.
