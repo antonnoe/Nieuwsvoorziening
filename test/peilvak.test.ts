@@ -112,3 +112,26 @@ test("maakLezerszin: GEEN wordt bewaard als marker, modelfout en afkeuring geven
   assert.match(await titelFout("Abattement op pensioen"), /Frans woord/);
   assert.match(await titelFout("10%-aftrek op pensioen"), /getal in titel/, "10 staat niet in de omschrijving");
 });
+
+test("PEIL-vak: Nederlandse items alleen als ze Nederlanders in Frankrijk raken; vult aan met het volgende geschikte item", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { peilRaaktNlInFrankrijk } = await import("../lib/peil-nl-filter");
+  const d = JSON.parse(readFileSync(new URL("./fixtures/peil-export-2026-11-27.json", import.meta.url), "utf8"));
+  const ps = d.parameters.filter((p: { aangekondigd?: unknown }) => p.aangekondigd).map((p: { id: string; aangekondigd: { datum?: string | null; omschrijving: string } }) => ({ ...p, aangekondigd: { ...p.aangekondigd, datum: "2027-06-01" } }));
+  assert.ok(ps.some((p: { id: string }) => p.id === "p.nl.ib.aftrektarief_hypotheekrente"));
+  assert.ok(ps.some((p: { id: string }) => p.id === "p.nl.aow.bruto_alleenstaand"));
+  const { lijst, totaal } = kiesAankondigingen(ps, "2026-11-23", 100, zinnenVoor(ps));
+  const ids = lijst.map((a) => a.id);
+  assert.ok(!ids.includes("p.nl.ib.aftrektarief_hypotheekrente"));
+  assert.ok(!ids.includes("p.nl.zorg.eigen_risico") && !ids.includes("p.nl.box3.tarief") && !ids.includes("p.nl.ovb.tarieven"));
+  assert.ok(ids.some((i) => i.startsWith("p.nl.aow.") || i === "p.nl.ib.aow_leeftijd"), ids.join(" "));
+  assert.ok(ids.every((i) => peilRaaktNlInFrankrijk(i)));
+  assert.ok(ids.some((i) => i.startsWith("p.fr.")), "Franse items blijven");
+  assert.ok(totaal < ps.length);
+  const aow = ps.filter((p: { id: string }) => p.id === "p.nl.aow.bruto_alleenstaand");
+  assert.deepEqual(kiesAankondigingen(aow, "2026-11-23", 4, zinnenVoor(aow)).lijst.map((a) => a.id), ["p.nl.aow.bruto_alleenstaand"]);
+  const hyp = ps.filter((p: { id: string }) => p.id === "p.nl.ib.aftrektarief_hypotheekrente");
+  assert.equal(kiesAankondigingen(hyp, "2026-11-23", 4, zinnenVoor(hyp)).lijst.length, 0);
+  // Aanvullen: met max 4 blijven er vier over, ook al staat een Nederlands niet-passend item vooraan.
+  assert.equal(kiesAankondigingen(ps, "2026-11-23", 4, zinnenVoor(ps)).lijst.length, 4);
+});

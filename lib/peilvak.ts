@@ -3,6 +3,7 @@
 import { veiligeUrl } from "./site";
 import { leesOpslag } from "./motor/api";
 import { groenePeil } from "./motor/types";
+import { peilRaaktNlInFrankrijk } from "./peil-nl-filter";
 import { GEEN_ZIN, hashOmschrijving } from "./motor/lezerszin";
 
 const EXPORT = process.env.PEIL_URL || "https://communitiesabroad.com/manifest/peil-zoek.json";
@@ -50,7 +51,8 @@ export function netjes(omschrijving: string, max = 240): { tekst: string; voorlo
  * met een datum. Per tool hooguit één regel.
  */
 export function kiesAankondigingen(parameters: Ruw[], vandaag: string, max = 4, zinnen: Map<string, { hash: string; zin: string; titel?: string }> = new Map(), nieuws: NieuwsPerParameter = new Map()): { lijst: Aankondiging[]; totaal: number } {
-  const alle = parameters.filter((p) => p && p.id && p.naam && p.aangekondigd && p.aangekondigd.omschrijving);
+  // Nederlandse items alleen als ze Nederlanders in Frankrijk raken (lib/peil-nl-filter.ts); daarna vult het vak aan met het volgende geschikte item.
+  const alle = parameters.filter((p) => p && p.id && p.naam && p.aangekondigd && p.aangekondigd.omschrijving && peilRaaktNlInFrankrijk(String(p.id)));
   const lijst = alle
     .flatMap((p): Aankondiging[] => {
       const om = p.aangekondigd!.omschrijving!;
