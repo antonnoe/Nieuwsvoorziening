@@ -1,0 +1,1246 @@
+{
+ "afkomst": "Illustratie door Communities Abroad",
+ "beelden": [
+  {
+   "id": "algemeen-apotheek-fr",
+   "categorie": "algemeen",
+   "naam": "Apotheek",
+   "binding": "fr",
+   "trefwoorden": [
+    "apotheek",
+    "pharmacie",
+    "medicijn",
+    "medicijnen",
+    "geneesmiddel",
+    "tekort",
+    "vaccin"
+   ],
+   "svg": "/illustraties/algemeen-apotheek-fr.svg",
+   "png": "/illustraties/algemeen-apotheek-fr.png"
+  },
+  {
+   "id": "algemeen-bakkerij-dorp-fr",
+   "categorie": "algemeen",
+   "naam": "Bakkerij in het dorp",
+   "binding": "fr",
+   "trefwoorden": [
+    "bakker",
+    "bakkerij",
+    "boulangerie",
+    "brood",
+    "baguette",
+    "winkel",
+    "dorp",
+    "platteland"
+   ],
+   "svg": "/illustraties/algemeen-bakkerij-dorp-fr.svg",
+   "png": "/illustraties/algemeen-bakkerij-dorp-fr.png"
+  },
+  {
+   "id": "algemeen-consulaat-paspoort-nl",
+   "categorie": "algemeen",
+   "naam": "Consulaat en paspoort",
+   "binding": "nl",
+   "trefwoorden": [
+    "consulaat",
+    "ambassade",
+    "paspoort",
+    "identiteitskaart",
+    "nederlanders",
+    "buitenland",
+    "rijbewijs",
+    "documenten"
+   ],
+   "svg": "/illustraties/algemeen-consulaat-paspoort-nl.svg",
+   "png": "/illustraties/algemeen-consulaat-paspoort-nl.png"
+  },
+  {
+   "id": "algemeen-gemeentehuis-fr",
+   "categorie": "algemeen",
+   "naam": "Gemeentehuis",
+   "binding": "fr",
+   "trefwoorden": [
+    "gemeente",
+    "mairie",
+    "burgemeester",
+    "gemeenteraad",
+    "commune",
+    "maire",
+    "dorp",
+    "lokaal bestuur"
+   ],
+   "svg": "/illustraties/algemeen-gemeentehuis-fr.svg",
+   "png": "/illustraties/algemeen-gemeentehuis-fr.png"
+  },
+  {
+   "id": "algemeen-gendarmerie-fr",
+   "categorie": "algemeen",
+   "naam": "Gendarmerie",
+   "binding": "fr",
+   "trefwoorden": [
+    "politie",
+    "gendarmerie",
+    "police",
+    "agent",
+    "controle",
+    "ongeval",
+    "verbod",
+    "veiligheid",
+    "terreur",
+    "justitie",
+    "rechtbank"
+   ],
+   "svg": "/illustraties/algemeen-gendarmerie-fr.svg",
+   "png": "/illustraties/algemeen-gendarmerie-fr.png"
+  },
+  {
+   "id": "algemeen-huisarts-fr",
+   "categorie": "algemeen",
+   "naam": "Huisarts",
+   "binding": "fr",
+   "trefwoorden": [
+    "huisarts",
+    "arts",
+    "dokter",
+    "medecin",
+    "gezondheid",
+    "zorg",
+    "griep",
+    "ziekte",
+    "vaccinatie",
+    "consult",
+    "patiënt"
+   ],
+   "svg": "/illustraties/algemeen-huisarts-fr.svg",
+   "png": "/illustraties/algemeen-huisarts-fr.png"
+  },
+  {
+   "id": "algemeen-postkantoor-dorp-fr",
+   "categorie": "algemeen",
+   "naam": "Postkantoor in het dorp",
+   "binding": "fr",
+   "trefwoorden": [
+    "post",
+    "la poste",
+    "brief",
+    "pakket",
+    "postkantoor",
+    "dienstverlening",
+    "platteland",
+    "sluiting"
+   ],
+   "svg": "/illustraties/algemeen-postkantoor-dorp-fr.svg",
+   "png": "/illustraties/algemeen-postkantoor-dorp-fr.png"
+  },
+  {
+   "id": "algemeen-school-fr",
+   "categorie": "algemeen",
+   "naam": "School",
+   "binding": "fr",
+   "trefwoorden": [
+    "school",
+    "onderwijs",
+    "leerlingen",
+    "leraren",
+    "ecole",
+    "college",
+    "lycee",
+    "vakantie",
+    "rentree"
+   ],
+   "svg": "/illustraties/algemeen-school-fr.svg",
+   "png": "/illustraties/algemeen-school-fr.png"
+  },
+  {
+   "id": "algemeen-verhuisdozen-emigratie-nl",
+   "categorie": "algemeen",
+   "naam": "Verhuisdozen",
+   "binding": "nl",
+   "trefwoorden": [
+    "emigratie",
+    "verhuizen",
+    "verhuizing",
+    "nederlanders",
+    "emigranten",
+    "inschrijving",
+    "remigratie",
+    "woning"
+   ],
+   "svg": "/illustraties/algemeen-verhuisdozen-emigratie-nl.svg",
+   "png": "/illustraties/algemeen-verhuisdozen-emigratie-nl.png"
+  },
+  {
+   "id": "algemeen-ziekenhuis-fr",
+   "categorie": "algemeen",
+   "naam": "Ziekenhuis",
+   "binding": "fr",
+   "trefwoorden": [
+    "ziekenhuis",
+    "hopital",
+    "spoed",
+    "urgences",
+    "ambulance",
+    "zorg",
+    "verpleging",
+    "patiënten"
+   ],
+   "svg": "/illustraties/algemeen-ziekenhuis-fr.svg",
+   "png": "/illustraties/algemeen-ziekenhuis-fr.png"
+  },
+  {
+   "id": "economie-bankzaken-twee-landen-nl",
+   "categorie": "economie en ondernemen",
+   "naam": "Bankzaken in twee landen",
+   "binding": "nl",
+   "trefwoorden": [
+    "bank",
+    "bankrekening",
+    "sparen",
+    "rente",
+    "livret",
+    "spaarrekening",
+    "lening",
+    "hypotheek",
+    "iban"
+   ],
+   "svg": "/illustraties/economie-bankzaken-twee-landen-nl.svg",
+   "png": "/illustraties/economie-bankzaken-twee-landen-nl.png"
+  },
+  {
+   "id": "economie-belastingbrief-fr",
+   "categorie": "economie en ondernemen",
+   "naam": "Belastingbrief",
+   "binding": "fr",
+   "trefwoorden": [
+    "belasting",
+    "belastingen",
+    "impots",
+    "aangifte",
+    "taxe fonciere",
+    "heffing",
+    "fiscus",
+    "btw"
+   ],
+   "svg": "/illustraties/economie-belastingbrief-fr.svg",
+   "png": "/illustraties/economie-belastingbrief-fr.png"
+  },
+  {
+   "id": "economie-energiemeter-fr",
+   "categorie": "economie en ondernemen",
+   "naam": "Energiemeter",
+   "binding": "fr",
+   "trefwoorden": [
+    "energie",
+    "stroom",
+    "elektriciteit",
+    "gas",
+    "energierekening",
+    "linky",
+    "edf",
+    "tarief",
+    "verwarming",
+    "stookkosten"
+   ],
+   "svg": "/illustraties/economie-energiemeter-fr.svg",
+   "png": "/illustraties/economie-energiemeter-fr.png"
+  },
+  {
+   "id": "economie-fabriek-fr",
+   "categorie": "economie en ondernemen",
+   "naam": "Fabriek",
+   "binding": "fr",
+   "trefwoorden": [
+    "industrie",
+    "fabriek",
+    "ontslagen",
+    "banen",
+    "werkgelegenheid",
+    "productie",
+    "recessie",
+    "bbp",
+    "groei"
+   ],
+   "svg": "/illustraties/economie-fabriek-fr.svg",
+   "png": "/illustraties/economie-fabriek-fr.png"
+  },
+  {
+   "id": "economie-graanakker-fr",
+   "categorie": "economie en ondernemen",
+   "naam": "Graanakker",
+   "binding": "fr",
+   "trefwoorden": [
+    "landbouw",
+    "boeren",
+    "oogst",
+    "graan",
+    "tarwe",
+    "agrarisch",
+    "subsidie",
+    "mercosur"
+   ],
+   "svg": "/illustraties/economie-graanakker-fr.svg",
+   "png": "/illustraties/economie-graanakker-fr.png"
+  },
+  {
+   "id": "economie-haven-containers-fr",
+   "categorie": "economie en ondernemen",
+   "naam": "Haven",
+   "binding": "fr",
+   "trefwoorden": [
+    "haven",
+    "export",
+    "import",
+    "containers",
+    "handel",
+    "scheepvaart",
+    "douane",
+    "staking haven",
+    "sleepboten"
+   ],
+   "svg": "/illustraties/economie-haven-containers-fr.svg",
+   "png": "/illustraties/economie-haven-containers-fr.png"
+  },
+  {
+   "id": "economie-markthal-fr",
+   "categorie": "economie en ondernemen",
+   "naam": "Markthal",
+   "binding": "fr",
+   "trefwoorden": [
+    "markt",
+    "prijzen",
+    "inflatie",
+    "boodschappen",
+    "levensmiddelen",
+    "koopkracht",
+    "supermarkt",
+    "voedsel"
+   ],
+   "svg": "/illustraties/economie-markthal-fr.svg",
+   "png": "/illustraties/economie-markthal-fr.png"
+  },
+  {
+   "id": "economie-pensioenbrief-twee-landen-nl",
+   "categorie": "economie en ondernemen",
+   "naam": "Pensioenbrief uit twee landen",
+   "binding": "nl",
+   "trefwoorden": [
+    "pensioen",
+    "aow",
+    "uitkering",
+    "sociale zekerheid",
+    "svb",
+    "retraite",
+    "gepensioneerden",
+    "dubbele belasting"
+   ],
+   "svg": "/illustraties/economie-pensioenbrief-twee-landen-nl.svg",
+   "png": "/illustraties/economie-pensioenbrief-twee-landen-nl.png"
+  },
+  {
+   "id": "economie-tankstation-fr",
+   "categorie": "economie en ondernemen",
+   "naam": "Tankstation",
+   "binding": "fr",
+   "trefwoorden": [
+    "benzine",
+    "diesel",
+    "brandstof",
+    "pomp",
+    "olieprijs",
+    "brandstofprijs",
+    "tanken",
+    "accijns"
+   ],
+   "svg": "/illustraties/economie-tankstation-fr.svg",
+   "png": "/illustraties/economie-tankstation-fr.png"
+  },
+  {
+   "id": "economie-winkelstraat-rolluiken-fr",
+   "categorie": "economie en ondernemen",
+   "naam": "Winkelstraat",
+   "binding": "fr",
+   "trefwoorden": [
+    "winkels",
+    "detailhandel",
+    "faillissement",
+    "sluiting",
+    "recessie",
+    "krimp",
+    "economie",
+    "black friday",
+    "consumenten"
+   ],
+   "svg": "/illustraties/economie-winkelstraat-rolluiken-fr.svg",
+   "png": "/illustraties/economie-winkelstraat-rolluiken-fr.png"
+  },
+  {
+   "id": "merkwaardig-baguette-fiets-fr",
+   "categorie": "merkwaardig",
+   "naam": "Fiets met baguettes",
+   "binding": "fr",
+   "trefwoorden": [
+    "baguette",
+    "brood",
+    "fiets",
+    "cliché",
+    "unesco",
+    "traditie"
+   ],
+   "svg": "/illustraties/merkwaardig-baguette-fiets-fr.svg",
+   "png": "/illustraties/merkwaardig-baguette-fiets-fr.png"
+  },
+  {
+   "id": "merkwaardig-eend-2cv-fr",
+   "categorie": "merkwaardig",
+   "naam": "Eend (2CV)",
+   "binding": "fr",
+   "trefwoorden": [
+    "2cv",
+    "eend",
+    "citroen",
+    "oldtimer",
+    "auto",
+    "klassieker",
+    "nostalgie"
+   ],
+   "svg": "/illustraties/merkwaardig-eend-2cv-fr.svg",
+   "png": "/illustraties/merkwaardig-eend-2cv-fr.png"
+  },
+  {
+   "id": "merkwaardig-haan-dorpsplein-fr",
+   "categorie": "merkwaardig",
+   "naam": "Haan op het dorpsplein",
+   "binding": "fr",
+   "trefwoorden": [
+    "haan",
+    "coq",
+    "dieren",
+    "platteland",
+    "geluid",
+    "buren",
+    "rechtszaak",
+    "traditie"
+   ],
+   "svg": "/illustraties/merkwaardig-haan-dorpsplein-fr.svg",
+   "png": "/illustraties/merkwaardig-haan-dorpsplein-fr.png"
+  },
+  {
+   "id": "merkwaardig-jeu-de-boules-fr",
+   "categorie": "merkwaardig",
+   "naam": "Jeu de boules",
+   "binding": "fr",
+   "trefwoorden": [
+    "jeu de boules",
+    "petanque",
+    "dorpsplein",
+    "spel",
+    "traditie"
+   ],
+   "svg": "/illustraties/merkwaardig-jeu-de-boules-fr.svg",
+   "png": "/illustraties/merkwaardig-jeu-de-boules-fr.png"
+  },
+  {
+   "id": "merkwaardig-kaaswiel-fr",
+   "categorie": "merkwaardig",
+   "naam": "Kaaswiel",
+   "binding": "fr",
+   "trefwoorden": [
+    "kaas",
+    "fromage",
+    "comte",
+    "camembert",
+    "gastronomie",
+    "eten",
+    "keuken"
+   ],
+   "svg": "/illustraties/merkwaardig-kaaswiel-fr.svg",
+   "png": "/illustraties/merkwaardig-kaaswiel-fr.png"
+  },
+  {
+   "id": "merkwaardig-klompen-voor-franse-deur-nl",
+   "categorie": "merkwaardig",
+   "naam": "Klompen voor een Franse deur",
+   "binding": "nl",
+   "trefwoorden": [
+    "nederlanders",
+    "klompen",
+    "integratie",
+    "buren",
+    "cultuurverschil",
+    "emigranten",
+    "nieuwkomers"
+   ],
+   "svg": "/illustraties/merkwaardig-klompen-voor-franse-deur-nl.svg",
+   "png": "/illustraties/merkwaardig-klompen-voor-franse-deur-nl.png"
+  },
+  {
+   "id": "merkwaardig-oranje-terras-nl",
+   "categorie": "merkwaardig",
+   "naam": "Oranje terras",
+   "binding": "nl",
+   "trefwoorden": [
+    "oranje",
+    "koningsdag",
+    "nederlanders",
+    "feest",
+    "terras",
+    "ek",
+    "wk",
+    "voetbal",
+    "vereniging"
+   ],
+   "svg": "/illustraties/merkwaardig-oranje-terras-nl.svg",
+   "png": "/illustraties/merkwaardig-oranje-terras-nl.png"
+  },
+  {
+   "id": "merkwaardig-tractor-op-straat-fr",
+   "categorie": "merkwaardig",
+   "naam": "Tractor in het dorp",
+   "binding": "fr",
+   "trefwoorden": [
+    "tractor",
+    "boer",
+    "platteland",
+    "dorp",
+    "boerenprotest",
+    "landbouw"
+   ],
+   "svg": "/illustraties/merkwaardig-tractor-op-straat-fr.svg",
+   "png": "/illustraties/merkwaardig-tractor-op-straat-fr.png"
+  },
+  {
+   "id": "merkwaardig-truffelhond-fr",
+   "categorie": "merkwaardig",
+   "naam": "Truffelhond",
+   "binding": "fr",
+   "trefwoorden": [
+    "truffel",
+    "hond",
+    "bos",
+    "perigord",
+    "gastronomie",
+    "zoeken"
+   ],
+   "svg": "/illustraties/merkwaardig-truffelhond-fr.svg",
+   "png": "/illustraties/merkwaardig-truffelhond-fr.png"
+  },
+  {
+   "id": "merkwaardig-vuurtoren-fr",
+   "categorie": "merkwaardig",
+   "naam": "Vuurtoren",
+   "binding": "fr",
+   "trefwoorden": [
+    "vuurtoren",
+    "phare",
+    "kust",
+    "bretagne",
+    "zee",
+    "erfgoed"
+   ],
+   "svg": "/illustraties/merkwaardig-vuurtoren-fr.svg",
+   "png": "/illustraties/merkwaardig-vuurtoren-fr.png"
+  },
+  {
+   "id": "natuur-bosbrand-blusvliegtuig-fr",
+   "categorie": "natuur en rampen",
+   "naam": "Bosbrand",
+   "binding": "fr",
+   "trefwoorden": [
+    "bosbrand",
+    "brand",
+    "incendie",
+    "canadair",
+    "brandweer",
+    "evacuatie",
+    "droogte",
+    "stookverbod"
+   ],
+   "svg": "/illustraties/natuur-bosbrand-blusvliegtuig-fr.svg",
+   "png": "/illustraties/natuur-bosbrand-blusvliegtuig-fr.png"
+  },
+  {
+   "id": "natuur-droogte-akker-fr",
+   "categorie": "natuur en rampen",
+   "naam": "Droogte",
+   "binding": "fr",
+   "trefwoorden": [
+    "droogte",
+    "watertekort",
+    "sproeiverbod",
+    "secheresse",
+    "irrigatie",
+    "grondwater"
+   ],
+   "svg": "/illustraties/natuur-droogte-akker-fr.svg",
+   "png": "/illustraties/natuur-droogte-akker-fr.png"
+  },
+  {
+   "id": "natuur-hagel-wijngaard-fr",
+   "categorie": "natuur en rampen",
+   "naam": "Hagel in de wijngaard",
+   "binding": "fr",
+   "trefwoorden": [
+    "hagel",
+    "onweer",
+    "wijnbouw",
+    "wijngaard",
+    "schade",
+    "oogst",
+    "wijnboeren"
+   ],
+   "svg": "/illustraties/natuur-hagel-wijngaard-fr.svg",
+   "png": "/illustraties/natuur-hagel-wijngaard-fr.png"
+  },
+  {
+   "id": "natuur-hittegolf-fr",
+   "categorie": "natuur en rampen",
+   "naam": "Hittegolf",
+   "binding": "fr",
+   "trefwoorden": [
+    "hitte",
+    "hittegolf",
+    "canicule",
+    "temperatuur",
+    "warmte",
+    "klimaat",
+    "record"
+   ],
+   "svg": "/illustraties/natuur-hittegolf-fr.svg",
+   "png": "/illustraties/natuur-hittegolf-fr.png"
+  },
+  {
+   "id": "natuur-overstroming-dorp-fr",
+   "categorie": "natuur en rampen",
+   "naam": "Overstroming in het dorp",
+   "binding": "fr",
+   "trefwoorden": [
+    "overstroming",
+    "wateroverlast",
+    "inondation",
+    "code rood",
+    "code oranje",
+    "noodweer",
+    "regen",
+    "cat nat"
+   ],
+   "svg": "/illustraties/natuur-overstroming-dorp-fr.svg",
+   "png": "/illustraties/natuur-overstroming-dorp-fr.png"
+  },
+  {
+   "id": "natuur-rivier-hoogwater-fr",
+   "categorie": "natuur en rampen",
+   "naam": "Hoogwater in de rivier",
+   "binding": "fr",
+   "trefwoorden": [
+    "hoogwater",
+    "rivier",
+    "dijk",
+    "waterpeil",
+    "seine",
+    "loire",
+    "rhone",
+    "garonne",
+    "vigicrues"
+   ],
+   "svg": "/illustraties/natuur-rivier-hoogwater-fr.svg",
+   "png": "/illustraties/natuur-rivier-hoogwater-fr.png"
+  },
+  {
+   "id": "natuur-sneeuw-bergpas-fr",
+   "categorie": "natuur en rampen",
+   "naam": "Sneeuw in de bergen",
+   "binding": "fr",
+   "trefwoorden": [
+    "sneeuw",
+    "winter",
+    "ijzel",
+    "bergpas",
+    "kou",
+    "vorst",
+    "winterbanden",
+    "afgesloten weg"
+   ],
+   "svg": "/illustraties/natuur-sneeuw-bergpas-fr.svg",
+   "png": "/illustraties/natuur-sneeuw-bergpas-fr.png"
+  },
+  {
+   "id": "natuur-storm-kust-fr",
+   "categorie": "natuur en rampen",
+   "naam": "Storm aan de kust",
+   "binding": "fr",
+   "trefwoorden": [
+    "storm",
+    "tempete",
+    "wind",
+    "kust",
+    "golven",
+    "noodweer",
+    "windstoten",
+    "code oranje"
+   ],
+   "svg": "/illustraties/natuur-storm-kust-fr.svg",
+   "png": "/illustraties/natuur-storm-kust-fr.png"
+  },
+  {
+   "id": "natuur-stormschade-landhuis-nl",
+   "categorie": "natuur en rampen",
+   "naam": "Stormschade aan een landhuis",
+   "binding": "nl",
+   "trefwoorden": [
+    "stormschade",
+    "schade",
+    "verzekering",
+    "huiseigenaren",
+    "dak",
+    "catastrophe naturelle",
+    "tweede huis",
+    "nederlanders"
+   ],
+   "svg": "/illustraties/natuur-stormschade-landhuis-nl.svg",
+   "png": "/illustraties/natuur-stormschade-landhuis-nl.png"
+  },
+  {
+   "id": "natuur-zwembad-leeg-droogte-nl",
+   "categorie": "natuur en rampen",
+   "naam": "Leeg zwembad",
+   "binding": "nl",
+   "trefwoorden": [
+    "zwembad",
+    "sproeiverbod",
+    "watertekort",
+    "waterbeperking",
+    "tuin",
+    "tweede huis",
+    "piscine"
+   ],
+   "svg": "/illustraties/natuur-zwembad-leeg-droogte-nl.svg",
+   "png": "/illustraties/natuur-zwembad-leeg-droogte-nl.png"
+  },
+  {
+   "id": "politiek-briefstem-buitenland-nl",
+   "categorie": "politiek",
+   "naam": "Stemmen vanuit het buitenland",
+   "binding": "nl",
+   "trefwoorden": [
+    "stemmen buitenland",
+    "briefstem",
+    "kiezers buiten nederland",
+    "tweede kamer",
+    "nederlandse verkiezingen",
+    "registratie"
+   ],
+   "svg": "/illustraties/politiek-briefstem-buitenland-nl.svg",
+   "png": "/illustraties/politiek-briefstem-buitenland-nl.png"
+  },
+  {
+   "id": "politiek-burgemeester-sjerp-fr",
+   "categorie": "politiek",
+   "naam": "Burgemeester",
+   "binding": "fr",
+   "trefwoorden": [
+    "burgemeester",
+    "maire",
+    "gemeenteraadsverkiezingen",
+    "municipales",
+    "wethouder",
+    "gemeente"
+   ],
+   "svg": "/illustraties/politiek-burgemeester-sjerp-fr.svg",
+   "png": "/illustraties/politiek-burgemeester-sjerp-fr.png"
+  },
+  {
+   "id": "politiek-demonstratie-fr",
+   "categorie": "politiek",
+   "naam": "Demonstratie",
+   "binding": "fr",
+   "trefwoorden": [
+    "demonstratie",
+    "manifestatie",
+    "protest",
+    "betoging",
+    "vakbond",
+    "staking",
+    "actie",
+    "optocht"
+   ],
+   "svg": "/illustraties/politiek-demonstratie-fr.svg",
+   "png": "/illustraties/politiek-demonstratie-fr.png"
+  },
+  {
+   "id": "politiek-elysee-fr",
+   "categorie": "politiek",
+   "naam": "Élysée",
+   "binding": "fr",
+   "trefwoorden": [
+    "elysee",
+    "president",
+    "macron",
+    "regering",
+    "premier",
+    "minister",
+    "kabinet",
+    "presidentsverkiezingen"
+   ],
+   "svg": "/illustraties/politiek-elysee-fr.svg",
+   "png": "/illustraties/politiek-elysee-fr.png"
+  },
+  {
+   "id": "politiek-eu-gebouw-fr",
+   "categorie": "politiek",
+   "naam": "Europese Unie",
+   "binding": "fr",
+   "trefwoorden": [
+    "europa",
+    "europese unie",
+    "eu",
+    "brussel",
+    "europees parlement",
+    "europese commissie",
+    "richtlijn"
+   ],
+   "svg": "/illustraties/politiek-eu-gebouw-fr.svg",
+   "png": "/illustraties/politiek-eu-gebouw-fr.png"
+  },
+  {
+   "id": "politiek-parlement-fr",
+   "categorie": "politiek",
+   "naam": "Parlement",
+   "binding": "fr",
+   "trefwoorden": [
+    "parlement",
+    "assemblee",
+    "nationale assemblee",
+    "kamer",
+    "wet",
+    "wetsvoorstel",
+    "stemming",
+    "afgevaardigden",
+    "begroting",
+    "motie"
+   ],
+   "svg": "/illustraties/politiek-parlement-fr.svg",
+   "png": "/illustraties/politiek-parlement-fr.png"
+  },
+  {
+   "id": "politiek-prefectuur-fr",
+   "categorie": "politiek",
+   "naam": "Prefectuur",
+   "binding": "fr",
+   "trefwoorden": [
+    "prefectuur",
+    "prefect",
+    "prefet",
+    "departement",
+    "besluit",
+    "verbod",
+    "verblijfsvergunning",
+    "regio"
+   ],
+   "svg": "/illustraties/politiek-prefectuur-fr.svg",
+   "png": "/illustraties/politiek-prefectuur-fr.png"
+  },
+  {
+   "id": "politiek-senaat-fr",
+   "categorie": "politiek",
+   "naam": "Senaat",
+   "binding": "fr",
+   "trefwoorden": [
+    "senaat",
+    "senat",
+    "senatoren",
+    "wet",
+    "amendement",
+    "stemming"
+   ],
+   "svg": "/illustraties/politiek-senaat-fr.svg",
+   "png": "/illustraties/politiek-senaat-fr.png"
+  },
+  {
+   "id": "politiek-stembus-fr",
+   "categorie": "politiek",
+   "naam": "Stembus",
+   "binding": "fr",
+   "trefwoorden": [
+    "verkiezingen",
+    "stemmen",
+    "stembus",
+    "kandidaat",
+    "campagne",
+    "peiling",
+    "uitslag",
+    "presidentsverkiezingen",
+    "referendum"
+   ],
+   "svg": "/illustraties/politiek-stembus-fr.svg",
+   "png": "/illustraties/politiek-stembus-fr.png"
+  },
+  {
+   "id": "politiek-wetboek-fr",
+   "categorie": "politiek",
+   "naam": "Wetboek",
+   "binding": "fr",
+   "trefwoorden": [
+    "wet",
+    "wetboek",
+    "decreet",
+    "regelgeving",
+    "rechter",
+    "rechtbank",
+    "uitspraak",
+    "grondwet",
+    "conseil constitutionnel"
+   ],
+   "svg": "/illustraties/politiek-wetboek-fr.svg",
+   "png": "/illustraties/politiek-wetboek-fr.png"
+  },
+  {
+   "id": "toerisme-brocante-fr",
+   "categorie": "toerisme en evenementen",
+   "naam": "Brocante",
+   "binding": "fr",
+   "trefwoorden": [
+    "brocante",
+    "vide grenier",
+    "rommelmarkt",
+    "antiek",
+    "markt",
+    "tweedehands"
+   ],
+   "svg": "/illustraties/toerisme-brocante-fr.svg",
+   "png": "/illustraties/toerisme-brocante-fr.png"
+  },
+  {
+   "id": "toerisme-camping-nl",
+   "categorie": "toerisme en evenementen",
+   "naam": "Camping",
+   "binding": "nl",
+   "trefwoorden": [
+    "camping",
+    "kamperen",
+    "tent",
+    "caravan",
+    "camper",
+    "nederlanders",
+    "vakantie",
+    "seizoen"
+   ],
+   "svg": "/illustraties/toerisme-camping-nl.svg",
+   "png": "/illustraties/toerisme-camping-nl.png"
+  },
+  {
+   "id": "toerisme-chambre-d-hotes-nl",
+   "categorie": "toerisme en evenementen",
+   "naam": "Chambre d'hôtes",
+   "binding": "nl",
+   "trefwoorden": [
+    "chambre d'hotes",
+    "gite",
+    "bed and breakfast",
+    "verhuur",
+    "toeristenbelasting",
+    "airbnb",
+    "meublé",
+    "nederlanders"
+   ],
+   "svg": "/illustraties/toerisme-chambre-d-hotes-nl.svg",
+   "png": "/illustraties/toerisme-chambre-d-hotes-nl.png"
+  },
+  {
+   "id": "toerisme-dorpsfeest-fr",
+   "categorie": "toerisme en evenementen",
+   "naam": "Dorpsfeest",
+   "binding": "fr",
+   "trefwoorden": [
+    "feest",
+    "fete",
+    "dorpsfeest",
+    "festival",
+    "evenement",
+    "concert",
+    "14 juli",
+    "quatorze juillet"
+   ],
+   "svg": "/illustraties/toerisme-dorpsfeest-fr.svg",
+   "png": "/illustraties/toerisme-dorpsfeest-fr.png"
+  },
+  {
+   "id": "toerisme-kasteel-loire-fr",
+   "categorie": "toerisme en evenementen",
+   "naam": "Kasteel aan de Loire",
+   "binding": "fr",
+   "trefwoorden": [
+    "kasteel",
+    "chateau",
+    "erfgoed",
+    "monument",
+    "loire",
+    "toerisme",
+    "bezoekers"
+   ],
+   "svg": "/illustraties/toerisme-kasteel-loire-fr.svg",
+   "png": "/illustraties/toerisme-kasteel-loire-fr.png"
+  },
+  {
+   "id": "toerisme-kerstmarkt-fr",
+   "categorie": "toerisme en evenementen",
+   "naam": "Kerstmarkt",
+   "binding": "fr",
+   "trefwoorden": [
+    "kerst",
+    "kerstmarkt",
+    "feestdagen",
+    "december",
+    "marche de noel",
+    "oud en nieuw"
+   ],
+   "svg": "/illustraties/toerisme-kerstmarkt-fr.svg",
+   "png": "/illustraties/toerisme-kerstmarkt-fr.png"
+  },
+  {
+   "id": "toerisme-museum-fr",
+   "categorie": "toerisme en evenementen",
+   "naam": "Museum",
+   "binding": "fr",
+   "trefwoorden": [
+    "museum",
+    "tentoonstelling",
+    "expositie",
+    "kunst",
+    "cultuur",
+    "louvre",
+    "erfgoeddagen"
+   ],
+   "svg": "/illustraties/toerisme-museum-fr.svg",
+   "png": "/illustraties/toerisme-museum-fr.png"
+  },
+  {
+   "id": "toerisme-skigebied-fr",
+   "categorie": "toerisme en evenementen",
+   "naam": "Skigebied",
+   "binding": "fr",
+   "trefwoorden": [
+    "ski",
+    "skien",
+    "wintersport",
+    "skigebied",
+    "alpen",
+    "pyreneeen",
+    "skiliften",
+    "seizoen"
+   ],
+   "svg": "/illustraties/toerisme-skigebied-fr.svg",
+   "png": "/illustraties/toerisme-skigebied-fr.png"
+  },
+  {
+   "id": "toerisme-strand-fr",
+   "categorie": "toerisme en evenementen",
+   "naam": "Strand",
+   "binding": "fr",
+   "trefwoorden": [
+    "strand",
+    "zee",
+    "kust",
+    "zomer",
+    "zwemmen",
+    "badplaats",
+    "vakantie",
+    "toeristen"
+   ],
+   "svg": "/illustraties/toerisme-strand-fr.svg",
+   "png": "/illustraties/toerisme-strand-fr.png"
+  },
+  {
+   "id": "toerisme-wijnoogst-fr",
+   "categorie": "toerisme en evenementen",
+   "naam": "Wijnoogst",
+   "binding": "fr",
+   "trefwoorden": [
+    "wijn",
+    "wijnoogst",
+    "vendanges",
+    "druiven",
+    "wijnbouw",
+    "beaujolais",
+    "champagne",
+    "bordeaux"
+   ],
+   "svg": "/illustraties/toerisme-wijnoogst-fr.svg",
+   "png": "/illustraties/toerisme-wijnoogst-fr.png"
+  },
+  {
+   "id": "verkeer-apk-keuring-fr",
+   "categorie": "reizen en verkeer",
+   "naam": "Autokeuring",
+   "binding": "fr",
+   "trefwoorden": [
+    "apk",
+    "controle technique",
+    "keuring",
+    "auto",
+    "inschrijving",
+    "kenteken",
+    "carte grise"
+   ],
+   "svg": "/illustraties/verkeer-apk-keuring-fr.svg",
+   "png": "/illustraties/verkeer-apk-keuring-fr.png"
+  },
+  {
+   "id": "verkeer-caravan-geel-kenteken-nl",
+   "categorie": "reizen en verkeer",
+   "naam": "Caravan met geel kenteken",
+   "binding": "nl",
+   "trefwoorden": [
+    "nederlanders",
+    "caravan",
+    "kampeerders",
+    "vakantie",
+    "nederlandse auto",
+    "kenteken",
+    "vignet",
+    "crit air"
+   ],
+   "svg": "/illustraties/verkeer-caravan-geel-kenteken-nl.svg",
+   "png": "/illustraties/verkeer-caravan-geel-kenteken-nl.png"
+  },
+  {
+   "id": "verkeer-fietser-dorpsweg-nl",
+   "categorie": "reizen en verkeer",
+   "naam": "Fietser op een dorpsweg",
+   "binding": "nl",
+   "trefwoorden": [
+    "fiets",
+    "fietsers",
+    "wielrennen",
+    "fietspad",
+    "nederlanders",
+    "verkeersveiligheid"
+   ],
+   "svg": "/illustraties/verkeer-fietser-dorpsweg-nl.svg",
+   "png": "/illustraties/verkeer-fietser-dorpsweg-nl.png"
+  },
+  {
+   "id": "verkeer-metro-staking-fr",
+   "categorie": "reizen en verkeer",
+   "naam": "Metro bij staking",
+   "binding": "fr",
+   "trefwoorden": [
+    "metro",
+    "ov",
+    "openbaar vervoer",
+    "ratp",
+    "staking",
+    "parijs",
+    "bus",
+    "tram"
+   ],
+   "svg": "/illustraties/verkeer-metro-staking-fr.svg",
+   "png": "/illustraties/verkeer-metro-staking-fr.png"
+  },
+  {
+   "id": "verkeer-perron-tgv-fr",
+   "categorie": "reizen en verkeer",
+   "naam": "Treinperron",
+   "binding": "fr",
+   "trefwoorden": [
+    "trein",
+    "tgv",
+    "sncf",
+    "spoor",
+    "station",
+    "vertraging",
+    "treinkaartje",
+    "eurostar"
+   ],
+   "svg": "/illustraties/verkeer-perron-tgv-fr.svg",
+   "png": "/illustraties/verkeer-perron-tgv-fr.png"
+  },
+  {
+   "id": "verkeer-rotonde-fr",
+   "categorie": "reizen en verkeer",
+   "naam": "Rotonde",
+   "binding": "fr",
+   "trefwoorden": [
+    "rotonde",
+    "verkeersregels",
+    "snelheid",
+    "flitspaal",
+    "boete",
+    "rijbewijs",
+    "weg"
+   ],
+   "svg": "/illustraties/verkeer-rotonde-fr.svg",
+   "png": "/illustraties/verkeer-rotonde-fr.png"
+  },
+  {
+   "id": "verkeer-snelweg-file-fr",
+   "categorie": "reizen en verkeer",
+   "naam": "Snelweg met file",
+   "binding": "fr",
+   "trefwoorden": [
+    "snelweg",
+    "file",
+    "verkeer",
+    "drukte",
+    "vakantieverkeer",
+    "ongeval",
+    "wegwerkzaamheden",
+    "a7",
+    "a9"
+   ],
+   "svg": "/illustraties/verkeer-snelweg-file-fr.svg",
+   "png": "/illustraties/verkeer-snelweg-file-fr.png"
+  },
+  {
+   "id": "verkeer-tolpoort-fr",
+   "categorie": "reizen en verkeer",
+   "naam": "Tolpoort",
+   "binding": "fr",
+   "trefwoorden": [
+    "tol",
+    "peage",
+    "autoroute",
+    "snelweg",
+    "tolwegen",
+    "tarieven"
+   ],
+   "svg": "/illustraties/verkeer-tolpoort-fr.svg",
+   "png": "/illustraties/verkeer-tolpoort-fr.png"
+  },
+  {
+   "id": "verkeer-veerboot-kanaal-fr",
+   "categorie": "reizen en verkeer",
+   "naam": "Veerboot",
+   "binding": "fr",
+   "trefwoorden": [
+    "veerboot",
+    "ferry",
+    "kanaal",
+    "overtocht",
+    "calais",
+    "boot",
+    "eiland",
+    "corsica"
+   ],
+   "svg": "/illustraties/verkeer-veerboot-kanaal-fr.svg",
+   "png": "/illustraties/verkeer-veerboot-kanaal-fr.png"
+  },
+  {
+   "id": "verkeer-vliegveld-fr",
+   "categorie": "reizen en verkeer",
+   "naam": "Vliegveld",
+   "binding": "fr",
+   "trefwoorden": [
+    "vliegveld",
+    "luchthaven",
+    "vlucht",
+    "vliegtuig",
+    "luchtverkeersleiders",
+    "staking",
+    "annulering",
+    "air france"
+   ],
+   "svg": "/illustraties/verkeer-vliegveld-fr.svg",
+   "png": "/illustraties/verkeer-vliegveld-fr.png"
+  }
+ ]
+}
