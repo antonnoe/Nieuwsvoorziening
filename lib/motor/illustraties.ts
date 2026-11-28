@@ -76,6 +76,7 @@ export interface IllustratieInvoer {
  * Kiest een illustratie (besluit 28-11-2026): trefwoord in de kop 2 punten, in de samenvatting 1 (per trefwoord hooguit één keer);
  * de hoogste score over de hele set wint; bij gelijke score de eigen categorie, dan binding nl bij Nederland-onderwerpen (anders fr),
  * dan het langst niet gebruikt (`recent` = beeld-urls, nieuwste eerst; nooit gebruikt telt als het langst geleden), dan de vaste volgorde.
+ * Gaat het bericht over Nederland, dan krijgt een nl-beeld met minstens 1 treffer +3 punten; zijn alle scores 0, dan gaat een nl-beeld voor (eigen categorie eerst, anders de hele set).
  * Is de hoogste score 0, dan de keuze in de eigen categorie.
  */
 export function kiesIllustratie(b: IllustratieInvoer, recent: string[] = [], lijst: IllustratieLijst = ILLUSTRATIES): Illustratie | null {
@@ -96,7 +97,8 @@ export function kiesIllustratie(b: IllustratieInvoer, recent: string[] = [], lij
         if (kopTekst.includes(` ${n}`)) s += 2;
         else if (samTekst.includes(` ${n}`)) s += 1;
       }
-      return s;
+      // Nederland-onderwerp: een nl-beeld met minstens 1 treffer krijgt +3 (voorrang, geen tiebreak).
+      return voorkeur === "nl" && i.binding === "nl" && s > 0 ? s + 3 : s;
     };
     const gebruikPlek = new Map<string, number>(); // pad -> plaats in `recent` (0 = nieuwste)
     recent.forEach((u, n) => {
@@ -113,6 +115,10 @@ export function kiesIllustratie(b: IllustratieInvoer, recent: string[] = [], lij
     if (top && top.s > 0) return top.i;
     // Alles 0: de bestaande keuze in de eigen categorie (heeft die geen beelden, dan de hele set).
     const eigenPool = kandidaten.filter((k) => k.eigen === 1);
+    const nlEigen = voorkeur === "nl" ? eigenPool.filter((k) => k.bind === 1) : [];
+    const nlAlle = voorkeur === "nl" ? kandidaten.filter((k) => k.bind === 1) : [];
+    if (nlEigen.length) return pak(nlEigen)!.i;
+    if (nlAlle.length) return pak(nlAlle)!.i;
     const metVoorkeur = (eigenPool.length ? eigenPool : kandidaten).filter((k) => k.bind === 1);
     return (pak(metVoorkeur.length ? metVoorkeur : eigenPool.length ? eigenPool : kandidaten) ?? top)?.i ?? null;
   } catch {

@@ -188,3 +188,15 @@ test("alle illustraties in de index hebben een bestaand svg- en png-bestand", as
     assert.ok(existsSync(join(process.cwd(), "public", i.png)), i.png);
   }
 });
+
+test("Nederland-onderwerp: nl-beeld met treffer krijgt +3, bij alles 0 gaat een nl-beeld voor (echte koppen)", () => {
+  const k = (kop: string, categorie: string) => kiesIllustratie({ kop, samenvatting: "", categorie })?.id;
+  assert.equal(k("Nederlanders in Frankrijk moeten pensioenbrief uit twee landen controleren", "economie en ondernemen"), "economie-pensioenbrief-twee-landen-nl");
+  assert.equal(k("Nederlandse kampeerders met caravan vast op de A7", "reizen en verkeer"), "verkeer-caravan-geel-kenteken-nl");
+  assert.equal(k("Nederlanders vieren Koningsdag op een terras in de Dordogne", "merkwaardig"), "merkwaardig-oranje-terras-nl");
+  assert.equal(k("Sarkozy, Bruni en Marchand in 2027 voor de rechter", "politiek"), "politiek-rechtszaal-fr");
+  const l: IllustratieLijst = { afkomst: "x", beelden: [beeld("a-fr", "algemeen", "fr", ["storm"]), beeld("b-nl", "economie en ondernemen", "nl", ["svb"])] };
+  assert.equal(kiesIllustratie(b("Nederlanders zonder treffer", "", "algemeen"), [], l)?.id, "b-nl"); // alles 0: nl uit de hele set
+  assert.equal(kiesIllustratie(b("Storm bij Nederland en svb", "", "algemeen"), [], l)?.id, "b-nl"); // 3+2 tegen 2
+  assert.equal(kiesIllustratie(b("Storm", "", "algemeen"), [], l)?.id, "a-fr"); // geen Nederland: ongewijzigd
+});
