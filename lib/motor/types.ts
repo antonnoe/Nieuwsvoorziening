@@ -78,8 +78,15 @@ export interface Cluster {
 export interface BeeldCredit {
   bron: string;
   maker: string;
-  makerUrl: string;
-  bronUrl: string;
+  /** Alleen bij Unsplash. */
+  makerUrl?: string;
+  /** Alleen bij Unsplash. */
+  bronUrl?: string;
+  /** Alleen bij bron "Illustratie" (eigen illustratieset). */
+  categorie?: string;
+  naam?: string;
+  /** Absolute PNG-url (voor e-mail, die geen SVG toont). */
+  png?: string;
 }
 
 export interface Synthese {

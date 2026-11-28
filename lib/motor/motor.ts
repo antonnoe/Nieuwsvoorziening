@@ -199,8 +199,12 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
   beeldGen?.startRun?.(); // Unsplash-aanvraagbudget per run
   // Nooit dezelfde foto bij twee berichten: de foto's van de laatste 60 berichten worden vermeden, ook binnen deze run.
   const vermijd = new Set<string>();
+  // Recente beeld-urls, nieuwste eerst: voor "langst niet gebruikt" bij de eigen illustraties (hergebruik is toegestaan).
+  const recent: string[] = [];
   try {
-    for (const u of await o.opslag.recenteBeeldUrls(60)) vermijd.add(fotoSleutel(u));
+    const urls = await o.opslag.recenteBeeldUrls(100);
+    recent.push(...urls);
+    for (const u of urls.slice(0, 60)) vermijd.add(fotoSleutel(u));
   } catch (e) {
     noteer({ stap: "beeld_vermijden", ok: false, fout: fout(e) });
   }
@@ -250,7 +254,7 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
           peilLog = p.oordelen;
           if (p.fout) noteer({ stap: "peil_oordeel", ok: false, fout: p.fout });
         }
-        const beeld = status === "gepubliceerd" ? await beeldResultaat({ kop: s.kop, samenvatting: s.samenvatting, categorie: s.categorie, zoektermen: s.beeldZoektermen, zoekterm: s.beeldZoekterm, client: o.client, vermijd }, generator) : null;
+        const beeld = status === "gepubliceerd" ? await beeldResultaat({ kop: s.kop, samenvatting: s.samenvatting, categorie: s.categorie, zoektermen: s.beeldZoektermen, zoekterm: s.beeldZoekterm, client: o.client, vermijd, recent }, generator) : null;
         const beeldUrl = beeld?.url ?? null;
         const beeldCredit = beeld?.credit ?? null;
         const bericht: Bericht = {
@@ -327,19 +331,19 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
   // de generator bewaakt zelf het aanvraagbudget en stopt netjes bij een uitgeputte limiet).
   {
     const generator = o.generator === undefined ? actieveGenerator() : o.generator;
-    if (generator) {
+    {
       try {
         let aangevuld = 0;
         for (const b of await o.opslag.zonderBeeld(10)) {
           if (!tijdOver()) break;
           let zoektermen: string[] | undefined;
-          if (o.client) {
+          if (o.client && generator) {
             const antw = await o.client
               .tekst({ model: modelGoedkoop(), maxTokens: 100, system: ZOEKTERMEN_SYSTEEM, user: `${b.kop}\n${b.samenvatting}` })
               .catch(() => "");
             zoektermen = schoneZoektermen(haalJson<unknown>(antw) ?? []);
           }
-          const r = await beeldResultaat({ kop: b.kop, samenvatting: b.samenvatting, categorie: b.categorie, zoektermen, client: o.client, vermijd }, generator);
+          const r = await beeldResultaat({ kop: b.kop, samenvatting: b.samenvatting, categorie: b.categorie, zoektermen, client: o.client, vermijd, recent }, generator);
           if (r) (await o.opslag.zetBeeld(b.id, r.url, r.credit ?? null), (aangevuld += 1));
         }
         aantallen.beeldAangevuld = aangevuld;

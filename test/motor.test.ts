@@ -34,7 +34,7 @@ test("volledige run: oogst, cluster, synthese, poort, publicatie, bronnenblok", 
   assert.equal(b.bronnen.length, 2);
   assert.deepEqual(b.bronnen.map((x) => x.naam).sort(), ["Le Monde — À la une", "Sud Ouest"]);
   assert.ok(b.bronnen.every((x) => x.url && x.origineleKop && x.datum));
-  assert.equal(b.beeldUrl, null);
+  assert.match(String(b.beeldUrl), /^https:\/\/nieuws\.infofrankrijk\.com\/illustraties\/algemeen-.*\.svg$/, "zonder generator een eigen illustratie");
   // Het model kreeg geanonimiseerde bronnen: geen krantennaam in de invoer.
   const syn = client.aanroepen.find((c) => !c.system.includes("groepeert"))!;
   assert.ok(!syn.user.includes("Sud Ouest") && !syn.user.includes("Le Monde"));
@@ -124,11 +124,12 @@ test("synthese-uitvoer: ongeldige categorie wordt algemeen, publiceren=false gee
   assert.equal(leesSynthese("geen json"), null);
 });
 
-test("beeld staat standaard uit en faalt nooit", async () => {
-  assert.equal(await beeldVoor({ kop: "k", samenvatting: "s", categorie: "algemeen" }), null);
-  assert.equal(await beeldVoor({ kop: "k", samenvatting: "s", categorie: "algemeen" }, { naam: "x", genereer: async () => { throw new Error("boem"); } }), null);
+test("zonder generator een eigen illustratie, en een generatorfout breekt niets", async () => {
+  const ill = /illustraties\/algemeen-.*\.svg$/;
+  assert.match(String(await beeldVoor({ kop: "k", samenvatting: "s", categorie: "algemeen" })), ill);
+  assert.match(String(await beeldVoor({ kop: "k", samenvatting: "s", categorie: "algemeen" }, { naam: "x", genereer: async () => { throw new Error("boem"); } })), ill);
   assert.equal(await beeldVoor({ kop: "k", samenvatting: "s", categorie: "algemeen" }, { naam: "x", genereer: async () => "https://beeld.test/1.jpg" }), "https://beeld.test/1.jpg");
-  assert.equal(await beeldVoor({ kop: "k", samenvatting: "s", categorie: "algemeen" }, { naam: "x", genereer: async () => "http://onveilig/1.jpg" }), null);
+  assert.match(String(await beeldVoor({ kop: "k", samenvatting: "s", categorie: "algemeen" }, { naam: "x", genereer: async () => "http://onveilig/1.jpg" })), ill);
 });
 
 test("bronnenlijst en config zijn geldig", () => {

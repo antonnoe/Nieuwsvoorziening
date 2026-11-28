@@ -3,16 +3,13 @@
 //  1. tot 3 zoektermen van specifiek naar algemeen; per term de top 10;
 //  2. het goedkope model geeft elke foto een pasvorm 0-10 uit kop, samenvatting en
 //     de beschrijving van de foto; vanaf PASVORM_DREMPEL wordt de beste gebruikt;
-//  3. past niets, dan een vaste neutrale terugvalfoto per categorie (beeld-terugval.ts);
-//     zijn die al gebruikt, dan een ongebruikte neutrale zoekfoto (NEUTRAAL), en als
-//     laatste vangnet toch een vaste terugvalfoto: een bericht zonder foto is erger (28-11-2026);
-//  4. zonder sleutel, zonder model of bij een uitgeputte limiet: geen beeld.
+//  3. past niets (of geen sleutel, geen model, limiet bereikt): null; `beeldResultaat` in
+//     beeld.ts valt dan terug op een eigen illustratie (illustraties.ts, besluit 28-11-2026).
 // Regels van Unsplash: hotlinken (urls.regular), download-eindpunt aanroepen bij
 // gebruik, fotograaf en Unsplash met link vermelden. De sleutel verlaat de server nooit.
 // Limiet (demomodus 50 per uur): per run hooguit MAX_AANVRAGEN_PER_RUN aanvragen
 // (zoeken, foto ophalen, download-melding); bij 403 of 429 stopt de run met Unsplash.
 import { registreerGenerator, noemtPersoon, fotoSleutel, schoneZoektermen, type BeeldGenerator, type BeeldInvoer } from "./beeld";
-import { TERUGVAL } from "./beeld-terugval";
 import { haalJson } from "./ai";
 import { modelGoedkoop } from "./config";
 import type { BeeldCredit } from "./types";
@@ -21,17 +18,6 @@ const UTM = "utm_source=nieuwsvoorziening&utm_medium=referral";
 export const PASVORM_DREMPEL = 7;
 export const MAX_AANVRAGEN_PER_RUN = 36;
 const MAX_ZOEKTERMEN = 3;
-
-/** Neutrale zoektermen per categorie als de vaste terugvalfoto's al gebruikt zijn: Frans, rustig, zonder gebeurtenis. */
-const NEUTRAAL: Record<string, string[]> = {
-  algemeen: ["french village street", "french town square"],
-  politiek: ["french town hall", "french village street"],
-  "economie en ondernemen": ["french market town street", "french town square"],
-  "reizen en verkeer": ["french country road", "french railway countryside"],
-  "natuur en rampen": ["french countryside landscape", "french river valley"],
-  "toerisme en evenementen": ["french village hills", "french countryside landscape"],
-  merkwaardig: ["french village street", "french countryside landscape"],
-};
 
 type Foto = {
   id: string;
@@ -70,8 +56,6 @@ Antwoord uitsluitend met JSON: {"keuze":1,"cijfer":0}`;
 export function maakUnsplashGenerator(fetchFn: typeof fetch = fetch, sleutel = () => String(process.env.UNSPLASH_ACCESS_KEY || "").trim(), maxAanvragen = MAX_AANVRAGEN_PER_RUN): BeeldGenerator & { aanvragen(): number } {
   let aanvragen = 0;
   let uitgeput = false;
-  let terugvalCache = new Map<string, Foto | null>();
-  let neutraalCache = new Map<string, Foto[]>();
 
   /** Elke aanvraag aan Unsplash loopt hierlangs: telt, bewaakt de limiet. */
   async function vraag(url: string, uitleg: string): Promise<Response> {
@@ -91,18 +75,6 @@ export function maakUnsplashGenerator(fetchFn: typeof fetch = fetch, sleutel = (
     if (!r.ok) throw new Error(`Unsplash HTTP ${r.status}`);
     const d = (await r.json()) as { results?: Foto[] };
     return (Array.isArray(d.results) ? d.results : []).filter((f) => f?.id && f.urls?.regular && f.user?.name && !noemtPersoon(`${f.alt_description || ""} ${f.description || ""}`));
-  }
-
-  async function haalFoto(id: string): Promise<Foto | null> {
-    if (terugvalCache.has(id)) return terugvalCache.get(id)!;
-    const r = await vraag(`https://api.unsplash.com/photos/${encodeURIComponent(id)}`, "foto ophalen");
-    let f: Foto | null = null;
-    if (r.ok) {
-      const d = (await r.json()) as Foto;
-      if (d?.id && d.urls?.regular && d.user?.name && !noemtPersoon(`${d.alt_description || ""} ${d.description || ""}`)) f = d;
-    }
-    terugvalCache.set(id, f);
-    return f;
   }
 
   async function beoordeel(b: BeeldInvoer, fotos: Foto[]): Promise<{ foto: Foto; cijfer: number } | null> {
@@ -138,11 +110,6 @@ export function maakUnsplashGenerator(fetchFn: typeof fetch = fetch, sleutel = (
     return { url: lichteUrl(String(foto.urls!.regular)), credit };
   }
 
-  async function neutraal(term: string): Promise<Foto[]> {
-    if (!neutraalCache.has(term)) neutraalCache.set(term, await zoek(term));
-    return neutraalCache.get(term)!;
-  }
-
   const gebruikt = (b: BeeldInvoer, f: Foto) => Boolean(b.vermijd?.has(fotoSleutel(String(f.urls?.regular || ""))));
   async function gekozen(b: BeeldInvoer, f: Foto) {
     const r = await gebruik(f);
@@ -156,8 +123,6 @@ export function maakUnsplashGenerator(fetchFn: typeof fetch = fetch, sleutel = (
     startRun() {
       aanvragen = 0;
       uitgeput = false;
-      terugvalCache = new Map();
-      neutraalCache = new Map();
     },
     async genereer(b: BeeldInvoer) {
       if (!sleutel()) return null;
@@ -167,25 +132,6 @@ export function maakUnsplashGenerator(fetchFn: typeof fetch = fetch, sleutel = (
           const kandidaten = (await zoek(term)).filter((f) => !gebruikt(b, f));
           const keuze = await beoordeel(b, kandidaten);
           if (keuze && keuze.cijfer >= PASVORM_DREMPEL) return await gekozen(b, keuze.foto);
-        }
-        // Niets past: vaste, neutrale terugval per categorie (afwisselend op de kop).
-        const lijst = TERUGVAL[b.categorie] || TERUGVAL.algemeen;
-        let h = 0;
-        for (const ch of b.kop) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-        for (let i = 0; i < lijst.length; i++) {
-          const foto = await haalFoto(lijst[(h + i) % lijst.length].id);
-          if (foto && !gebruikt(b, foto)) return await gekozen(b, foto);
-        }
-        // Vaste terugval op (elke foto wordt maar één keer gebruikt): een nog ongebruikte,
-        // neutrale Franse foto zoeken (dorp, landschap; zonder personen, één zoekopdracht per term per run).
-        for (const term of NEUTRAAL[b.categorie] || NEUTRAAL.algemeen) {
-          const foto = (await neutraal(term)).find((f) => !gebruikt(b, f));
-          if (foto) return await gekozen(b, foto);
-        }
-        // Laatste vangnet: een vaste terugvalfoto nog eens, liever dat dan een bericht zonder foto.
-        for (let i = 0; i < lijst.length; i++) {
-          const foto = await haalFoto(lijst[(h + i) % lijst.length].id);
-          if (foto) return await gekozen(b, foto);
         }
         return null;
       } catch (e) {

@@ -85,5 +85,7 @@ export function publiekBericht(b: OpgeslagenBericht, metTekst: boolean, wordtNag
     kanalen: leesKanalen(b.kanalen),
     // Toegevoegd 27-11-2026 (InfoPoche "Let op"): alleen toevoegen, achteraan. Geen interne toelichting.
     signaal: leesSignaal(b.signaal),
+    // Toegevoegd 28-11-2026: PNG-url van een eigen illustratie (e-mail toont geen SVG); anders null.
+    beeldPng: b.beeldCredit?.bron === "Illustratie" && b.beeldCredit.png ? b.beeldCredit.png : null,
   };
 }

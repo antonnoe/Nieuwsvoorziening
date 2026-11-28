@@ -4,6 +4,7 @@
 // UNSPLASH_ACCESS_KEY bestaat, anders geen beeld. Nooit een persfoto.
 import type { Bericht, BeeldCredit } from "./types";
 import type { ModelClient } from "./ai";
+import { illustratieResultaat } from "./illustraties";
 
 export interface BeeldResultaat {
   url: string;
@@ -19,6 +20,8 @@ export type BeeldInvoer = Pick<Bericht, "kop" | "samenvatting" | "categorie"> & 
   client?: ModelClient | null;
   /** Al gebruikte foto's (zie `fotoSleutel`); een foto uit deze set wordt nooit nog eens gekozen. De generator voegt de gekozen foto zelf toe. */
   vermijd?: Set<string>;
+  /** Beeld-urls van recente berichten, nieuwste eerst, voor "langst niet gebruikt" bij de eigen illustraties. Het gekozen beeld wordt vooraan toegevoegd. */
+  recent?: string[];
 };
 
 /** Sleutel van een foto-url: host en pad (het foto-id zit in het pad), zonder queryparameters, zodat een lichtere of oudere url van dezelfde foto herkend wordt. */
@@ -52,16 +55,30 @@ export function actieveGenerator(): BeeldGenerator | null {
   return register.get(naam) || null;
 }
 
-/** Faalt nooit: bij een storing of zonder generator is het resultaat null. */
+/**
+ * Faalt nooit. Eerst de generator (Unsplash met voldoende pasvorm); past er niets, is er geen generator of
+ * model, of is de limiet bereikt, dan een eigen illustratie (hergebruik toegestaan). Alleen zonder illustraties null.
+ */
 export async function beeldResultaat(b: BeeldInvoer, g: BeeldGenerator | null = actieveGenerator()): Promise<BeeldResultaat | null> {
-  if (!g) return null;
-  try {
-    const u = await g.genereer(b);
-    const r = typeof u === "string" ? { url: u } : u;
-    return r && /^https:\/\//.test(r.url) ? r : null;
-  } catch {
-    return null;
+  let r: BeeldResultaat | null = null;
+  if (g) {
+    try {
+      const u = await g.genereer(b);
+      const x = typeof u === "string" ? { url: u } : u;
+      r = x && /^https:\/\//.test(x.url) ? x : null;
+    } catch {
+      r = null;
+    }
   }
+  if (!r) {
+    try {
+      r = illustratieResultaat(b, b.recent || []);
+    } catch {
+      r = null;
+    }
+  }
+  if (r) b.recent?.unshift(r.url);
+  return r;
 }
 
 /** Alleen de URL (oude aanroep, blijft voor tests en eenvoudige generatoren). */

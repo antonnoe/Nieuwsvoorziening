@@ -2,8 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { maakUnsplashGenerator, MAX_AANVRAGEN_PER_RUN } from "../lib/motor/beeld-unsplash";
 import { beeldResultaat, schoneZoektermen, noemtPersoon } from "../lib/motor/beeld";
-import { TERUGVAL } from "../lib/motor/beeld-terugval";
-import { CATEGORIEEN } from "../lib/motor/types";
+import { ILLUSTRATIES } from "../lib/motor/illustraties";
 import type { ModelClient } from "../lib/motor/ai";
 
 const mk = (id: string, alt: string) => ({ id, alt_description: alt, description: null, urls: { regular: `https://images.unsplash.com/${id}` }, links: { download_location: `https://api.unsplash.com/photos/${id}/download` }, user: { name: "Marie Dupont", links: { html: "https://unsplash.com/@marie" } } });
@@ -37,34 +36,34 @@ test("pasvorm boven de drempel: de gekozen zoekfoto, met download-melding en bro
   assert.equal(log.length, 2, "één zoekopdracht en één melding");
 });
 
-test("pasvorm onder de drempel: alle termen geprobeerd, dan vaste terugval (geen zoekfoto)", async () => {
+test("pasvorm onder de drempel: alle termen geprobeerd, dan een eigen illustratie (geen zoekfoto)", async () => {
   const { f, log } = nepUnsplash({ zoek: [[mk("x1", "mont saint michel")]] });
   const g = maakUnsplashGenerator(f, () => "test");
   const r = await beeldResultaat({ ...invoer, zoektermen: ["flooded street", "heavy rain river", "wet road"], client: modelMet('{"keuze":1,"cijfer":3}') }, g);
-  const ids = TERUGVAL["natuur en rampen"].map((t) => t.id);
-  assert.ok(r, "er is een terugval");
-  assert.ok(ids.some((id) => r!.url.split("?")[0].endsWith(id)), "terugvalfoto uit het vaste bestand");
-  assert.ok(!r!.url.split("?")[0].endsWith("x1"));
+  assert.ok(r, "er is een illustratie");
+  assert.equal(r!.credit?.bron, "Illustratie");
+  assert.match(r!.url, /^https:\/\/nieuws\.infofrankrijk\.com\/illustraties\/natuur-.*\.svg$/);
   assert.equal(log.filter((u) => u.includes("/search/photos")).length, 3);
-  assert.ok(log.some((u) => /\/photos\/[^/]+$/.test(u)), "terugvalfoto via GET /photos/:id");
-  assert.ok(log.some((u) => u.endsWith("/download")), "download-melding bij de terugval");
+  assert.ok(!log.some((u) => /\/photos\/[^/]+$/.test(u)), "geen vaste Unsplash-terugvalfoto meer");
+  assert.ok(!log.some((u) => u.endsWith("/download")), "geen download-melding bij een illustratie");
 });
 
-test("zonder model geen oordeel: terugval in plaats van een gok", async () => {
+test("zonder model geen oordeel: illustratie in plaats van een gok", async () => {
   const { f } = nepUnsplash({ zoek: [[mk("x1", "flooded street")]] });
   const r = await beeldResultaat({ ...invoer, zoektermen: ["flooded street"], client: null }, maakUnsplashGenerator(f, () => "test"));
-  assert.ok(r && !r.url.split("?")[0].endsWith("x1"));
+  assert.ok(r && r.credit?.bron === "Illustratie");
 });
 
 test("onleesbaar modelantwoord telt als 'past niet'", async () => {
   const { f } = nepUnsplash({ zoek: [[mk("x1", "flooded street")]] });
   const r = await beeldResultaat({ ...invoer, zoektermen: ["flooded street"], client: modelMet("geen idee") }, maakUnsplashGenerator(f, () => "test"));
-  assert.ok(r && !r.url.split("?")[0].endsWith("x1"));
+  assert.ok(r && r.credit?.bron === "Illustratie");
 });
 
-test("geen sleutel: geen beeld en geen enkele aanvraag", async () => {
+test("geen sleutel: geen Unsplash-aanvraag, wel een illustratie", async () => {
   const { f, log } = nepUnsplash();
-  assert.equal(await beeldResultaat({ ...invoer, zoektermen: ["flooded street"], client: modelMet('{"keuze":1,"cijfer":9}') }, maakUnsplashGenerator(f, () => "")), null);
+  const r0 = await beeldResultaat({ ...invoer, zoektermen: ["flooded street"], client: modelMet('{"keuze":1,"cijfer":9}') }, maakUnsplashGenerator(f, () => ""));
+  assert.equal(r0?.credit?.bron, "Illustratie");
   assert.equal(log.length, 0);
 });
 
@@ -72,8 +71,8 @@ test("403 en 429: netjes null, daarna geen nieuwe aanvragen tot de volgende run"
   for (const status of [403, 429]) {
     const { f, log } = nepUnsplash({ status });
     const g = maakUnsplashGenerator(f, () => "test");
-    assert.equal(await beeldResultaat({ ...invoer, zoektermen: ["flooded street", "wet road"], client: modelMet('{"keuze":1,"cijfer":9}') }, g), null);
-    assert.equal(await beeldResultaat(invoer, g), null);
+    assert.equal((await beeldResultaat({ ...invoer, zoektermen: ["flooded street", "wet road"], client: modelMet('{"keuze":1,"cijfer":9}') }, g))?.credit?.bron, "Illustratie", `HTTP ${status}: illustratie`);
+    assert.equal((await beeldResultaat(invoer, g))?.credit?.bron, "Illustratie");
     assert.equal(log.length, 1, `HTTP ${status}: na de eerste weigering geen aanvraag meer`);
     g.startRun?.();
     await beeldResultaat({ ...invoer, zoektermen: ["flooded street"] }, g);
@@ -104,12 +103,10 @@ test("nooit een persoon: zoektermen zonder namen en foto's met personen vallen a
   assert.ok(r && !r.url.endsWith("p1"));
 });
 
-test("terugvalbestand: elke categorie heeft foto's, ids uniek per categorie", () => {
-  for (const c of CATEGORIEEN) {
-    const l = TERUGVAL[c];
-    assert.ok(l.length >= 2, c);
-    assert.equal(new Set(l.map((t) => t.id)).size, l.length);
-  }
+test("illustratieset: elke categorie heeft beelden en de ids zijn uniek", () => {
+  assert.ok(ILLUSTRATIES.beelden.length >= 70);
+  assert.equal(new Set(ILLUSTRATIES.beelden.map((i) => i.id)).size, ILLUSTRATIES.beelden.length);
+  assert.equal(new Set(ILLUSTRATIES.beelden.map((i) => i.categorie)).size, 7);
 });
 
 test("lichte url: breedte 1200 en kwaliteit 75, bestaande parameters worden vervangen", async () => {
@@ -153,19 +150,13 @@ test("herstelronde 2: elke zoekterm krijgt France, de drempel is 7 en de pasvorm
   assert.ok(r6 && !r6.url.split("?")[0].endsWith("x1"));
 });
 
-test("vaste terugval al gebruikt: ongebruikte neutrale zoekfoto, nooit een bericht zonder foto (28-11-2026)", async () => {
-  const vermijd = new Set<string>(TERUGVAL["economie en ondernemen"].map((t) => `images.unsplash.com/${t.id}`));
-  const { f, log } = nepUnsplash({ zoek: [[mk("x1", "a chart")], [mk("x1", "a chart")], [mk("x1", "a chart")], [mk("n1", "a quiet french village street")]] });
-  const r = await beeldResultaat({ kop: "Frankrijk officieel in recessie", samenvatting: "De economie krimpt.", categorie: "economie en ondernemen", zoektermen: ["economy decline", "shop closed", "empty street"], client: modelMet('{"keuze":1,"cijfer":3}'), vermijd }, maakUnsplashGenerator(f, () => "test"));
-  assert.ok(r, "er komt een foto");
-  assert.ok(r!.url.split("?")[0].endsWith("n1"), "de neutrale zoekfoto");
-  assert.ok(log.some((u) => u.includes("query=french+market+town+street")));
-});
-
-test("alles al gebruikt: laatste vangnet is een vaste terugvalfoto, opnieuw", async () => {
-  const ids = TERUGVAL.algemeen.map((t) => t.id);
-  const vermijd = new Set<string>([...ids.map((id) => `images.unsplash.com/${id}`), "images.unsplash.com/x1"]);
-  const { f } = nepUnsplash({ zoek: [[mk("x1", "a street")]] });
-  const r = await beeldResultaat({ kop: "Vrachtwagen op middenberm A9", samenvatting: "Verkeer staat stil.", categorie: "algemeen", zoektermen: ["truck highway"], client: modelMet('{"keuze":1,"cijfer":2}'), vermijd }, maakUnsplashGenerator(f, () => "test"));
-  assert.ok(r && ids.some((id) => r.url.split("?")[0].endsWith(id)));
+test("de regel 'nooit dezelfde foto' geldt niet voor illustraties: hergebruik is toegestaan", async () => {
+  const recent: string[] = [];
+  const g = maakUnsplashGenerator(nepUnsplash().f, () => "");
+  const uit = new Set<string>();
+  for (let i = 0; i < ILLUSTRATIES.beelden.filter((x) => x.categorie === "algemeen").length + 3; i++) {
+    const r = await beeldResultaat({ kop: `Nieuws ${i}`, samenvatting: "Iets.", categorie: "algemeen", vermijd: uit, recent }, g);
+    assert.ok(r && r.credit?.bron === "Illustratie", "nooit zonder beeld");
+  }
+  assert.ok(recent.length > 0);
 });

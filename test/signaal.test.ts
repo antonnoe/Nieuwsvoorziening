@@ -40,7 +40,8 @@ const bericht = (o: Partial<OpgeslagenBericht> = {}): OpgeslagenBericht => ({
 test("API: signaal staat achteraan in de publieke vorm, ongeldige waarde en ontbrekend geven null, geen interne velden erbij", () => {
   const p = publiekBericht(bericht({ signaal: "wetswijziging", signaalBeoordeeld: true }), false) as Record<string, unknown>;
   const sleutels = Object.keys(p);
-  assert.equal(sleutels[sleutels.length - 1], "signaal");
+  assert.equal(sleutels[sleutels.length - 2], "signaal");
+  assert.equal(sleutels[sleutels.length - 1], "beeldPng");
   assert.equal(p.signaal, "wetswijziging");
   assert.ok(!("signaalBeoordeeld" in p));
   assert.equal((publiekBericht(bericht(), true) as Record<string, unknown>).signaal, null);
