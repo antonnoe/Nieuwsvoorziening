@@ -32,7 +32,7 @@ import { overheidPoort } from "./overheidpoort";
 import { dagStart } from "./tijd";
 import { leesSignaal, type Bericht, type Bron, type Cluster, type PeilParameter, type PeilSignaalNieuw, type StapResultaat, type Synthese } from "./types";
 import { beoordeelSignaal } from "./signaal";
-import { draaiRadar, RADAR_BEWAAR_DAGEN } from "./radar";
+import { draaiRadar, herkoppelOpenTips, RADAR_BEWAAR_DAGEN } from "./radar";
 import { laadBronnenLijst, kiesOogstBronnen, actieveRadarBronnen, GEEN_ACTIEVE_BRONNEN_MELDING } from "./bronnenlijst";
 import { isVerbodenBron } from "./config";
 import { draaiOverheidKort, OVERHEIDKORT_BEWAAR_DAGEN } from "./overheidkort";
@@ -192,6 +192,17 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
     noteer({ stap: "overheidkort", ok: r.ok, aantal: r.gemaakt, fout: r.fout, detail: r.detail });
   } catch (e) {
     noteer({ stap: "overheidkort", ok: false, fout: fout(e) });
+  }
+
+  // 2d. Eenmalige herkoppeling (28-11-2026): open tips met status "handmatige broncheck vereist" krijgen één kans met de modelkoppeling
+  // (overheidsitems, terugval persbronnen). Hooguit 20 per run; een behandelde tip krijgt beoordeeld_op = nu en komt niet terug.
+  if (o.client) {
+    try {
+      const r = await herkoppelOpenTips({ opslag: o.opslag, client: o.client, nu });
+      if (r.bekeken) noteer({ stap: "radar_herkoppel", ok: true, aantal: r.overheid + r.pers, detail: r });
+    } catch (e) {
+      noteer({ stap: "radar_herkoppel", ok: false, fout: fout(e) });
+    }
   }
 
   // 3. Open pool binnen het venster

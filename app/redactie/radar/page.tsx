@@ -6,6 +6,7 @@ import { laadBronnenLijst } from "@/lib/motor/bronnenlijst";
 import { kaleHost } from "@/lib/motor/config";
 import { eisToegang, leesMelding } from "@/lib/redactie-pagina";
 import { toonLinkVeld } from "@/lib/redactie-maak-bericht";
+import { LEGIFRANCE_ZOEKLINK, isRampTip } from "@/lib/motor/radar";
 import { TIJDELIJK_MELDING } from "@/lib/redactie-melding";
 import { veiligeUrl } from "@/lib/site";
 
@@ -50,6 +51,9 @@ export default async function Radar({ searchParams }: { searchParams: SP }) {
             <h2>{t.werktitel}</h2>
             <p className="brontekst">Tip van {tipgeverNaam(t.signaalUrl)}</p>
             {signaal && <a className="rd-knop" href={signaal} target="_blank" rel="noopener noreferrer">Bekijk de tip</a>}
+            {isRampTip(t.werktitel) && !t.berichtId && (
+              <a className="rd-knop" href={LEGIFRANCE_ZOEKLINK} target="_blank" rel="noopener noreferrer">Zoek het besluit in het Staatsblad</a>
+            )}
             {hier && <Melding melding={melding} />}
             {t.berichtId ? (
               <>
@@ -69,6 +73,15 @@ export default async function Radar({ searchParams }: { searchParams: SP }) {
                       <input id={`link-${t.id}`} type="text" name="link" inputMode="url" autoComplete="off" autoCapitalize="none" placeholder="bijvoorbeeld service-public.fr/…" defaultValue={sp.link || ""} required />
                     </>
                   )}
+                </BezigFormulier>
+              </>
+            ) : (t.persBronnen || []).length > 0 ? (
+              <>
+                <p>Persbronnen: <strong>{(t.persBronnen || []).map((b) => b.naam).filter((n, i, a) => a.indexOf(n) === i).join(", ")}</strong></p>
+                <BezigFormulier actie="/redactie/actie" knop="Maak bericht" bezigTekst="Bezig, dit duurt een minuut…">
+                  <Terugvelden actie="maak-bericht" id={t.id} terug="/redactie/radar" extra={{ tip: t.id }} />
+                  <label htmlFor={`link-${t.id}`}>Of plak de link van een overheidspagina (die gaat voor)</label>
+                  <input id={`link-${t.id}`} type="text" name="link" inputMode="url" autoComplete="off" autoCapitalize="none" placeholder="bijvoorbeeld service-public.fr/…" defaultValue={hier ? sp.link || "" : ""} />
                 </BezigFormulier>
               </>
             ) : (

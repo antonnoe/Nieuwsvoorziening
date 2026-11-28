@@ -172,6 +172,12 @@ export interface Opslag {
   radarOverheidItems(sindsIso: string): Promise<BronItem[]>;
   /** Slaat signalen op, ontdubbeld op signaal_url; geeft het aantal nieuw bewaarde rijen. */
   radarOpslaan(rijen: RadarNieuw[]): Promise<number>;
+  /** Persitems (regime pers) sinds een moment, nieuwste eerst: terugval voor tips zonder overheidsbron. */
+  radarPersItems(sindsIso: string): Promise<BronItem[]>;
+  /** Open tips (geen besluit) met status "handmatige broncheck vereist" die vóór `voorIso` zijn beoordeeld: de eenmalige herkoppeling. */
+  radarHerkoppelTe(voorIso: string, limiet: number): Promise<RadarRij[]>;
+  /** Zet status, bronnen (overheid of pers) en beoordeeld_op van een open tip; verandert niets aan het besluit. */
+  radarBijwerkBron(id: string, v: { status: RadarRij["status"]; primaireBron: RadarBron[] | null; persBronnen: RadarBron[] | null; beoordeeldOp: string }): Promise<void>;
   /** Open signalen (zonder besluit), nieuwste eerst. */
   radarOpen(limiet: number): Promise<RadarRij[]>;
   radarRij(id: string): Promise<RadarRij | null>;
@@ -215,6 +221,13 @@ export interface Opslag {
 }
 
 // ---- Geheugen -----------------------------------------------------------------
+/** De waarde voor de jsonb-kolom nv_radar.primaire_bron: de lijst met overheidsbronnen, of {"persbronnen": [...]} als er alleen persbronnen zijn. */
+export function radarBronKolom(overheid: RadarBron[] | null | undefined, pers: RadarBron[] | null | undefined): unknown {
+  if (overheid?.length) return overheid;
+  if (pers?.length) return { persbronnen: pers };
+  return null;
+}
+
 export class GeheugenOpslag implements Opslag {
   naam = "geheugen";
   items = new Map<string, BronItem & { verwerkt?: string; berichtId?: string | null }>();
@@ -234,6 +247,18 @@ export class GeheugenOpslag implements Opslag {
   }
   async radarOverheidItems(sinds: string) {
     return [...this.items.values()].filter((i) => i.regime === "overheid" && i.gepubliceerdOp >= sinds).sort((a, b) => b.gepubliceerdOp.localeCompare(a.gepubliceerdOp));
+  }
+  async radarPersItems(sinds: string) {
+    return [...this.items.values()].filter((i) => i.regime === "pers" && i.gepubliceerdOp >= sinds).sort((a, b) => b.gepubliceerdOp.localeCompare(a.gepubliceerdOp));
+  }
+  async radarHerkoppelTe(voor: string, limiet: number) {
+    this.radarCheck();
+    return this.radarRijen.filter((r) => !r.besluit && r.status === "handmatige broncheck vereist" && r.beoordeeldOp < voor).sort((a, b) => b.signaalDatum.localeCompare(a.signaalDatum)).slice(0, limiet);
+  }
+  async radarBijwerkBron(id: string, v: { status: RadarRij["status"]; primaireBron: RadarBron[] | null; persBronnen: RadarBron[] | null; beoordeeldOp: string }) {
+    this.radarCheck();
+    const r = this.radarRijen.find((x) => x.id === id);
+    if (r && !r.besluit) Object.assign(r, v);
   }
   async radarOpslaan(rijen: RadarNieuw[]) {
     this.radarCheck();
@@ -675,11 +700,13 @@ export class SupabaseOpslag implements Opslag {
   private naarRadar(r: Rij): RadarRij {
     const t = (v: unknown) => (v == null ? null : String(v));
     const pb = r.primaire_bron;
-    const lijst = (Array.isArray(pb) ? pb : pb && typeof pb === "object" ? [pb] : []) as Rij[];
-    const bronnen: RadarBron[] = lijst.filter((x) => x && x.url).map((x) => ({ naam: String(x.naam || ""), url: String(x.url), datum: String(x.datum || "") }));
+    const naarLijst = (v: unknown): RadarBron[] => ((Array.isArray(v) ? v : v && typeof v === "object" ? [v] : []) as Rij[]).filter((x) => x && x.url).map((x) => ({ naam: String(x.naam || ""), url: String(x.url), datum: String(x.datum || "") }));
+    // Persbronnen staan in dezelfde jsonb-kolom als {"persbronnen": [...]}; een gewone lijst is de overheidsbron.
+    const pers = pb && typeof pb === "object" && !Array.isArray(pb) && Array.isArray((pb as Rij).persbronnen) ? naarLijst((pb as Rij).persbronnen) : [];
+    const bronnen: RadarBron[] = pers.length ? [] : naarLijst(pb);
     return {
       id: String(r.id), signaalUrl: String(r.signaal_url), signaalDatum: String(r.signaal_datum), werktitel: String(r.werktitel), categorie: r.categorie as RadarRij["categorie"],
-      relevantie: String(r.relevantie || ""), status: r.status as RadarRij["status"], primaireBron: bronnen.length ? bronnen : null, berichtId: t(r.bericht_id),
+      relevantie: String(r.relevantie || ""), status: r.status as RadarRij["status"], primaireBron: bronnen.length ? bronnen : null, ...(pers.length ? { persBronnen: pers } : {}), berichtId: t(r.bericht_id),
       beoordeeldOp: String(r.beoordeeld_op), besluit: r.besluit === "geaccepteerd" || r.besluit === "afgewezen" ? r.besluit : null, besluitOp: t(r.besluit_op),
     };
   }
@@ -690,6 +717,18 @@ export class SupabaseOpslag implements Opslag {
     const rijen = await this.lees(`nv_bron_items?regime=eq.overheid&gepubliceerd_op=gte.${encodeURIComponent(sinds)}&order=gepubliceerd_op.desc&limit=2000`);
     return rijen.map(naarItem);
   }
+  async radarPersItems(sinds: string) {
+    const rijen = await this.lees(`nv_bron_items?regime=eq.pers&gepubliceerd_op=gte.${encodeURIComponent(sinds)}&order=gepubliceerd_op.desc&limit=2000`);
+    return rijen.map(naarItem);
+  }
+  async radarHerkoppelTe(voor: string, limiet: number) {
+    return this.radarVraag(async () =>
+      (await this.lees(`nv_radar?besluit=is.null&status=eq.${encodeURIComponent("handmatige broncheck vereist")}&beoordeeld_op=lt.${encodeURIComponent(voor)}&order=signaal_datum.desc&limit=${Math.max(1, Math.min(100, limiet))}`)).map((r) => this.naarRadar(r)));
+  }
+  async radarBijwerkBron(id: string, v: { status: RadarRij["status"]; primaireBron: RadarBron[] | null; persBronnen: RadarBron[] | null; beoordeeldOp: string }) {
+    if (!/^[0-9a-f-]{36}$/i.test(id)) return;
+    await this.radarVraag(() => this.vraag(`nv_radar?id=eq.${id}&besluit=is.null`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ status: v.status, primaire_bron: radarBronKolom(v.primaireBron, v.persBronnen), beoordeeld_op: v.beoordeeldOp }) }));
+  }
   async radarOpslaan(rijen: RadarNieuw[]) {
     if (!rijen.length) return 0;
     return this.radarVraag(async () => {
@@ -697,7 +736,7 @@ export class SupabaseOpslag implements Opslag {
         method: "POST", prefer: "resolution=ignore-duplicates,return=representation",
         body: JSON.stringify(rijen.map((x) => ({
           signaal_url: x.signaalUrl, signaal_datum: x.signaalDatum, werktitel: x.werktitel, categorie: x.categorie, relevantie: x.relevantie, status: x.status,
-          primaire_bron: x.primaireBron, bericht_id: x.berichtId && /^[0-9a-f-]{36}$/i.test(x.berichtId) ? x.berichtId : null, beoordeeld_op: x.beoordeeldOp,
+          primaire_bron: radarBronKolom(x.primaireBron, x.persBronnen), bericht_id: x.berichtId && /^[0-9a-f-]{36}$/i.test(x.berichtId) ? x.berichtId : null, beoordeeld_op: x.beoordeeldOp,
         }))),
       });
       return ((await r.json()) as Rij[]).length;

@@ -16,7 +16,7 @@ import { REGELVERSIE, isVerbodenBron, laadConfig, type MotorConfig } from "@/lib
 import { poortMetHerkansing } from "@/lib/motor/motor";
 import type { Opslag } from "@/lib/motor/opslag";
 import { laadPeil, peilKoppeling } from "@/lib/motor/peil";
-import { isOverheidsUrl } from "@/lib/motor/radar";
+import { isOverheidsUrl, persKandidaten } from "@/lib/motor/radar";
 import { berekenScore, clusterRegime } from "@/lib/motor/score";
 import { synthetiseer } from "@/lib/motor/synthese";
 import { hashId, overlap } from "@/lib/motor/tekst";
@@ -25,6 +25,7 @@ import { leesSignaal, type Bericht, type BronItem, type Cluster, type PeilKoppel
 export const MELDING_GEEN_OVERHEIDSLINK = "Dit is geen overheidspagina. Gebruik een link van een .gouv.fr-site, service-public.fr, overheid.nl, rijksoverheid.nl of een andere publieke instelling.";
 export const MELDING_LINK_ONLEESBAAR = "Deze pagina kon niet worden gelezen. Controleer de link, of probeer een andere pagina van de overheid.";
 export const MELDING_GEEN_BRON = "Bij deze tip hoort nog geen overheidsbron. Plak de link van een overheidspagina.";
+export const MELDING_PERSBRONNEN_WEG = "De nieuwsberichten bij deze tip zijn niet meer beschikbaar. Plak de link van een overheidspagina.";
 export const MELDING_AL_AFGEHANDELD = "Deze tip is al afgehandeld.";
 export const MELDING_GEEN_BERICHT = "Er is geen bericht van te maken: de bronnen bevatten te weinig nieuws. De tip blijft staan.";
 const OVERHEID_ITEMS_DAGEN = 35;
@@ -143,6 +144,13 @@ export async function maakBerichtUitTip(o: MaakOpties, tipId: string, link?: str
     primair = [r.item];
     nieuweItems.push(r.item);
     linkTeksten.set(r.item.url, r.tekst);
+  } else if (!primair.length && tip.persBronnen?.length) {
+    // Terugval persbronnen (een overheidsbron of geplakte link heeft altijd voorrang): de nieuwsitems van de tip uit onze eigen opslag,
+    // minstens twee van verschillende bronnen. Van de tipgever zelf komt niets mee.
+    const urls = new Set(tip.persBronnen.map((b) => b.url));
+    const pers = persKandidaten(await opslag.radarPersItems(new Date(nu - OVERHEID_ITEMS_DAGEN * 86400_000).toISOString()).catch(() => [] as BronItem[])).filter((i) => urls.has(i.url));
+    if (new Set(pers.map((i) => i.bronId)).size < 2) return { ok: false, melding: MELDING_PERSBRONNEN_WEG };
+    primair = pers.map((i) => ({ ...i }));
   } else if (!bekend.length) {
     return { ok: false, melding: MELDING_GEEN_BRON };
   }

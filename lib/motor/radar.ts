@@ -8,11 +8,12 @@
 // eigen opslag (nv_bron_items); nooit een verzonnen url. Wat hier uitkomt is alleen zichtbaar voor de redactie
 // (GET/POST /api/redactie); publieke API's, RSS en pagina's tonen niets van de radar.
 import { haalJson, type ModelClient } from "./ai";
-import { modelGoedkoop, CONNEXION_SITEMAP_URL, kaleHost } from "./config";
+import { modelGoedkoop, CONNEXION_SITEMAP_URL, kaleHost, isVerbodenBron } from "./config";
 import { laadBronnenLijst, actieveRadarBronnen } from "./bronnenlijst";
 import { leesFeed } from "./feeds";
-import { normaliseer } from "./tekst";
-import type { Bron, BronItem, BronRij, RadarBron, RadarCategorie, RadarNieuw, RadarStatus, UitsluitRegel } from "./types";
+import { hashId, normaliseer } from "./tekst";
+import { isKanttekeningItem } from "./kanttekening";
+import type { Bron, BronItem, BronRij, RadarBron, RadarCategorie, RadarNieuw, RadarRij, RadarStatus, UitsluitRegel } from "./types";
 import { RADAR_CATEGORIEEN } from "./types";
 import type { Opslag, OpgeslagenBericht } from "./opslag";
 
@@ -25,6 +26,16 @@ export const RADAR_TIMEOUT_MS = 10_000;
 export const RADAR_BATCH = 20;
 export const RADAR_MAX_SELECTIE_AANROEPEN = 3;
 export const RADAR_MAX_BEVESTIG_AANROEPEN = 10;
+/** Modelstap voor de overheidsbron (zonder trefwoordvoorselectie): hooguit 10 aanroepen per run, over de laatste 60 overheidsitems. */
+export const RADAR_MAX_BRONKEUZE_AANROEPEN = 10;
+export const RADAR_BRONKEUZE_ITEMS = 60;
+/** Terugval persbronnen: items van de laatste 3 dagen, hooguit 30 kandidaten per tip, hooguit 10 modelaanroepen per run. */
+export const RADAR_PERS_DAGEN = 3;
+export const RADAR_PERS_KANDIDATEN = 30;
+export const RADAR_MAX_PERSKEUZE_AANROEPEN = 10;
+/** Eenmalige herkoppeling van open tips met status "handmatige broncheck vereist": alleen tips beoordeeld vóór dit moment, hooguit 20 per run. */
+export const RADAR_HERKOPPEL_VOOR = "2026-11-28T17:00:00.000Z";
+export const RADAR_HERKOPPEL_MAX = 20;
 /** Tijdbudget voor de hele radarstap; daarna stopt ze netjes (de rest komt in de volgende run). */
 export const RADAR_BUDGET_MS = 90_000;
 export const GEEN_BRON_TEKST = "Primaire bron niet beschikbaar — handmatige controle vereist";
@@ -300,6 +311,209 @@ export function leesBevestiging(antwoord: string, aantal: number): number[] {
   return [...uit].sort((a, b) => a - b).slice(0, 3);
 }
 
+// ---- 4b. Bronkoppeling met het model (28-11-2026) ----------------------------------------------------------
+// De trefwoordmatch hierboven mist wat in andere woorden is geschreven (Prime de Noël voor "kerstpremie voor RSA-ontvangers"): een tip heeft
+// maar twee, drie Franse zoektermen en de drempel is twee treffers. Vindt de trefwoordstap niets, dan kiest het goedkope model uit de laatste 60
+// overheidsitems (id, Franse kop en waar beschikbaar de Nederlandse titel uit nv_overheid_kort). Het model krijgt NOOIT de kop van de tipgever,
+// alleen de werktitel en de Franse zoektermen. Het id moet in de lijst staan; bij twijfel null.
+
+export const SYSTEEM_RADAR_BRONKEUZE = `Je koppelt een onderwerp aan precies één Frans overheidsbericht uit een lijst. Je krijgt een onderwerp (een korte Nederlandse omschrijving, eventueel met Franse zoektermen) en een lijst met overheidsberichten: per bericht een id, de Franse kop en soms een Nederlandse titel.
+Kies het bericht dat over DEZELFDE maatregel, regeling of uitkering gaat als het onderwerp, ook als de woorden verschillen (bijvoorbeeld "kerstpremie" en "prime de Noël"). Een verwant maar ander onderwerp is geen match. Bij twijfel kies je niets.
+Antwoord uitsluitend met JSON: {"id": "<id uit de lijst>"} of {"id": null}.`;
+
+export const SYSTEEM_RADAR_PERSKEUZE = `Je zoekt in een lijst met nieuwskoppen de berichten die over DEZELFDE gebeurtenis of maatregel gaan als een onderwerp. Je krijgt een onderwerp (een korte Nederlandse omschrijving, eventueel met Franse zoektermen) en een lijst met id en kop. Kies alleen koppen die over precies hetzelfde gaan, niet over een verwant onderwerp. Bij twijfel kies je niets.
+Antwoord uitsluitend met JSON: {"ids": ["<id>", ...]} (een lege lijst bij geen match of twijfel).`;
+
+const zonderTags = (t: string) => String(t || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+
+/** Stabiele, unieke id's voor een lijst items (hash van de url; bij een botsing een volgnummer erachter). */
+function itemIds(items: BronItem[]): Map<string, BronItem> {
+  const m = new Map<string, BronItem>();
+  for (const i of items) {
+    let id = hashId(i.url);
+    if (m.has(id)) id = `${id}${m.size}`;
+    m.set(id, i);
+  }
+  return m;
+}
+
+export function leesBronKeuze(antwoord: string, ids: Set<string>): string | null {
+  const o = haalJson<{ id?: unknown }>(antwoord);
+  if (!o || typeof o.id !== "string") return null;
+  return ids.has(o.id) ? o.id : null;
+}
+
+export function leesPersKeuze(antwoord: string, ids: Set<string>): string[] {
+  const o = haalJson<{ ids?: unknown }>(antwoord);
+  if (!o || !Array.isArray(o.ids)) return [];
+  return [...new Set(o.ids.filter((x): x is string => typeof x === "string" && ids.has(x)))].slice(0, 4);
+}
+
+/** Alleen echte persbronnen: regime pers, geen tipgever, geen kanttekening (die telt niet als onafhankelijke bron). */
+export const persKandidaten = (items: BronItem[]): BronItem[] =>
+  items.filter((i) => i.regime === "pers" && !isVerbodenBron(i.url) && !isVerbodenBron(i.bronId) && !isKanttekeningItem(i));
+
+/** Zoektermen voor de trefwoordvoorselectie bij de persbronnen: de Franse zoektermen, of zonder die de woorden van 5+ letters uit de werktitel. */
+function persTermen(werktitel: string, zoektermen: string[]): string[] {
+  if (zoektermen.length) return zoektermen;
+  return [...new Set(zonder(werktitel).split(" ").filter((w) => w.length >= 5))].slice(0, 8);
+}
+
+/** Top `max` persitems op trefwoordtreffers (minstens 1), beste eerst, bij gelijk nieuwste eerst. */
+export function zoekPersItems(werktitel: string, zoektermen: string[], kandidaten: BronItem[], max = RADAR_PERS_KANDIDATEN): BronItem[] {
+  const termen = persTermen(werktitel, zoektermen);
+  return kandidaten
+    .map((i) => ({ i, n: termTreffers(termen, `${i.titel} ${zonderTags(i.samenvatting || "")}`) }))
+    .filter((x) => x.n >= 1)
+    .sort((a, b) => b.n - a.n || b.i.gepubliceerdOp.localeCompare(a.i.gepubliceerdOp))
+    .slice(0, max)
+    .map((x) => x.i);
+}
+
+export interface KoppelContext {
+  client: ModelClient;
+  /** Overheidsitems (al gefilterd op isOverheidsUrl, nieuwste eerst). */
+  overheid: BronItem[];
+  /** Persitems van de laatste dagen (al gefilterd met persKandidaten). */
+  pers: BronItem[];
+  /** Nederlandse titel per item-url uit nv_overheid_kort. */
+  nlTitels: Map<string, string>;
+  /** Resterende modelaanroepen per soort; wordt tijdens het koppelen afgeteld. */
+  budget: { bevestig: number; bronkeuze: number; perskeuze: number };
+  klaar: () => boolean;
+  /** Teller voor de stapdetails. */
+  gebruikt: { bevestig: number; bronkeuze: number; perskeuze: number };
+}
+
+export interface KoppelUitkomst {
+  overheid: BronItem[];
+  pers: BronItem[];
+}
+
+/** De vaste volgorde: (1) trefwoord + bevestiging, (2) alleen als dat niets vond het model over de laatste 60 overheidsitems, (3) alleen zonder overheidsbron de persbronnen. */
+export async function koppelBronnen(g: { werktitel: string; zoektermen: string[] }, c: KoppelContext): Promise<KoppelUitkomst> {
+  let overheid: BronItem[] = [];
+  // Stap 1a: de bestaande trefwoordmatch, goedkoop, met bevestiging door het model.
+  const voorstel = zoekOverheidsItems(g.zoektermen, c.overheid, 5);
+  if (voorstel.length && c.budget.bevestig > 0 && !c.klaar()) {
+    c.budget.bevestig -= 1;
+    c.gebruikt.bevestig += 1;
+    try {
+      const antw = await c.client.tekst({
+        model: modelGoedkoop(), maxTokens: 200, system: SYSTEEM_RADAR_BEVESTIG,
+        user: `Onderwerp: ${g.werktitel}\nFranse zoektermen: ${g.zoektermen.join("; ")}\n\nKandidaten:\n${voorstel.map((v, k) => `${k + 1}. ${v.titel}${v.samenvatting ? ` — ${zonderTags(v.samenvatting).slice(0, 300)}` : ""}`).join("\n")}`,
+      });
+      overheid = leesBevestiging(antw, voorstel.length).map((n) => voorstel[n - 1]);
+    } catch {
+      overheid = []; // bij een modelfout of twijfel geen match uit deze stap
+    }
+  }
+  // Stap 1b: het model over de laatste 60 overheidsitems, alleen als de trefwoordstap niets vond.
+  if (!overheid.length && c.overheid.length && c.budget.bronkeuze > 0 && !c.klaar()) {
+    c.budget.bronkeuze -= 1;
+    c.gebruikt.bronkeuze += 1;
+    const lijst = itemIds(c.overheid.slice(0, RADAR_BRONKEUZE_ITEMS));
+    try {
+      const regels = [...lijst].map(([id, i]) => {
+        const nl = c.nlTitels.get(i.url);
+        return `${id} | ${zonderTags(i.titel)}${nl ? ` | NL: ${nl}` : ""}`;
+      });
+      const antw = await c.client.tekst({
+        model: modelGoedkoop(), maxTokens: 100, system: SYSTEEM_RADAR_BRONKEUZE,
+        user: `Onderwerp: ${g.werktitel}${g.zoektermen.length ? `\nFranse zoektermen: ${g.zoektermen.join("; ")}` : ""}\n\nOverheidsberichten (id | Franse kop | Nederlandse titel):\n${regels.join("\n")}`,
+      });
+      const gekozen = leesBronKeuze(antw, new Set(lijst.keys()));
+      if (gekozen) overheid = [lijst.get(gekozen)!];
+    } catch {
+      overheid = []; // bij een modelfout of twijfel geen match
+    }
+  }
+  if (overheid.length) return { overheid, pers: [] };
+  // Stap 2: terugval op persbronnen (een overheidsbron heeft altijd voorrang).
+  let pers: BronItem[] = [];
+  const kand = zoekPersItems(g.werktitel, g.zoektermen, c.pers);
+  if (kand.length >= 2 && c.budget.perskeuze > 0 && !c.klaar()) {
+    c.budget.perskeuze -= 1;
+    c.gebruikt.perskeuze += 1;
+    const lijst = itemIds(kand);
+    try {
+      const antw = await c.client.tekst({
+        model: modelGoedkoop(), maxTokens: 150, system: SYSTEEM_RADAR_PERSKEUZE,
+        user: `Onderwerp: ${g.werktitel}${g.zoektermen.length ? `\nFranse zoektermen: ${g.zoektermen.join("; ")}` : ""}\n\nKoppen (id | kop):\n${[...lijst].map(([id, i]) => `${id} | ${zonderTags(i.titel)}`).join("\n")}`,
+      });
+      pers = leesPersKeuze(antw, new Set(lijst.keys())).map((id) => lijst.get(id)!);
+    } catch {
+      pers = [];
+    }
+    // Minstens twee onafhankelijke bronnen (verschillende bron_id's); anders niets.
+    if (new Set(pers.map((i) => i.bronId)).size < 2) pers = [];
+  }
+  return { overheid: [], pers };
+}
+
+const naarBron = (b: BronItem): RadarBron => ({ naam: b.bronNaam, url: b.url, datum: b.gepubliceerdOp });
+
+/** Laadt de gegevens die de koppeling nodig heeft (overheid, pers, Nederlandse titels); elke fout geeft een lege lijst. */
+export async function laadKoppelGegevens(opslag: Opslag, nu: number): Promise<{ overheid: BronItem[]; pers: BronItem[]; nlTitels: Map<string, string> }> {
+  const sindsBronnen = new Date(nu - RADAR_BRONNEN_DAGEN * 86400_000).toISOString();
+  const sindsPers = new Date(nu - RADAR_PERS_DAGEN * 86400_000).toISOString();
+  const [items, persItems, korten] = await Promise.all([
+    opslag.radarOverheidItems(sindsBronnen).catch(() => [] as BronItem[]),
+    opslag.radarPersItems(sindsPers).catch(() => [] as BronItem[]),
+    opslag.overheidKortLijst({ limiet: 500, sindsIso: sindsBronnen, metWeg: true }).catch(() => []),
+  ]);
+  return {
+    overheid: overheidKandidaten(items).sort((a, b) => b.gepubliceerdOp.localeCompare(a.gepubliceerdOp)),
+    pers: persKandidaten(persItems),
+    nlTitels: new Map(korten.map((k) => [k.itemUrl, k.titel])),
+  };
+}
+
+/** Een tip over een natuurramp (CatNat, rampstatus): de app toont dan een vaste zoeklink naar Légifrance (het besluit staat daar, niet in onze bronnen). */
+export const LEGIFRANCE_ZOEKLINK = "https://www.legifrance.gouv.fr/search/jorf?query=catastrophe%20naturelle";
+export function isRampTip(werktitel: string, zoektermen: string[] = []): boolean {
+  return /catastrophes? naturelles?|\bcatnat\b|rampstatus|rampenstatus|natuurramp|ramp(?:en)?(?:erkenning|besluit)|erkend als (?:natuur)?ramp/i.test(`${werktitel} ${zoektermen.join(" ")}`);
+}
+
+/**
+ * Eenmalige herkoppeling (28-11-2026): open tips met status "handmatige broncheck vereist" die vóór `RADAR_HERKOPPEL_VOOR` zijn beoordeeld
+ * krijgen één kans met de nieuwe koppeling (hooguit 20 per run). Elke behandelde tip krijgt beoordeeld_op = nu en komt dus niet opnieuw aan de beurt.
+ * De Franse zoektermen zijn niet bewaard: het model werkt dan alleen met de werktitel.
+ */
+export async function herkoppelOpenTips(o: { opslag: Opslag; client: ModelClient; nu?: number; klaar?: () => boolean }): Promise<{ bekeken: number; overheid: number; pers: number; geen: number }> {
+  const nu = o.nu ?? Date.now();
+  const uit = { bekeken: 0, overheid: 0, pers: 0, geen: 0 };
+  let tips: RadarRij[] = [];
+  try {
+    tips = await o.opslag.radarHerkoppelTe(RADAR_HERKOPPEL_VOOR, RADAR_HERKOPPEL_MAX);
+  } catch {
+    return uit; // tabel ontbreekt of storing: niets doen
+  }
+  if (!tips.length) return uit;
+  const g = await laadKoppelGegevens(o.opslag, nu);
+  const ctx: KoppelContext = { client: o.client, ...g, budget: { bevestig: 0, bronkeuze: RADAR_HERKOPPEL_MAX, perskeuze: RADAR_HERKOPPEL_MAX }, klaar: o.klaar ?? (() => false), gebruikt: { bevestig: 0, bronkeuze: 0, perskeuze: 0 } };
+  for (const t of tips) {
+    if (ctx.klaar()) break;
+    uit.bekeken += 1;
+    const k = await koppelBronnen({ werktitel: t.werktitel, zoektermen: [] }, ctx);
+    try {
+      if (k.overheid.length) {
+        await o.opslag.radarBijwerkBron(t.id, { status: "klaar voor redactie", primaireBron: k.overheid.map(naarBron), persBronnen: null, beoordeeldOp: new Date(nu).toISOString() });
+        uit.overheid += 1;
+      } else if (k.pers.length) {
+        await o.opslag.radarBijwerkBron(t.id, { status: "klaar voor redactie", primaireBron: null, persBronnen: k.pers.map(naarBron), beoordeeldOp: new Date(nu).toISOString() });
+        uit.pers += 1;
+      } else {
+        await o.opslag.radarBijwerkBron(t.id, { status: t.status, primaireBron: null, persBronnen: null, beoordeeldOp: new Date(nu).toISOString() });
+        uit.geen += 1;
+      }
+    } catch {
+      /* bijwerken mislukt: de tip blijft voor de volgende run staan */
+    }
+  }
+  return uit;
+}
+
 const datumDeel = (iso: string) => String(iso || "").slice(0, 10);
 
 // ---- De radarstap -----------------------------------------------------------------------------------------
@@ -415,16 +629,20 @@ export async function draaiRadar(o: RadarOpties): Promise<RadarUitslag> {
     uit.detail = { ...uit.detail, nieuwTeBeoordelen: nieuwe.length, selectieAanroepen, geselecteerd: gekozen.length };
     if (!gekozen.length) return uit;
 
-    // Eigen opslag lezen: overheidsitems en recente berichten.
+    // Eigen opslag lezen: overheidsitems, persitems, Nederlandse titels en recente berichten.
     const sindsBronnen = new Date(nu - RADAR_BRONNEN_DAGEN * 86400_000).toISOString();
-    const [items, berichten] = await Promise.all([
-      o.opslag.radarOverheidItems(sindsBronnen).catch(() => [] as BronItem[]),
+    const [gegevens, berichten] = await Promise.all([
+      laadKoppelGegevens(o.opslag, nu),
       o.opslag.berichtenVoorRedactie(sindsBronnen, 500).catch(() => [] as OpgeslagenBericht[]),
     ]);
-    const overheid = overheidKandidaten(items);
+    const ctx: KoppelContext = {
+      client: o.client, ...gegevens, klaar,
+      budget: { bevestig: RADAR_MAX_BEVESTIG_AANROEPEN, bronkeuze: RADAR_MAX_BRONKEUZE_AANROEPEN, perskeuze: RADAR_MAX_PERSKEUZE_AANROEPEN },
+      gebruikt: { bevestig: 0, bronkeuze: 0, perskeuze: 0 },
+    };
 
     const rijen: RadarNieuw[] = [];
-    let bevestigAanroepen = 0, alGepubliceerd = 0, klaarVoorRedactie = 0, handmatig = 0;
+    let alGepubliceerd = 0, klaarVoorRedactie = 0, klaarMetPers = 0, handmatig = 0;
     for (const g of gekozen) {
       const basis = { signaalUrl: g.item.url, signaalDatum: g.item.datum, werktitel: g.werktitel, categorie: g.categorie, relevantie: g.relevantie, beoordeeldOp: new Date(nu).toISOString() };
       const bestaand = zoekBestaandBericht(g.zoektermen, berichten);
@@ -433,32 +651,21 @@ export async function draaiRadar(o: RadarOpties): Promise<RadarUitslag> {
         alGepubliceerd += 1;
         continue;
       }
-      let bronnen: BronItem[] = [];
-      const voorstel = zoekOverheidsItems(g.zoektermen, overheid, 5);
-      if (voorstel.length && bevestigAanroepen < RADAR_MAX_BEVESTIG_AANROEPEN && !klaar()) {
-        bevestigAanroepen += 1;
-        try {
-          const antw = await o.client.tekst({
-            model: modelGoedkoop(), maxTokens: 200, system: SYSTEEM_RADAR_BEVESTIG,
-            user: `Onderwerp: ${g.werktitel}\nFranse zoektermen: ${g.zoektermen.join("; ")}\n\nKandidaten:\n${voorstel.map((v, k) => `${k + 1}. ${v.titel}${v.samenvatting ? ` — ${v.samenvatting.slice(0, 300)}` : ""}`).join("\n")}`,
-          });
-          bronnen = leesBevestiging(antw, voorstel.length).map((n) => voorstel[n - 1]);
-        } catch {
-          bronnen = []; // bij een modelfout of twijfel geen match: handmatige broncheck
-        }
-      }
-      if (bronnen.length) {
-        const primair: RadarBron[] = bronnen.map((b) => ({ naam: b.bronNaam, url: b.url, datum: b.gepubliceerdOp }));
-        rijen.push({ ...basis, status: "klaar voor redactie", primaireBron: primair, berichtId: null });
-        uit.voorrangUrls.push(...bronnen.map((b) => b.url));
+      const k = await koppelBronnen({ werktitel: g.werktitel, zoektermen: g.zoektermen }, ctx);
+      if (k.overheid.length) {
+        rijen.push({ ...basis, status: "klaar voor redactie", primaireBron: k.overheid.map(naarBron), berichtId: null });
+        uit.voorrangUrls.push(...k.overheid.map((b) => b.url));
         klaarVoorRedactie += 1;
+      } else if (k.pers.length) {
+        rijen.push({ ...basis, status: "klaar voor redactie", primaireBron: null, persBronnen: k.pers.map(naarBron), berichtId: null });
+        klaarMetPers += 1;
       } else {
         rijen.push({ ...basis, status: "handmatige broncheck vereist", primaireBron: null, berichtId: null });
         handmatig += 1;
       }
     }
     uit.nieuw = await o.opslag.radarOpslaan(rijen);
-    uit.detail = { ...uit.detail, bevestigAanroepen, klaarVoorRedactie, handmatig, alGepubliceerd, bewaard: uit.nieuw };
+    uit.detail = { ...uit.detail, bevestigAanroepen: ctx.gebruikt.bevestig, bronkeuzeAanroepen: ctx.gebruikt.bronkeuze, perskeuzeAanroepen: ctx.gebruikt.perskeuze, klaarVoorRedactie, klaarMetPersbronnen: klaarMetPers, handmatig, alGepubliceerd, bewaard: uit.nieuw };
     return uit;
   } catch (e) {
     if (e instanceof RadarOntbreekt || isRadarFout(e)) return { ...uit, detail: { overgeslagen: "tabel nv_radar ontbreekt (migratie nog niet toegepast)" } };
@@ -467,7 +674,7 @@ export async function draaiRadar(o: RadarOpties): Promise<RadarUitslag> {
 }
 
 /** De vorm voor de redactie in GET /api/redactie (veld "radar"): alleen daar komt de signaalbron voor, in één vaste zin. */
-export function radarVorm(r: { signaalUrl?: string; id: string; werktitel: string; categorie: string; signaalDatum: string; relevantie: string; primaireBron: RadarBron[] | null; status: RadarStatus; berichtId: string | null }) {
+export function radarVorm(r: { signaalUrl?: string; id: string; werktitel: string; categorie: string; signaalDatum: string; relevantie: string; primaireBron: RadarBron[] | null; persBronnen?: RadarBron[] | null; status: RadarStatus; berichtId: string | null }) {
   return {
     id: r.id,
     onderwerp: r.werktitel,
@@ -475,6 +682,7 @@ export function radarVorm(r: { signaalUrl?: string; id: string; werktitel: strin
     signaalVan: `${signaalBronNaam(r.signaalUrl)} (${datumDeel(r.signaalDatum)}), uitsluitend gebruikt als onderwerpsignaal`,
     relevantie: r.relevantie,
     primaireBronnen: (r.primaireBron || []).map((b) => ({ naam: b.naam, url: b.url, datum: b.datum })),
+    ...(r.persBronnen?.length ? { persbronnen: r.persBronnen.map((b) => ({ naam: b.naam, url: b.url, datum: b.datum })) } : {}),
     status: r.status,
     berichtId: r.berichtId,
     opmerking: r.status === "handmatige broncheck vereist" ? GEEN_BRON_TEKST : null,

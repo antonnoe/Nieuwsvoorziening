@@ -264,6 +264,8 @@ export interface RadarRij {
   relevantie: string;
   status: RadarStatus;
   primaireBron: RadarBron[] | null;
+  /** Persbronnen (minstens 2 verschillende bron_id's) als er geen overheidsbron is; bewaard in dezelfde jsonb-kolom primaire_bron als {"persbronnen": [...]}, geen migratie. */
+  persBronnen?: RadarBron[] | null;
   berichtId: string | null;
   beoordeeldOp: string;
   besluit: RadarBesluit | null;
