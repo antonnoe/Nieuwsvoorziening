@@ -32,7 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="wrap">
             <span>Een uitgave van Communities Abroad</span>
             <span>
-              <a href="/werkwijze">Bronnen en werkwijze</a> · <a href="/werkwijze#correcties">Correcties</a> · <a href="mailto:info@nederlanders.fr">Contact</a>
+              <a href="/werkwijze">Bronnen en werkwijze</a> · <a href="/beeldmateriaal">Beeldmateriaal</a> · <a href="/werkwijze#correcties">Correcties</a> · <a href="mailto:info@nederlanders.fr">Contact</a>
             </span>
           </div>
         </footer>

@@ -5,7 +5,7 @@ import { BASIS_URL } from "@/lib/site";
 export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const vast: MetadataRoute.Sitemap = [{ url: `${BASIS_URL}/` }, { url: `${BASIS_URL}/werkwijze` }];
+  const vast: MetadataRoute.Sitemap = [{ url: `${BASIS_URL}/` }, { url: `${BASIS_URL}/werkwijze` }, { url: `${BASIS_URL}/beeldmateriaal` }];
   const opslag = leesOpslag();
   if (!opslag) return vast;
   try {
