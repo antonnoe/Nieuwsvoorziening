@@ -208,6 +208,10 @@ export interface Opslag {
   overheidKortLijst(o: { limiet: number; sindsIso?: string; metWeg?: boolean }): Promise<OverheidKortRij[]>;
   zetOverheidKortRedactie(id: string, waarde: "weg" | null): Promise<boolean>;
   overheidKortOpruimen(oudIso: string): Promise<number>;
+  /** Relevante, niet weggehaalde korten met `gemaakt_op` voor `voorIso` (oude opdracht), met het oorspronkelijke item (null als dat is opgeruimd). Zonder tabel leeg. */
+  overheidKortOud(voorIso: string, limiet: number): Promise<{ kort: OverheidKortRij; item: BronItem | null }[]>;
+  /** Werkt velden van één kort bij (op item_url); redactie blijft staan. */
+  overheidKortVernieuw(itemUrl: string, v: Partial<Pick<OverheidKortNieuw, "titel" | "samenvatting" | "thema" | "relevant" | "reden" | "gemaaktOp">>): Promise<void>;
 }
 
 // ---- Geheugen -----------------------------------------------------------------
@@ -371,6 +375,19 @@ export class GeheugenOpslag implements Opslag {
     if (!k) return false;
     k.redactie = waarde;
     return true;
+  }
+  async overheidKortOud(voor: string, limiet: number) {
+    if (this.overheidKortTabelOntbreekt) return [];
+    return this.overheidKorten
+      .filter((k) => k.relevant && k.redactie !== "weg" && k.gemaaktOp < voor)
+      .sort((a, b) => b.datum.localeCompare(a.datum))
+      .slice(0, limiet)
+      .map((kort) => ({ kort, item: [...this.items.values()].find((i) => i.url === kort.itemUrl) ?? null }));
+  }
+  async overheidKortVernieuw(itemUrl: string, v: Partial<Pick<OverheidKortNieuw, "titel" | "samenvatting" | "thema" | "relevant" | "reden" | "gemaaktOp">>) {
+    this.kortCheck();
+    const k = this.overheidKorten.find((x) => x.itemUrl === itemUrl);
+    if (k) Object.assign(k, v);
   }
   async overheidKortOpruimen(oud: string) {
     if (this.overheidKortTabelOntbreekt) return 0;
@@ -860,6 +877,30 @@ export class SupabaseOpslag implements Opslag {
       const r = await this.vraag(`nv_overheid_kort?id=eq.${id}`, { method: "PATCH", prefer: "return=representation", body: JSON.stringify({ redactie: waarde }) });
       return ((await r.json()) as Rij[]).length > 0;
     });
+  }
+  async overheidKortOud(voor: string, limiet: number) {
+    try {
+      const rijen = (await this.lees(`nv_overheid_kort?relevant=eq.true&or=(redactie.is.null,redactie.neq.weg)&gemaakt_op=lt.${encodeURIComponent(voor)}&order=datum.desc&limit=${Math.max(1, Math.min(100, limiet))}`)).map((r) => this.naarKort(r));
+      const uit: { kort: OverheidKortRij; item: BronItem | null }[] = [];
+      for (const kort of rijen) {
+        const it = await this.lees(`nv_bron_items?url=eq.${encodeURIComponent(kort.itemUrl)}&limit=1`);
+        uit.push({ kort, item: it.length ? naarItem(it[0]) : null });
+      }
+      return uit;
+    } catch (e) {
+      if (isTabelFout(e, "nv_overheid_kort")) return [];
+      throw e;
+    }
+  }
+  async overheidKortVernieuw(itemUrl: string, v: Partial<Pick<OverheidKortNieuw, "titel" | "samenvatting" | "thema" | "relevant" | "reden" | "gemaaktOp">>) {
+    const body: Record<string, unknown> = {};
+    if (v.titel !== undefined) body.titel = v.titel;
+    if (v.samenvatting !== undefined) body.samenvatting = v.samenvatting;
+    if (v.thema !== undefined) body.thema = v.thema;
+    if (v.relevant !== undefined) body.relevant = v.relevant;
+    if (v.reden !== undefined) body.reden = v.reden;
+    if (v.gemaaktOp !== undefined) body.gemaakt_op = v.gemaaktOp;
+    await this.metTabel("nv_overheid_kort", () => this.vraag(`nv_overheid_kort?item_url=eq.${encodeURIComponent(itemUrl)}`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify(body) }));
   }
   async overheidKortOpruimen(oud: string) {
     try {

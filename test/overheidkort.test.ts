@@ -4,7 +4,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { GeheugenOpslag, SupabaseOpslag, type OpgeslagenBericht } from "../lib/motor/opslag";
-import { OVERHEIDKORT_BUDGET_MS, MAX_OVERHEIDSKORT_PER_RUN, draaiOverheidKort, kortAfkeurReden, maakKort } from "../lib/motor/overheidkort";
+import { OVERHEIDKORT_BUDGET_MS, MAX_OVERHEIDSKORT_PER_RUN, OVERHEIDKORT_OPDRACHT_VANAF, SYSTEEM_OVERHEIDKORT, draaiOverheidKort, kortAfkeurReden, maakKort } from "../lib/motor/overheidkort";
 import { draaiOogst } from "../lib/motor/motor";
 import { laadConfig } from "../lib/motor/config";
 import { laadOverheidItems, OVERHEID_MAX } from "../lib/inbed";
@@ -36,6 +36,7 @@ const NL_CARIBISCH = item({
   titel: "Nieuwe regels voor Bonaire en Nederlanders in Frankrijk", samenvatting: "Caribisch Nederland krijgt een eigen regeling.", gepubliceerdOp: new Date(nu - 6000_000).toISOString(),
 });
 const BRONNEN = ["sp", "rijk"];
+const VAN = "2026-11-28T00:00:00Z"; // kaarten van de testruns (09:00) zijn dus niet "oud"
 
 // ---- Model-JSON verwerken -------------------------------------------------------------------------------
 test("maakKort: JSON (ook in code-hekken) wordt een kaart met thema en relevantie; model krijgt alleen kop en omschrijving", async () => {
@@ -87,7 +88,7 @@ test("R17 en Caribisch Nederland vooraf zonder model; Franse overheid en NL met 
   const opslag = new GeheugenOpslag();
   await opslag.upsertItems([FR, NL, NL_BUITENLAND, NL_CARIBISCH]);
   const c = klein([goed()]);
-  const r = await draaiOverheidKort({ opslag, client: c, bronIds: BRONNEN, nu });
+  const r = await draaiOverheidKort({ opslag, client: c, bronIds: BRONNEN, nu, opdrachtVanaf: VAN });
   assert.ok(r.ok);
   assert.equal(c.aanroepen.length, 2, "alleen FR en NL met buitenlandkenmerk gaan naar het model");
   assert.ok(c.aanroepen.every((a) => !a.user.includes("afvalheffing") && !a.user.includes("Bonaire")));
@@ -103,7 +104,7 @@ test("R17 en Caribisch Nederland vooraf zonder model; Franse overheid en NL met 
   assert.equal(per(FR.url).datum, FR.gepubliceerdOp);
   // Een tweede run doet niets meer: alles heeft een kaart (ook de niet-relevante).
   const c2 = klein([goed()]);
-  const r2 = await draaiOverheidKort({ opslag, client: c2, bronIds: BRONNEN, nu });
+  const r2 = await draaiOverheidKort({ opslag, client: c2, bronIds: BRONNEN, nu, opdrachtVanaf: VAN });
   assert.equal(c2.aanroepen.length, 0);
   assert.equal(r2.detail.teDoen, 0);
 });
@@ -112,7 +113,7 @@ test("afgekeurde kaart wordt niet getoond en niet opnieuw gevraagd; een modelfou
   const opslag = new GeheugenOpslag();
   await opslag.upsertItems([FR]);
   const slecht = klein([goed({ samenvatting: "Het plafond wordt 99999 euro voor alle verhuurders in Frankrijk." })]);
-  const r = await draaiOverheidKort({ opslag, client: slecht, bronIds: BRONNEN, nu });
+  const r = await draaiOverheidKort({ opslag, client: slecht, bronIds: BRONNEN, nu, opdrachtVanaf: VAN });
   assert.equal(r.gemaakt, 0);
   assert.equal(r.detail.afgekeurd, 1);
   assert.match(String((r.detail.redenen as string[])[0]), /getal niet in kop of omschrijving: 99999/);
@@ -123,33 +124,77 @@ test("afgekeurde kaart wordt niet getoond en niet opnieuw gevraagd; een modelfou
   const opslag2 = new GeheugenOpslag();
   await opslag2.upsertItems([FR]);
   const kapot = { async tekst(): Promise<string> { throw new Error("overbelast"); } };
-  const r2 = await draaiOverheidKort({ opslag: opslag2, client: kapot, bronIds: BRONNEN, nu });
+  const r2 = await draaiOverheidKort({ opslag: opslag2, client: kapot, bronIds: BRONNEN, nu, opdrachtVanaf: VAN });
   assert.equal(r2.detail.uitgesteld, 1);
   assert.equal(opslag2.overheidKorten.length, 0, "niets bewaard");
-  const r3 = await draaiOverheidKort({ opslag: opslag2, client: klein([goed()]), bronIds: BRONNEN, nu });
+  const r3 = await draaiOverheidKort({ opslag: opslag2, client: klein([goed()]), bronIds: BRONNEN, nu, opdrachtVanaf: VAN });
   assert.equal(r3.gemaakt, 1, "de volgende run lukt het wel");
 });
 
-test("plafond per run, venster van 7 dagen en alleen actieve overheidsbronnen", async () => {
-  assert.equal(MAX_OVERHEIDSKORT_PER_RUN, 20);
+test("plafond: 30 modelaanroepen per run, r17 telt niet mee; venster van 7 dagen en alleen actieve overheidsbronnen", async () => {
+  assert.equal(MAX_OVERHEIDSKORT_PER_RUN, 30);
   assert.equal(OVERHEIDKORT_BUDGET_MS, 60_000);
   const opslag = new GeheugenOpslag();
-  const veel = Array.from({ length: 25 }, (_, n) => item({ ...FR, url: `https://www.service-public.fr/n${n}`, titel: `Meublés ${n}`, gepubliceerdOp: new Date(nu - (n + 1) * 60_000).toISOString() }));
-  await opslag.upsertItems([...veel, item({ ...FR, url: "https://www.service-public.fr/oud", gepubliceerdOp: new Date(nu - 8 * 86400_000).toISOString() }), item({ ...FR, url: "https://x.test/inactief", bronId: "uit" }), item({ url: "https://p.test/pers", regime: "pers" })]);
+  // 15 nieuwste items zijn r17 (Nederlandse overheid zonder buitenlandkenmerk), daarna 40 Franse.
+  const r17 = Array.from({ length: 15 }, (_, n) => item({ ...NL, url: `https://www.rijksoverheid.nl/r${n}`, titel: `Gemeentelijke afvalheffing ${n}`, gepubliceerdOp: new Date(nu - (n + 1) * 30_000).toISOString() }));
+  const veel = Array.from({ length: 40 }, (_, n) => item({ ...FR, url: `https://www.service-public.fr/n${n}`, titel: `Meublés ${n}`, gepubliceerdOp: new Date(nu - (n + 1) * 60_000).toISOString() }));
+  await opslag.upsertItems([...r17, ...veel, item({ ...FR, url: "https://www.service-public.fr/oud", gepubliceerdOp: new Date(nu - 8 * 86400_000).toISOString() }), item({ ...FR, url: "https://x.test/inactief", bronId: "uit" }), item({ url: "https://p.test/pers", regime: "pers" })]);
   const c = klein([goed({ titel: "Nieuwe regels voor de verhuur", samenvatting: "Er komen nieuwe regels voor verhuurders in Frankrijk." })]);
-  const r = await draaiOverheidKort({ opslag, client: c, bronIds: ["sp"], nu });
-  assert.equal(c.aanroepen.length, 20);
-  assert.equal(r.gemaakt, 20);
+  const r = await draaiOverheidKort({ opslag, client: c, bronIds: BRONNEN, nu, opdrachtVanaf: VAN });
+  assert.equal(c.aanroepen.length, 30, "precies 30 modelaanroepen");
+  assert.equal(r.detail.modelAanroepen, 30);
+  assert.equal(r.detail.r17, 15, "alle r17 vooraf weggezet, buiten het plafond");
+  assert.equal(r.gemaakt, 30);
   const urls = opslag.overheidKorten.map((k) => k.itemUrl);
   assert.ok(!urls.includes("https://www.service-public.fr/oud") && !urls.includes("https://x.test/inactief") && !urls.includes("https://p.test/pers"));
-  assert.ok(urls.includes("https://www.service-public.fr/n0") && !urls.includes("https://www.service-public.fr/n24"), "nieuwste eerst");
+  assert.ok(urls.includes("https://www.service-public.fr/n0") && urls.includes("https://www.service-public.fr/n29") && !urls.includes("https://www.service-public.fr/n30"), "nieuwste eerst");
+});
+
+test("opdracht: gewone spreektaal, Franse naam één keer tussen haakjes, bbp, afkortingen uitleggen en drie voorbeelden", () => {
+  assert.match(SYSTEEM_OVERHEIDKORT, /spreektaal/);
+  assert.match(SYSTEEM_OVERHEIDKORT, /hooguit één keer tussen haakjes/);
+  assert.match(SYSTEEM_OVERHEIDKORT, /bbp \(nooit BNP/);
+  assert.match(SYSTEEM_OVERHEIDKORT, /RSA is de bijstandsuitkering/);
+  assert.match(SYSTEEM_OVERHEIDKORT, /Herhaal geen woorden/);
+  assert.match(SYSTEEM_OVERHEIDKORT, /wat de lezer ermee moet of wanneer iets ingaat/);
+  assert.equal((SYSTEEM_OVERHEIDKORT.match(/^Kop: /gm) || []).length, 3, "drie voorbeelden");
+  for (const w of ["Kerstuitkering", "Belastingkalender", "Betaaldata"]) assert.ok(SYSTEEM_OVERHEIDKORT.includes(w), w);
+});
+
+test("eenmalig herschrijven: oude korten (voor OVERHEIDKORT_OPDRACHT_VANAF) opnieuw met de nieuwe opdracht, hooguit 10 per run, geen tweede keer", async () => {
+  const opslag = new GeheugenOpslag();
+  const items = Array.from({ length: 12 }, (_, n) => item({ ...FR, url: `https://www.service-public.fr/h${n}`, titel: `Meublés ${n}`, gepubliceerdOp: new Date(nu - (n + 1) * 60_000).toISOString() }));
+  await opslag.upsertItems(items);
+  const oud = new Date(Date.parse(OVERHEIDKORT_OPDRACHT_VANAF) - 3600_000).toISOString();
+  await opslag.overheidKortOpslaan(items.map((i) => ({ itemUrl: i.url, bronNaam: "Service-Public", bronDomein: "service-public.fr", datum: i.gepubliceerdOp, titel: "Oude stijve titel", samenvatting: "Oude stijve samenvatting van de kaart.", thema: "geld-belasting", relevant: true, reden: null, gemaaktOp: oud })));
+  const nieuw = Date.parse(OVERHEIDKORT_OPDRACHT_VANAF) + 3600_000;
+  const c = klein([goed({ titel: "Nieuwe regels voor de verhuur", samenvatting: "Er komen nieuwe regels voor verhuurders in Frankrijk." })]);
+  const r = await draaiOverheidKort({ opslag, client: c, bronIds: BRONNEN, nu: nieuw });
+  assert.equal(r.detail.herschreven, 10);
+  assert.equal(c.aanroepen.length, 10);
+  assert.ok(c.aanroepen[0].system.includes("spreektaal"));
+  assert.equal(opslag.overheidKorten.filter((k) => k.titel === "Nieuwe regels voor de verhuur").length, 10);
+  const r2 = await draaiOverheidKort({ opslag, client: c, bronIds: BRONNEN, nu: nieuw + 3600_000 });
+  assert.equal(r2.detail.herschreven, 2, "de overige 2");
+  const r3 = await draaiOverheidKort({ opslag, client: c, bronIds: BRONNEN, nu: nieuw + 7200_000 });
+  assert.equal(r3.detail.herschreven, 0, "niet nog eens");
+  // Een afgekeurd antwoord laat de oude kaart staan en komt niet elke run terug.
+  const o2 = new GeheugenOpslag();
+  await o2.upsertItems([items[0]]);
+  await o2.overheidKortOpslaan([{ itemUrl: items[0].url, bronNaam: "S", bronDomein: "service-public.fr", datum: items[0].gepubliceerdOp, titel: "Oude titel hier", samenvatting: "Oude samenvatting van de kaart.", thema: "geld-belasting", relevant: true, reden: null, gemaaktOp: oud }]);
+  const slecht = klein([goed({ samenvatting: "Het plafond wordt 99999 euro voor alle verhuurders in Frankrijk." })]);
+  const r4 = await draaiOverheidKort({ opslag: o2, client: slecht, bronIds: BRONNEN, nu: nieuw });
+  assert.equal(r4.detail.herschrijfAfgekeurd, 1);
+  assert.equal(o2.overheidKorten[0].titel, "Oude titel hier");
+  const r5 = await draaiOverheidKort({ opslag: o2, client: slecht, bronIds: BRONNEN, nu: nieuw + 3600_000 });
+  assert.equal(r5.detail.herschrijfAfgekeurd, 0);
 });
 
 test("tijdbudget: een verlopen budget stopt de lus netjes (wat voor het verlopen budget vooraf wordt afgewezen kost niets)", async () => {
   const opslag = new GeheugenOpslag();
   await opslag.upsertItems([FR, { ...NL, gepubliceerdOp: new Date(nu - 60_000).toISOString() }]);
   const c = klein([goed()]);
-  const r = await draaiOverheidKort({ opslag, client: c, bronIds: BRONNEN, nu, budgetMs: 0 });
+  const r = await draaiOverheidKort({ opslag, client: c, bronIds: BRONNEN, nu, budgetMs: 0, opdrachtVanaf: VAN });
   assert.ok(r.ok);
   assert.equal(c.aanroepen.length, 0);
   assert.equal(opslag.overheidKorten.length, 1, "alleen de R17-afwijzing is bewaard");
@@ -161,7 +206,7 @@ test("zonder tabel: de stap slaat over, lezen geeft leeg en de redactie krijgt e
   const opslag = new GeheugenOpslag();
   opslag.overheidKortTabelOntbreekt = true;
   await opslag.upsertItems([FR]);
-  const r = await draaiOverheidKort({ opslag, client: klein([goed()]), bronIds: BRONNEN, nu });
+  const r = await draaiOverheidKort({ opslag, client: klein([goed()]), bronIds: BRONNEN, nu, opdrachtVanaf: VAN });
   assert.ok(r.ok && !r.fout);
   assert.match(String(r.detail.overgeslagen), /nv_overheid_kort/);
   assert.deepEqual(await opslag.overheidKortLijst({ limiet: 5 }), []);
@@ -169,9 +214,9 @@ test("zonder tabel: de stap slaat over, lezen geeft leeg en de redactie krijgt e
   const u = await voerActieUit(opslag, { rol: "redacteur", naam: "M", id: "x" }, { actie: "kort-weg", id: U1 });
   assert.equal(u.ok, false);
   assert.ok(u.melding.length > 5);
-  const geen = await draaiOverheidKort({ opslag: new GeheugenOpslag(), client: null, bronIds: BRONNEN, nu });
+  const geen = await draaiOverheidKort({ opslag: new GeheugenOpslag(), client: null, bronIds: BRONNEN, nu, opdrachtVanaf: VAN });
   assert.ok(geen.ok && /modelsleutel/.test(String(geen.detail.overgeslagen)));
-  const geenBron = await draaiOverheidKort({ opslag: new GeheugenOpslag(), client: klein([goed()]), bronIds: [], nu });
+  const geenBron = await draaiOverheidKort({ opslag: new GeheugenOpslag(), client: klein([goed()]), bronIds: [], nu, opdrachtVanaf: VAN });
   assert.ok(geenBron.ok && /overheidsbronnen/.test(String(geenBron.detail.overgeslagen)));
 });
 

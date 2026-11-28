@@ -13,17 +13,35 @@ import { normaliseer } from "./tekst";
 import { OVERHEID_THEMAS, isOverheidThema, type BronItem, type OverheidKortNieuw, type OverheidThema } from "./types";
 
 export const OVERHEIDKORT_TABEL = "nv_overheid_kort";
-export const MAX_OVERHEIDSKORT_PER_RUN = 20;
+/** Plafond voor modelaanroepen per run (besluit 28-11-2026); items die vooraf zonder model wegvallen (r17, caribisch) tellen niet mee. */
+export const MAX_OVERHEIDSKORT_PER_RUN = 30;
+/** Hoeveel items per run hooguit worden bekeken (de voorfilter kost niets); bepaalt niet het aantal modelaanroepen. */
+export const OVERHEIDKORT_KANDIDATEN_PER_RUN = 300;
+/** Eenmalig herschrijven: relevante korten met `gemaakt_op` voor dit moment zijn met de oude opdracht gemaakt (geen migratie nodig). */
+export const OVERHEIDKORT_OPDRACHT_VANAF = "2026-11-28T15:30:00Z";
+export const MAX_OVERHEIDKORT_HERSCHRIJVEN_PER_RUN = 10;
 export const OVERHEIDKORT_BUDGET_MS = 60_000;
 export const OVERHEIDKORT_VENSTER_DAGEN = 7;
 export const OVERHEIDKORT_BEWAAR_DAGEN = 60;
 
-export const SYSTEEM_OVERHEIDKORT = `Je maakt een korte kaart in gewoon Nederlands van één bericht van een overheidswebsite, voor Nederlanders en Belgen die in Frankrijk wonen of er ondernemen. Je krijgt alleen de kop en de omschrijving van dat ene bericht.
+export const SYSTEEM_OVERHEIDKORT = `Je maakt een korte kaart van één bericht van een overheidswebsite, voor Nederlanders en Belgen die in Frankrijk wonen of er ondernemen. Je krijgt alleen de kop en de omschrijving van dat ene bericht.
 Antwoord uitsluitend met JSON: {"titel":"","samenvatting":"","thema":"","relevant":true}
+- Schrijf in gewone spreektaal, zoals je het aan een buurman uitlegt. Geen stijf ambtelijk Nederlands, geen letterlijke vertaling van het Frans.
+- Franse instellingen: noem ze eerst met een gewone Nederlandse omschrijving ("de Franse belastingdienst", "de kinderbijslagkas") en zet de Franse naam of afkorting hooguit één keer tussen haakjes erachter, bijvoorbeeld "de kinderbijslagkas (CAF)". Herhaal die naam of afkorting niet.
+- Franse afkortingen leg je uit of laat je weg: RSA is de bijstandsuitkering, ASS de werkloosheidsuitkering na afloop van de gewone werkloosheidsuitkering, AER een overbruggingsuitkering; kun je het niet kort uitleggen, laat het dan weg. Zeg bbp (nooit BNP of "bruto nationaal product") voor het Franse PIB.
+- Herhaal geen woorden of begrippen in titel en samenvatting; zeg elk ding één keer.
 - titel: Nederlandse titel van hooguit 10 woorden, kleine letters behalve het eerste woord en eigennamen.
-- samenvatting: één of twee zinnen gewoon Nederlands, alleen wat in de kop of omschrijving staat. Neem bedragen, percentages en datums exact over; voeg geen getal, bedrag of datum toe en verander geen betekenis. Geen links, geen oordeel, geen advies, geen lange streepjes. Praat nooit over de aangeleverde tekst of de bron.
+- samenvatting: één of twee zinnen, alleen wat in de kop of omschrijving staat. Zegt de bron wat de lezer ermee moet of wanneer iets ingaat, zet dat dan erin; verzin niets. Neem bedragen, percentages en datums exact over; voeg geen getal, bedrag of datum toe en verander geen betekenis. Geen links, geen oordeel, geen advies, geen lange streepjes. Praat nooit over de aangeleverde tekst of de bron.
 - thema: precies één van ${OVERHEID_THEMAS.join(", ")}.
-- relevant: false bij puur interne overheidszaken (benoemingen, vergaderingen, organisatie) zonder belang voor particulieren of ondernemers, anders true.`;
+- relevant: false bij puur interne overheidszaken (benoemingen, vergaderingen, organisatie) zonder belang voor particulieren of ondernemers, anders true.
+
+Drie voorbeelden van goede kaarten:
+Kop: "Prime de fin d'année : le calendrier de versement" Omschrijving: "La prime de fin d'année est versée aux allocataires du RSA, de l'ASS et de l'AER à partir du 15 décembre."
+{"titel":"Kerstuitkering wordt vanaf 15 december betaald","samenvatting":"Wie een bijstandsuitkering (RSA) of een werkloosheidsuitkering (ASS) heeft, krijgt de eindejaarsuitkering vanaf 15 december op de rekening.","thema":"sociale-zekerheid","relevant":true}
+Kop: "Calendrier fiscal : les dates limites à retenir" Omschrijving: "La Direction générale des Finances publiques publie les échéances de déclaration et de paiement de l'impôt."
+{"titel":"Belastingkalender: de data om te onthouden","samenvatting":"De Franse belastingdienst (DGFiP) zet de uiterste data voor aangifte en betaling van belasting op een rij. Noteer ze, dan mist u geen deadline.","thema":"geld-belasting","relevant":true}
+Kop: "Allocations familiales : dates de paiement" Omschrijving: "Les caisses d'allocations familiales versent les prestations le 5 de chaque mois, sauf week-end."
+{"titel":"Betaaldata van de kinderbijslag","samenvatting":"De kinderbijslagkas (CAF) betaalt de uitkeringen op de 5e van elke maand. Valt die dag in het weekend, dan komt het geld iets later.","thema":"sociale-zekerheid","relevant":true}`;
 
 /** Eerste reden waarom de kaart niet bruikbaar is, of null. De getallencontrole vergelijkt met kop en omschrijving van het item. */
 export function kortAfkeurReden(titel: string, samenvatting: string, bron: string): string | null {
@@ -80,7 +98,7 @@ export interface OverheidKortUitslag {
  * De stap in de oogstrun. Faalt nooit naar buiten. Een modelfout laat het item voor de volgende run staan; een afgekeurd antwoord,
  * R17 en Caribisch Nederland worden bewaard als niet-relevant met een reden, zodat het item niet steeds opnieuw wordt gevraagd.
  */
-export async function draaiOverheidKort(o: { opslag: Opslag; client: ModelClient | null; bronIds: string[]; nu?: number; budgetMs?: number; max?: number }): Promise<OverheidKortUitslag> {
+export async function draaiOverheidKort(o: { opslag: Opslag; client: ModelClient | null; bronIds: string[]; nu?: number; budgetMs?: number; max?: number; kandidaten?: number; herschrijfMax?: number; opdrachtVanaf?: string }): Promise<OverheidKortUitslag> {
   const nu = o.nu ?? Date.now();
   const start = Date.now();
   const budget = o.budgetMs ?? OVERHEIDKORT_BUDGET_MS;
@@ -89,9 +107,24 @@ export async function draaiOverheidKort(o: { opslag: Opslag; client: ModelClient
   if (!o.bronIds.length) return { ok: true, gemaakt: 0, detail: { overgeslagen: "geen actieve overheidsbronnen" } };
   try {
     const sinds = new Date(nu - OVERHEIDKORT_VENSTER_DAGEN * 86400_000).toISOString();
-    const teDoen = await o.opslag.overheidKortTeMaken(sinds, max, o.bronIds);
+    let herschreven = 0, herschrijfAfgekeurd = 0;
+    // Eenmalig: korten die met de oude opdracht zijn gemaakt opnieuw schrijven (eerst, het zijn er maar een paar).
+    for (const { kort, item } of await o.opslag.overheidKortOud(o.opdrachtVanaf ?? OVERHEIDKORT_OPDRACHT_VANAF, o.herschrijfMax ?? MAX_OVERHEIDKORT_HERSCHRIJVEN_PER_RUN)) {
+      if (Date.now() - start >= budget) break;
+      if (!item) { await o.opslag.overheidKortVernieuw(kort.itemUrl, { gemaaktOp: new Date(nu).toISOString() }); continue; }
+      const u = await maakKort(item, o.client);
+      if (!u.ok) {
+        if (u.modelfout) continue;
+        herschrijfAfgekeurd += 1; // de oude kaart blijft staan; gemaakt_op omhoog zodat het niet elke run opnieuw gevraagd wordt
+        await o.opslag.overheidKortVernieuw(kort.itemUrl, { gemaaktOp: new Date(nu).toISOString() });
+        continue;
+      }
+      await o.opslag.overheidKortVernieuw(kort.itemUrl, { titel: u.titel, samenvatting: u.samenvatting, thema: u.thema, relevant: u.relevant, reden: u.relevant ? null : "model: niet relevant", gemaaktOp: new Date(nu).toISOString() });
+      herschreven += 1;
+    }
+    const teDoen = await o.opslag.overheidKortTeMaken(sinds, o.kandidaten ?? OVERHEIDKORT_KANDIDATEN_PER_RUN, o.bronIds);
     const rijen: OverheidKortNieuw[] = [];
-    let r17 = 0, caribisch = 0, nietRelevant = 0, afgekeurd = 0, uitgesteld = 0, getoond = 0;
+    let r17 = 0, caribisch = 0, nietRelevant = 0, afgekeurd = 0, uitgesteld = 0, getoond = 0, modelAanroepen = 0;
     const redenen: string[] = [];
     const gemaaktOp = new Date(nu).toISOString();
     const basis = (i: BronItem) => ({ itemUrl: i.url, bronNaam: i.bronNaam, bronDomein: kaleHost(i.url), datum: i.gepubliceerdOp, gemaaktOp });
@@ -105,7 +138,8 @@ export async function draaiOverheidKort(o: { opslag: Opslag; client: ModelClient
           continue;
         }
       }
-      if (Date.now() - start >= budget) break;
+      if (Date.now() - start >= budget || modelAanroepen >= max) break;
+      modelAanroepen += 1;
       const u = await maakKort(i, o.client);
       if (!u.ok) {
         if (u.modelfout) { uitgesteld += 1; continue; }
@@ -118,7 +152,7 @@ export async function draaiOverheidKort(o: { opslag: Opslag; client: ModelClient
       rijen.push({ ...basis(i), titel: u.titel, samenvatting: u.samenvatting, thema: u.thema, relevant: u.relevant, reden: u.relevant ? null : "model: niet relevant" });
     }
     const bewaard = rijen.length ? await o.opslag.overheidKortOpslaan(rijen) : 0;
-    return { ok: true, gemaakt: getoond, detail: { teDoen: teDoen.length, bewaard, getoond, nietRelevant, r17, caribisch, afgekeurd, uitgesteld, redenen } };
+    return { ok: true, gemaakt: getoond, detail: { teDoen: teDoen.length, modelAanroepen, herschreven, herschrijfAfgekeurd, bewaard, getoond, nietRelevant, r17, caribisch, afgekeurd, uitgesteld, redenen } };
   } catch (e) {
     if (e instanceof TabelOntbreekt || isTabelFout(e, OVERHEIDKORT_TABEL)) return { ok: true, gemaakt: 0, detail: { overgeslagen: "tabel nv_overheid_kort ontbreekt (migratie nog niet toegepast)" } };
     return { ok: false, gemaakt: 0, detail: {}, fout: (e instanceof Error ? e.message : String(e)).slice(0, 200) };
