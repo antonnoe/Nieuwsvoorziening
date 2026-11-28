@@ -1,0 +1,25 @@
+name: illustraties
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["illustraties/**", "scripts/maak-illustraties.mjs"]
+permissions:
+  contents: write
+concurrency: illustraties
+jobs:
+  maak:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: node scripts/maak-illustraties.mjs
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      - run: |
+          git config user.name "illustraties-bot"
+          git config user.email "illustraties-bot@users.noreply.github.com"
+          git add public/illustraties
+          git diff --cached --quiet || (git commit -m "Illustraties gemaakt" && git push)
