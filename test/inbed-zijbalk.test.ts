@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { GeheugenOpslag, type OpgeslagenBericht } from "../lib/motor/opslag";
-import { MEER_NIEUWS_URL, PORTEMONNEE_CHIP, ZIJBALK_BERICHTEN, ZIJBALK_LEEG, chipsVan, laadZijbalkItems, peilRegels, zijbalkKanaal } from "../lib/inbed-zijbalk";
+import { MEER_NIEUWS_URL, PORTEMONNEE_CHIP, ZIJBALK_BERICHTEN, ZIJBALK_LEEG, ZIJBALK_PEIL, chipsVan, laadZijbalkItems, peilRegels, zijbalkAantal, zijbalkKanaal, zijbalkPeilAantal } from "../lib/inbed-zijbalk";
 import type { Aankondiging } from "../lib/peilvak";
 import Zijbalk from "../app/inbed/zijbalk/Zijbalk";
 import nextConfig from "../next.config.mjs";
@@ -31,13 +31,14 @@ test("kanaal: standaard zijbalk, ?kanaal=infofrankrijk geeft infofrankrijk, onbe
   assert.equal(zijbalkKanaal("nieuwsbrief"), "zijbalk");
 });
 
-test("kanaalfilter, weg en status; nieuwste eerst, hooguit 4", async () => {
+test("kanaalfilter, weg en status; nieuwste eerst, standaard hooguit 10", async () => {
   const o = new GeheugenOpslag();
-  for (let n = 0; n < 9; n++) o.berichtenLijst.push(bericht(n));
+  for (let n = 0; n < 15; n++) o.berichtenLijst.push(bericht(n));
   o.berichtenLijst.push(bericht(20, { kanalen: { ...alle, zijbalk: false } }), bericht(21, { kanalen: { ...alle, infofrankrijk: false } }), bericht(22, { redactie: "weg" }), bericht(23, { status: "concept" }));
   const z = (await laadZijbalkItems(o, "zijbalk", naam))!;
-  assert.equal(ZIJBALK_BERICHTEN, 4);
-  assert.equal(z.length, 4);
+  assert.equal(ZIJBALK_BERICHTEN, 10);
+  assert.equal(z.length, 10);
+  assert.equal((await laadZijbalkItems(o, "zijbalk", naam, 3))!.length, 3);
   assert.ok(!z.some((i) => ["Kop 20", "Kop 22", "Kop 23"].includes(i.titel)));
   assert.ok(z.some((i) => i.titel === "Kop 21"), "kanaal infofrankrijk uit raakt de zijbalk niet");
   const f = (await laadZijbalkItems(o, "infofrankrijk", naam))!;
@@ -70,9 +71,11 @@ test("PEIL-chip alleen bij een groene koppeling met lezerstitel; oranje of zonde
 
 const aank = (n: number): Aankondiging => ({ id: `a${n}`, naam: `Titel ${n}`, peilNaam: "x", datum: n === 2 ? null : `2027-0${n}-01`, omschrijving: `Zin ${n}.`, voorlopig: false, tools: n === 1 ? [{ naam: "Financieel Kompas", url: "https://www.infofrankrijk.com/kompas" }] : [], nieuws: [], inDiscussie: n === 2 });
 
-test("PEIL-blok: 2 regels met datum of In discussie, tool en Alles in PEIL; bij storing (leeg of null) geen blok maar wel de rest", async () => {
-  const regels = peilRegels([1, 2, 3, 4].map(aank));
-  assert.equal(regels.length, 2);
+test("PEIL-blok: standaard 4 regels met datum of In discussie, tool en Alles in PEIL; bij storing (leeg of null) geen blok maar wel de rest", async () => {
+  assert.equal(ZIJBALK_PEIL, 4);
+  const regels = peilRegels([1, 2, 3, 4, 5, 6].map(aank));
+  assert.equal(regels.length, 4);
+  assert.equal(peilRegels([1, 2, 3, 4].map(aank), 2).length, 2);
   const o = await opslagMet([bericht(1)]);
   const items = (await laadZijbalkItems(o, "zijbalk", naam))!;
   const html = renderToStaticMarkup(React.createElement(Zijbalk, { items, peil: regels, bijgewerkt: "Bijgewerkt vandaag 14.46 uur" }));
@@ -117,4 +120,29 @@ test("headers: frame-ancestors gelijk aan /inbed, geen X-Frame-Options, noindex;
   const src = readFileSync("app/inbed/Hoogte.tsx", "utf8");
   assert.ok(src.includes('type: "nv-hoogte"') && src.includes("nlfrNieuwsHeight"));
   assert.ok(readFileSync("app/inbed/zijbalk/page.tsx", "utf8").includes("<Hoogte ook />"));
+});
+
+test("?aantal= (1 tot 20, standaard 10) en ?peil= (0 tot 8, standaard 4): begrensd, onzin geeft de standaard", () => {
+  assert.equal(zijbalkAantal(undefined), 10);
+  assert.equal(zijbalkAantal("6"), 6);
+  assert.equal(zijbalkAantal("0"), 1);
+  assert.equal(zijbalkAantal("99"), 20);
+  assert.equal(zijbalkAantal("abc"), 10);
+  assert.equal(zijbalkAantal("-3"), 10);
+  assert.equal(zijbalkPeilAantal(undefined), 4);
+  assert.equal(zijbalkPeilAantal("0"), 0);
+  assert.equal(zijbalkPeilAantal("8"), 8);
+  assert.equal(zijbalkPeilAantal("50"), 8);
+  assert.equal(zijbalkPeilAantal("x"), 4);
+});
+
+test("geen scrollbalk: html en body overflow hidden op de zijbalk; Hoogte meet de body, luistert op beelden en body; plakblok heeft scrolling=no en ruime starthoogte", () => {
+  const css = readFileSync("app/inbed/inbed.css", "utf8");
+  assert.match(css, /html:has\(\.zb\), body:has\(\.zb\) \{[^}]*overflow: hidden/);
+  const src = readFileSync("app/inbed/Hoogte.tsx", "utf8");
+  assert.ok(src.includes("ResizeObserver") && src.includes('addEventListener("load", stuur, true)') && src.includes("getBoundingClientRect"));
+  const doc = readFileSync("docs/inbedden.md", "utf8");
+  const blok = doc.match(/<iframe id="nlfr-nieuws" src="https:\/\/nieuws\.infofrankrijk\.com\/inbed\/zijbalk"[^>]*>/)![0];
+  assert.match(blok, /scrolling="no"/);
+  assert.match(blok, /height="3100"/);
 });

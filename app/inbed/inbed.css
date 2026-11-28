@@ -23,6 +23,9 @@ body:has(.ib) { background: var(--kaart); }
 @media (max-width: 400px) { .ib-beeld { width: 72px; height: 56px; } .ib-kop nav a { padding: 0 10px; font-size: 14px; } }
 
 /* Zijbalk /inbed/zijbalk: precies ontworpen voor 173 px (160 tot 200 px moet ook), alleen variabelen uit huisstijl.css. Geen afgeronde kaarten, nergens onder 11px. */
+/* De pagina zelf scrolt nooit: de iframe krijgt de hoogte van de inhoud (script) of een ruime vaste hoogte (zonder script). */
+html:has(.zb), body:has(.zb) { overflow: hidden; scrollbar-width: none; }
+html:has(.zb)::-webkit-scrollbar, body:has(.zb)::-webkit-scrollbar { display: none; }
 .zb { max-width: none; width: 100%; padding: 0 8px 12px; overflow-wrap: anywhere; }
 .zb-kop { padding: 8px 0 6px; border-bottom: 1px solid var(--lijn); }
 .zb-kop h1 { margin: 0; font-size: 14px; line-height: 1.25; color: var(--maroon); }

@@ -5,8 +5,21 @@ import type { Aankondiging } from "@/lib/peilvak";
 import { groenePeil, leesKanalen, type Kanaal } from "@/lib/motor/types";
 import { BASIS_URL, PEIL_URL, veiligeUrl } from "@/lib/site";
 
-export const ZIJBALK_BERICHTEN = 4;
-export const ZIJBALK_PEIL = 2;
+export const ZIJBALK_BERICHTEN = 10;
+export const ZIJBALK_BERICHTEN_MAX = 20;
+export const ZIJBALK_PEIL = 4;
+export const ZIJBALK_PEIL_MAX = 8;
+
+/** Geheel getal binnen min en max uit een queryparameter; leeg of onzin geeft de standaard. */
+export function begrensd(waarde: string | null | undefined, standaard: number, min: number, max: number): number {
+  const t = String(waarde ?? "").trim();
+  if (!/^\d+$/.test(t)) return standaard;
+  return Math.min(max, Math.max(min, Number(t)));
+}
+/** ?aantal= (berichten, 1 tot 20, standaard 10). */
+export const zijbalkAantal = (v?: string | null) => begrensd(v, ZIJBALK_BERICHTEN, 1, ZIJBALK_BERICHTEN_MAX);
+/** ?peil= (aankondigingen, 0 tot 8, standaard 4; 0 laat het blok weg). */
+export const zijbalkPeilAantal = (v?: string | null) => begrensd(v, ZIJBALK_PEIL, 0, ZIJBALK_PEIL_MAX);
 export const ZIJBALK_LEEG = "Er is nu geen nieuws.";
 export const MEER_NIEUWS_URL = "https://nieuws.infofrankrijk.com";
 export const PORTEMONNEE_CHIP = "€ raakt uw portemonnee";
@@ -29,19 +42,19 @@ export function chipsVan(b: OpgeslagenBericht, titels: Map<string, { titel?: str
   return chips;
 }
 
-export function filterZijbalk(lijst: OpgeslagenBericht[], kanaal: Kanaal): OpgeslagenBericht[] {
+export function filterZijbalk(lijst: OpgeslagenBericht[], kanaal: Kanaal, aantal: number = ZIJBALK_BERICHTEN): OpgeslagenBericht[] {
   return lijst
     .filter((b) => b.status === "gepubliceerd" && b.redactie !== "weg" && leesKanalen(b.kanalen)[kanaal])
     .sort((a, b) => b.gepubliceerdOp.localeCompare(a.gepubliceerdOp))
-    .slice(0, ZIJBALK_BERICHTEN);
+    .slice(0, aantal);
 }
 
 /** null bij een storing in de opslag, een lege lijst als er niets is. */
-export async function laadZijbalkItems(opslag: Opslag | null, kanaal: Kanaal, categorieNaam: (c: string) => string): Promise<ZijbalkItem[] | null> {
+export async function laadZijbalkItems(opslag: Opslag | null, kanaal: Kanaal, categorieNaam: (c: string) => string, aantal: number = ZIJBALK_BERICHTEN): Promise<ZijbalkItem[] | null> {
   if (!opslag) return null;
   try {
-    const [lijst, titels] = await Promise.all([opslag.berichten({ limiet: 60, kanaal }), opslag.lezerszinnen().catch(() => new Map<string, { titel?: string }>())]);
-    return filterZijbalk(lijst, kanaal).map((b) => ({
+    const [lijst, titels] = await Promise.all([opslag.berichten({ limiet: 80, kanaal }), opslag.lezerszinnen().catch(() => new Map<string, { titel?: string }>())]);
+    return filterZijbalk(lijst, kanaal, aantal).map((b) => ({
       id: b.id, titel: b.kop, url: `${BASIS_URL}/bericht/${b.id}`, datum: b.gepubliceerdOp, label: categorieNaam(b.categorie),
       beeld: b.beeldUrl ? veiligeUrl(b.beeldUrl) : null, chips: chipsVan(b, titels),
     }));
@@ -51,8 +64,8 @@ export async function laadZijbalkItems(opslag: Opslag | null, kanaal: Kanaal, ca
 }
 
 /** De eerstvolgende aankondigingen uit het PEIL-vak (al met geldige lezerszin en titel), met hooguit één tool per regel. */
-export function peilRegels(lijst: Aankondiging[] | null | undefined): ZijbalkPeilRegel[] {
-  return (lijst || []).slice(0, ZIJBALK_PEIL).map((a) => ({
+export function peilRegels(lijst: Aankondiging[] | null | undefined, aantal: number = ZIJBALK_PEIL): ZijbalkPeilRegel[] {
+  return (lijst || []).slice(0, aantal).map((a) => ({
     id: a.id, titel: a.naam, datum: a.datum, inDiscussie: a.inDiscussie || a.datum === null, zin: a.omschrijving, tool: a.tools[0] ? { naam: a.tools[0].naam, url: a.tools[0].url } : null,
   }));
 }
