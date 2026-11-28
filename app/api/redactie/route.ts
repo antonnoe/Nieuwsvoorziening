@@ -2,7 +2,7 @@ import { geenOpslag, leesOpslag } from "@/lib/motor/api";
 import { MigratieOntbreekt } from "@/lib/motor/opslag";
 import { RadarOntbreekt } from "@/lib/motor/radar";
 import { radarVorm } from "@/lib/motor/radar";
-import { controleerToegang, leesOpdracht, peilVorm, poortBlokkade, redactieAntwoord, redactieCors, redactieVorm, toegangFout } from "@/lib/redactie";
+import { controleerToegang, leesOpdracht, peilVorm, poortBlokkade, radarBesluitUitvoeren, redactieAntwoord, redactieCors, redactieVorm, toegangFout } from "@/lib/redactie";
 
 export const dynamic = "force-dynamic";
 
@@ -69,11 +69,9 @@ export async function POST(req: Request) {
       return redactieAntwoord(req, { signaal: { id: sig.id, status: opdracht.keuze } });
     }
     if (opdracht.actie === "radar") {
-      const rij = await opslag.radarRij(opdracht.id);
-      if (!rij) return redactieAntwoord(req, { fout: "Radarsignaal niet gevonden." }, 404);
-      if (rij.besluit) return redactieAntwoord(req, { fout: `Dit radarsignaal is al afgehandeld (${rij.besluit}).` }, 409);
-      await opslag.zetRadarBesluit(opdracht.id, opdracht.radarKeuze!);
-      return redactieAntwoord(req, { radar: { id: rij.id, besluit: opdracht.radarKeuze } });
+      const u = await radarBesluitUitvoeren(opslag, opdracht.id, opdracht.radarKeuze!);
+      if (!u.ok) return redactieAntwoord(req, { fout: u.fout }, u.status);
+      return redactieAntwoord(req, { radar: { id: opdracht.id, besluit: opdracht.radarKeuze } });
     }
     const bestaat = await opslag.redactieBericht(opdracht.id);
     if (!bestaat) return redactieAntwoord(req, { fout: "Bericht niet gevonden." }, 404);

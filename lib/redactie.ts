@@ -4,7 +4,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { geheim } from "@/lib/beheer";
 import { bronDomein } from "@/lib/motor/api";
-import { soortVan, type OpgeslagenBericht } from "@/lib/motor/opslag";
+import { soortVan, type OpgeslagenBericht, type Opslag } from "@/lib/motor/opslag";
 import { CATEGORIEEN, KANALEN, PEIL_BESLUITEN, RADAR_BESLUITEN, leesKanalen, type Bericht, type Kanaal, type PeilBesluit, type PeilSignaalRij, type RadarBesluit } from "@/lib/motor/types";
 import { laadConfig } from "@/lib/motor/config";
 
@@ -147,6 +147,15 @@ export function peilVorm(x: PeilSignaalRij) {
     aantal: x.aantal,
     advies: advies as "vastgesteld" | "verwacht" | "lijst",
   };
+}
+
+/** Het besluit over een radarsignaal uitvoeren (gedeeld door /api/redactie en de redactie-app). */
+export async function radarBesluitUitvoeren(opslag: Opslag, id: string, keuze: RadarBesluit): Promise<{ ok: true } | { ok: false; status: 404 | 409; fout: string }> {
+  const rij = await opslag.radarRij(id);
+  if (!rij) return { ok: false, status: 404, fout: "Radarsignaal niet gevonden." };
+  if (rij.besluit) return { ok: false, status: 409, fout: `Dit radarsignaal is al afgehandeld (${rij.besluit}).` };
+  await opslag.zetRadarBesluit(id, keuze);
+  return { ok: true };
 }
 
 export interface RedactieOpdracht {
