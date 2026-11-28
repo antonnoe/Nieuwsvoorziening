@@ -1,11 +1,12 @@
 import type { MetadataRoute } from "next";
 import { leesOpslag } from "@/lib/motor/api";
+import { beeldIds } from "@/lib/beeldmateriaal";
 import { BASIS_URL } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const vast: MetadataRoute.Sitemap = [{ url: `${BASIS_URL}/` }, { url: `${BASIS_URL}/werkwijze` }, { url: `${BASIS_URL}/beeldmateriaal` }];
+  const vast: MetadataRoute.Sitemap = [{ url: `${BASIS_URL}/` }, { url: `${BASIS_URL}/werkwijze` }, { url: `${BASIS_URL}/beeldmateriaal` }, ...beeldIds().map((id) => ({ url: `${BASIS_URL}/beeldmateriaal/${id}` }))];
   const opslag = leesOpslag();
   if (!opslag) return vast;
   try {

@@ -113,9 +113,21 @@ a:focus-visible { outline: 3px solid var(--maroon); outline-offset: 2px; border-
 .beeldraster .bbeschrijving { font-size: 12px; line-height: 1.4; color: var(--grijs); }
 .uitleglink { font-size: 12.5px; margin: 0 0 6px; }
 .uitleglink a { color: var(--grijs); text-decoration: underline; }
+.beeldraster li { scroll-margin-top: 16px; }
 .beeldraster .bdl { font-size: 12.5px; color: var(--grijs); }
 .beeldraster .bdl a { color: var(--maroon); font-weight: 700; }
 @media (max-width: 1100px) { .beeldraster { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (max-width: 840px) { .beeldraster { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 639px) { .beeldraster { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } }
 .tekst .herformulering { font-size: 13px; line-height: 1.5; color: var(--grijs); margin-top: 20px; }
+
+/* beeldmateriaal detailpagina (/beeldmateriaal/[id]) */
+.beelddetail { max-width: 760px; }
+.bm-knop { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 10px 20px; border-radius: 12px; border: 1.5px solid var(--inkt); background: var(--kaart); color: var(--inkt); font-weight: 700; font-size: 16px; text-decoration: none; }
+.bm-knop.hoofd { background: var(--inkt); color: var(--kaart); }
+.beelddetail .terugknop { margin: 4px 0 18px; }
+.beelddetail .groot { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: contain; background: var(--wit); border: 1px solid var(--lijn); border-radius: 12px; }
+.beelddetail h2 { font-family: "Source Serif 4", Georgia, serif; font-weight: 600; font-size: 28px; margin: 18px 0 6px; }
+.beelddetail .nlbe { font-size: 12px; font-weight: 700; color: var(--groen); background: var(--groenzacht); border-radius: 999px; padding: 2px 9px; margin-left: 8px; white-space: nowrap; vertical-align: middle; }
+.beelddetail .meta { color: var(--grijs); margin: 0 0 12px; }
+.beelddetail .downloads { display: flex; flex-wrap: wrap; gap: 12px; margin: 18px 0; }

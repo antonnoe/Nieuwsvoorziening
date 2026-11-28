@@ -45,3 +45,16 @@ export function groepeerBeelden(beelden: Illustratie[]): BeeldSectie[] {
 export function beeldmateriaalSecties(): BeeldSectie[] {
   return groepeerBeelden(ILLUSTRATIES.beelden);
 }
+
+/** De rechtenzin op /beeldmateriaal en op elke detailpagina: één plek. */
+export const RECHTEN_TEKST = "Alle illustraties zijn eigen werk van Communities Abroad. Ze zijn vrij te gebruiken op de eigen platforms van Communities Abroad: Nederlanders.fr, Infofrankrijk, nieuws.infofrankrijk.com en Infopoche. Gebruik door anderen is alleen toegestaan met schriftelijke toestemming. Vermeld bij gebruik: \u201cillustratie Communities Abroad\u201d.";
+
+/** Een beeld voor de detailpagina /beeldmateriaal/[id]: server-side uit index.json; onbekend id geeft null (de pagina geeft dan 404). */
+export function beeldDetail(id: string): (Illustratie & { categorieKop: string; groepKop: string }) | null {
+  const b = ILLUSTRATIES.beelden.find((x) => x.id === id);
+  if (!b) return null;
+  return { ...b, categorieKop: hoofdletter(b.categorie), groepKop: hoofdletter(b.groep || "overig") };
+}
+
+/** Alle id's met een detailpagina (voor generateStaticParams en de sitemap). */
+export const beeldIds = (): string[] => ILLUSTRATIES.beelden.map((b) => b.id);
