@@ -180,8 +180,8 @@ test("echte koppen kiezen de passende illustratie", () => {
 test("alle illustraties in de index hebben een bestaand svg- en png-bestand", async () => {
   const { existsSync } = await import("node:fs");
   const { join } = await import("node:path");
-  assert.equal(ILLUSTRATIES.beelden.length, 213);
-  assert.equal(new Set(ILLUSTRATIES.beelden.map((i) => i.id)).size, 213);
+  assert.equal(ILLUSTRATIES.beelden.length, 215);
+  assert.equal(new Set(ILLUSTRATIES.beelden.map((i) => i.id)).size, 215);
   for (const i of ILLUSTRATIES.beelden) {
     assert.ok(existsSync(join(process.cwd(), "public", i.svg)), i.svg);
     assert.ok(existsSync(join(process.cwd(), "public", i.png)), i.png);
@@ -221,4 +221,10 @@ test("index: geen dubbele id's en geen verboden korte trefwoorden (woordbegin-ma
   for (const i of ILLUSTRATIES.beelden) {
     for (const t of i.trefwoorden) assert.ok(!verboden.has(t.toLowerCase().trim()), `${i.id}: ${t}`);
   }
+});
+
+test("loon en krimp: de minimumloon-kop en de recessie-kop kiezen de nieuwe economiebeelden", () => {
+  const k = (kop: string, samenvatting: string) => kiesIllustratie({ kop, samenvatting, categorie: "economie en ondernemen" })?.id;
+  assert.equal(k("Minimumloon in Frankrijk stijgt op 1 december", "Het smic gaat omhoog voor werknemers."), "economie-loonstrook-fr");
+  assert.equal(k("Frankrijk officieel in recessie na tweede kwartaal met krimp", "Het bbp krimpt."), "economie-dalende-grafiek-fr");
 });

@@ -7,7 +7,6 @@ import { GeheugenOpslag } from "../lib/motor/opslag";
 import { actieveBronnen, laadConfig, zetRadarDomeinen } from "../lib/motor/config";
 import { GEEN_ACTIEVE_BRONNEN_MELDING, bronKleur, kiesOogstBronnen, statusTekst, BRON_SOORT_TEKST } from "../lib/motor/bronnenlijst";
 import { draaiOogst } from "../lib/motor/motor";
-import { ONDERWERP_AANWIJZING } from "../lib/motor/synthese";
 import { maakBerichtUitTip, isOverheidsLink, MELDING_AL_AFGEHANDELD, MELDING_GEEN_BRON, MELDING_GEEN_OVERHEIDSLINK, MELDING_LINK_ONLEESBAAR, MELDING_GEEN_BERICHT } from "../lib/redactie-maak-bericht";
 import { voerActieUit, metMelding } from "../lib/redactie-acties";
 import { TIJDELIJK_MELDING } from "../lib/redactie-melding";
@@ -115,7 +114,7 @@ test("Maak bericht: uit de overheidsbron van de tip, zelfde synthese en poort, t
   assert.equal((await opslag.openItems(new Date(nu - 86400_000).toISOString())).length, 0);
 });
 
-test("Maak bericht: de werktitel is alleen een aanwijzing voor het model, nooit bron; niets uit de tipgever, geen tipgever in het bronnenblok", async () => {
+test("Maak bericht: de werktitel en de signaal-url van de tip gaan nooit naar het model; niets uit de tipgever, geen tipgever in het bronnenblok", async () => {
   const opslag = await opzet();
   const client = klein([synthese()]);
   const aangevraagd: string[] = [];
@@ -123,8 +122,10 @@ test("Maak bericht: de werktitel is alleen een aanwijzing voor het model, nooit 
   const u = await maakBerichtUitTip({ opslag, client, fetchFn: f, nu, peil: [], generator: null }, ID1);
   assert.ok(u.ok);
   const syn = gebruikers(client)[0];
-  assert.ok(syn.user.includes("Nieuwe energielabels voor woningen"), "de werktitel gaat als aanwijzing mee");
-  assert.ok(syn.user.includes(ONDERWERP_AANWIJZING), "met de waarschuwing dat het geen bron is");
+  const invoer = `${syn.system}\n${syn.user}`;
+  assert.ok(!/Nieuwe energielabels/i.test(invoer) && !/energielabels voor woningen/i.test(invoer), "geen deel van de werktitel in de synthese-invoer");
+  assert.ok(!/connexionfrance|news\/dpe-changes|dpe-changes/i.test(invoer), "de signaal-url staat niet in de synthese-invoer");
+  assert.ok(!invoer.includes("Onderwerp van het bericht"), "geen onderwerpaanwijzing meer");
   assert.ok(!syn.user.includes("connexion") && !syn.user.includes("dpe-changes"), "niets uit de tipgever zelf");
   assert.ok(!aangevraagd.some((x) => /connexion/i.test(x)), "de tipgever wordt nooit opgehaald");
   assert.ok(syn.user.includes("Diagnostic de performance"), "de overheidsbron is wel het bronmateriaal");

@@ -1,8 +1,8 @@
 // "Maak bericht" bij een tip (redactie-app, 28-11-2026, herstelronde 1): uit de overheidsbron van de tip (die al in nv_bron_items staat, of een
 // geplakte link van een overheidspagina) plus eventuele andere geschikte nieuwsitems schrijft de motor een echt bericht, met DEZELFDE synthese,
 // kwaliteitspoort, PEIL-koppeling en beeldkeuze als de oogst (geen tweede schrijfopdracht).
-// HARDE REGEL: nooit iets uit de tipgever zelf: geen tekst en geen kop als bronmateriaal. De werktitel van de tip gaat alleen als aanwijzing naar
-// het model (`synthetiseer(..., onderwerp)`), is geen bron en komt nooit in het bronnenblok.
+// HARDE REGEL (besluit B, 28-11-2026): nooit iets uit de tipgever zelf: geen tekst, geen kop, en ook de werktitel van de tip gaat NIET meer naar het
+// model. Het model schrijft alleen uit de overheidsbron en de gekoppelde nieuwsitems; werktitel en signaal_url blijven buiten de synthese-invoer.
 import { normaliseerAdres } from "@/lib/bronontdekking";
 import { regimeVoorDomein } from "@/lib/bronbeheer";
 import { TIJDELIJK_MELDING, logReden } from "@/lib/redactie-melding";
@@ -166,7 +166,7 @@ export async function maakBerichtUitTip(o: MaakOpties, tipId: string, link?: str
   try {
     await verrijkMetArtikelen(c, fetchFn).catch(() => 0);
     for (const i of c.items) if (!i.artikelTekst && linkTeksten.has(i.url)) i.artikelTekst = linkTeksten.get(i.url);
-    const eerste = await synthetiseer(c, o.client, tip.werktitel);
+    const eerste = await synthetiseer(c, o.client);
     if (!eerste) return { ok: false, melding: MELDING_GEEN_BERICHT };
     const { s, uitslag } = await poortMetHerkansing(eerste, c, o.client, cfg);
 

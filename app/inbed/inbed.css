@@ -1,0 +1,23 @@
+/* Inbedvenster: kale layout, alleen variabelen uit huisstijl.css. De netwerkbalk, kop en voet van de site zijn hier verborgen. */
+body:has(.ib) .net, body:has(.ib) footer, body:has(.ib) .sla-over { display: none; }
+body:has(.ib) { background: var(--kaart); }
+.ib { padding: 0 12px 16px; max-width: 1100px; margin: 0 auto; }
+.ib-kop { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid var(--lijn); }
+.ib-kop nav { display: flex; gap: 4px; }
+.ib-kop nav a { display: inline-flex; align-items: center; min-height: 48px; padding: 0 14px; font-weight: 700; font-size: 15px; color: var(--grijs); border-bottom: 3px solid transparent; }
+.ib-kop nav a.aan { color: var(--maroon); border-bottom-color: var(--maroon); }
+.ib-tijd { font-size: 12px; color: var(--grijs); }
+.ib-lijst { list-style: none; margin: 12px 0 0; padding: 0; display: grid; grid-template-columns: 1fr; gap: 10px; }
+.ib-lijst li a { display: flex; gap: 12px; padding: 10px; height: 100%; border: 1px solid var(--lijn); border-radius: 12px; background: var(--kaart); color: var(--inkt); }
+.ib-lijst li a:hover b { color: var(--maroon); }
+.ib-beeld { flex: none; width: 96px; height: 72px; background: var(--wit); border-radius: 8px; overflow: hidden; }
+.ib-beeld img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.ib-tekst { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ib-tekst b { font-size: 15px; line-height: 1.3; }
+.ib-sam { font-size: 13.5px; line-height: 1.4; color: var(--inkt); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ib-meta { font-size: 12px; color: var(--grijs); }
+.ib-leeg { padding: 24px 4px; color: var(--grijs); }
+.ib-alles { margin: 14px 0 0; text-align: center; }
+.ib-alles a { display: inline-flex; align-items: center; min-height: 48px; padding: 0 22px; border: 1.5px solid var(--maroon); color: var(--maroon); border-radius: 999px; font-weight: 700; }
+@media (min-width: 700px) { .ib-lijst { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 400px) { .ib-beeld { width: 72px; height: 56px; } .ib-kop nav a { padding: 0 10px; font-size: 14px; } }

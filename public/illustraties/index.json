@@ -4034,6 +4034,44 @@
    ],
    "svg": "/illustraties/verkeer-vrachtwagen-fr.svg",
    "png": "/illustraties/verkeer-vrachtwagen-fr.png"
+  },
+  {
+   "id": "economie-loonstrook-fr",
+   "categorie": "economie en ondernemen",
+   "groep": "geld en bedrijven",
+   "naam": "Loonstrook",
+   "beschrijving": "Loonstrook met envelop, munten en kalender; loon, salaris en minimumloon.",
+   "binding": "fr",
+   "trefwoorden": [
+    "minimumloon",
+    "salaris",
+    "loon",
+    "smic",
+    "lonen",
+    "loonstrook",
+    "loonsverhoging"
+   ],
+   "svg": "/illustraties/economie-loonstrook-fr.svg",
+   "png": "/illustraties/economie-loonstrook-fr.png"
+  },
+  {
+   "id": "economie-dalende-grafiek-fr",
+   "categorie": "economie en ondernemen",
+   "groep": "geld en bedrijven",
+   "naam": "Dalende grafiek",
+   "beschrijving": "Staafdiagram met dalende staven en een pijl omlaag naast een fabriek; economische krimp en recessie.",
+   "binding": "fr",
+   "trefwoorden": [
+    "recessie",
+    "krimp",
+    "krimpt",
+    "economische groei",
+    "bbp",
+    "kwartaal",
+    "economische krimp"
+   ],
+   "svg": "/illustraties/economie-dalende-grafiek-fr.svg",
+   "png": "/illustraties/economie-dalende-grafiek-fr.png"
   }
  ]
 }
