@@ -4,7 +4,7 @@
 // UNSPLASH_ACCESS_KEY bestaat, anders geen beeld. Nooit een persfoto.
 import type { Bericht, BeeldCredit } from "./types";
 import type { ModelClient } from "./ai";
-import { illustratieResultaat } from "./illustraties";
+import { illustratieResultaatMetModel } from "./illustraties";
 
 export interface BeeldResultaat {
   url: string;
@@ -48,7 +48,13 @@ export function registreerGenerator(g: BeeldGenerator) {
   register.set(g.naam, g);
 }
 
+/** Beeldbron (besluit 28-11-2026): standaard alleen eigen illustraties; Unsplash alleen met BEELD_BRON=unsplash. BEELD_GENERATOR=uit telt als illustraties. */
+export function beeldBron(): "illustraties" | "unsplash" {
+  return String(process.env.BEELD_BRON || "").trim().toLowerCase() === "unsplash" ? "unsplash" : "illustraties";
+}
+
 export function actieveGenerator(): BeeldGenerator | null {
+  if (beeldBron() !== "unsplash") return null;
   const gekozen = String(process.env.BEELD_GENERATOR || "").trim();
   const naam = gekozen || (String(process.env.UNSPLASH_ACCESS_KEY || "").trim() ? "unsplash" : "");
   if (!naam || naam === "uit") return null;
@@ -72,7 +78,7 @@ export async function beeldResultaat(b: BeeldInvoer, g: BeeldGenerator | null = 
   }
   if (!r) {
     try {
-      r = illustratieResultaat(b, b.recent || []);
+      r = await illustratieResultaatMetModel(b, b.client ?? null, b.recent || []);
     } catch {
       r = null;
     }

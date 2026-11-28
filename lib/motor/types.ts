@@ -87,6 +87,8 @@ export interface BeeldCredit {
   naam?: string;
   /** Absolute PNG-url (voor e-mail, die geen SVG toont). */
   png?: string;
+  /** Alleen bij bron "Illustratie": hoe het beeld gekozen is (modelkeuze of trefwoordscore). Ontbreekt bij oude berichten. */
+  keuze?: "model" | "trefwoord";
 }
 
 export interface Synthese {

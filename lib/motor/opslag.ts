@@ -108,6 +108,11 @@ export interface Opslag {
   /** Gepubliceerde berichten zonder beeld (nieuwste eerst), om alsnog een beeld te geven. */
   zonderBeeld(limiet: number): Promise<OpgeslagenBericht[]>;
   zetBeeld(id: string, url: string, credit: BeeldCredit | null): Promise<void>;
+  /**
+   * Gepubliceerde berichten sinds `sindsIso` (niet redactie "weg", nieuwste eerst) waarvan het beeld herkozen moet worden:
+   * beeld_credit.bron "Unsplash", of bron "Illustratie" zonder keuze "model" (besluit 28-11-2026).
+   */
+  teHerkiezenBeeld(sindsIso: string, limiet: number): Promise<OpgeslagenBericht[]>;
   /** beeld_url's van de nieuwste gepubliceerde berichten (nieuwste eerst), zodat geen foto twee keer wordt gebruikt. */
   recenteBeeldUrls(limiet: number): Promise<string[]>;
   /** Gepubliceerde berichten sinds `sindsIso` met een lagere regelversie dan `versie` (nieuwste eerst), om opnieuw te schrijven. */
@@ -247,6 +252,13 @@ export class GeheugenOpslag implements Opslag {
   }
   async zonderBeeld(limiet: number) {
     return this.berichtenLijst.filter((b) => b.status === "gepubliceerd" && !b.beeldUrl).sort((a, b) => b.gepubliceerdOp.localeCompare(a.gepubliceerdOp)).slice(0, limiet);
+  }
+  async teHerkiezenBeeld(sinds: string, limiet: number) {
+    return this.berichtenLijst
+      .filter((b) => b.status === "gepubliceerd" && b.redactie !== "weg" && b.gepubliceerdOp >= sinds && b.beeldCredit
+        && (b.beeldCredit.bron === "Unsplash" || (b.beeldCredit.bron === "Illustratie" && b.beeldCredit.keuze !== "model")))
+      .sort((a, b) => b.gepubliceerdOp.localeCompare(a.gepubliceerdOp))
+      .slice(0, limiet);
   }
   async recenteBeeldUrls(limiet: number) {
     return this.berichtenLijst.filter((b) => b.status === "gepubliceerd" && b.beeldUrl).sort((a, b) => b.gepubliceerdOp.localeCompare(a.gepubliceerdOp)).slice(0, limiet).map((b) => b.beeldUrl!);
@@ -646,6 +658,13 @@ export class SupabaseOpslag implements Opslag {
   }
   async zonderBeeld(limiet: number) {
     const rijen = await this.lees(`nv_berichten?status=eq.gepubliceerd&beeld_url=is.null&order=gepubliceerd_op.desc&limit=${limiet}&select=*,nv_bronnen_per_bericht(*)`);
+    return rijen.map(naarBericht);
+  }
+  async teHerkiezenBeeld(sinds: string, limiet: number) {
+    const wie = encodeURIComponent("(beeld_credit->>bron.eq.Unsplash,and(beeld_credit->>bron.eq.Illustratie,beeld_credit->>keuze.is.null),and(beeld_credit->>bron.eq.Illustratie,beeld_credit->>keuze.neq.model))");
+    const zoek = (extra: string) => this.lees(`nv_berichten?status=eq.gepubliceerd&gepubliceerd_op=gte.${encodeURIComponent(sinds)}&or=${wie}${extra}&order=gepubliceerd_op.desc&limit=${limiet}&select=*,nv_bronnen_per_bericht(*)`);
+    // "weg"-berichten blijven buiten schot (zonder migratie bestaat die kolom niet).
+    const rijen = await this.metKolommen(() => zoek("&redactie=is.null"), () => zoek(""));
     return rijen.map(naarBericht);
   }
   async recenteBeeldUrls(limiet: number) {

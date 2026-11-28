@@ -4,6 +4,8 @@
 // Keuze zonder modelaanroep: categorie, binding (nl of fr), trefwoorden, langst niet gebruikt.
 import indexJson from "../../public/illustraties/index.json";
 import type { BeeldCredit, Categorie } from "./types";
+import { haalJson, type ModelClient } from "./ai";
+import { modelGoedkoop } from "./config";
 
 export interface Illustratie {
   id: string;
@@ -79,6 +81,42 @@ export interface IllustratieInvoer {
   categorie: Categorie | string;
 }
 
+type Kandidaat = { i: Illustratie; s: number; eigen: number; bind: number; g: number };
+
+/** Score per beeld en de volgorde-regels; gedeeld door `kiesIllustratie` en de kandidatenlijst voor het model. */
+function maakKandidaten(b: IllustratieInvoer, recent: string[], lijst: IllustratieLijst) {
+  const alle = lijst.beelden;
+  const tekst = `${b.kop || ""} ${b.samenvatting || ""}`;
+  const voorkeur = gaatOverNederland(tekst) ? "nl" : "fr";
+  const schoon = (t: string) => ` ${normaal(t).replace(/[^a-z0-9]+/g, " ")} `;
+  const kopTekst = schoon(b.kop || "");
+  const samTekst = schoon(b.samenvatting || "");
+  // Trefwoord in de kop 2 punten, in de samenvatting 1; elk trefwoord telt hooguit één keer, met het hoogste gewicht.
+  const score = (i: Illustratie) => {
+    let s = 0;
+    for (const t of i.trefwoorden) {
+      const n = normaal(t).replace(/[^a-z0-9]+/g, " ").trim();
+      if (!n) continue;
+      if (kopTekst.includes(` ${n}`)) s += 2;
+      else if (samTekst.includes(` ${n}`)) s += 1;
+    }
+    // Nederland-onderwerp: een nl-beeld met minstens 1 treffer krijgt +3 (voorrang, geen tiebreak).
+    return voorkeur === "nl" && i.binding === "nl" && s > 0 ? s + 3 : s;
+  };
+  const gebruikPlek = new Map<string, number>(); // pad -> plaats in `recent` (0 = nieuwste)
+  recent.forEach((u, n) => {
+    const p = pad(u);
+    if (!gebruikPlek.has(p)) gebruikPlek.set(p, n);
+  });
+  const geleden = (i: Illustratie) => gebruikPlek.get(pad(i.svg)) ?? Infinity;
+  // Volgorde: hoogste score, eigen categorie, nl-voorrang (binding), langst niet gebruikt; daarna de vaste volgorde (eerste wint).
+  const kandidaten: Kandidaat[] = alle.map((i) => ({ i, s: score(i), eigen: i.categorie === b.categorie ? 1 : 0, bind: i.binding === voorkeur ? 1 : 0, g: geleden(i) }));
+  const beter = (x: Kandidaat, y: Kandidaat) =>
+    x.s !== y.s ? x.s > y.s : x.eigen !== y.eigen ? x.eigen > y.eigen : x.bind !== y.bind ? x.bind > y.bind : x.g > y.g;
+  const pak = (pool: Kandidaat[]) => pool.reduce<Kandidaat | null>((m, k) => (!m || beter(k, m) ? k : m), null);
+  return { kandidaten, voorkeur, beter, pak };
+}
+
 /**
  * Kiest een illustratie (besluit 28-11-2026): trefwoord in de kop 2 punten, in de samenvatting 1 (per trefwoord hooguit één keer);
  * de hoogste score over de hele set wint; bij gelijke score de eigen categorie, dan binding nl bij Nederland-onderwerpen (anders fr),
@@ -88,36 +126,8 @@ export interface IllustratieInvoer {
  */
 export function kiesIllustratie(b: IllustratieInvoer, recent: string[] = [], lijst: IllustratieLijst = ILLUSTRATIES): Illustratie | null {
   try {
-    const alle = lijst.beelden;
-    if (!alle.length) return null;
-    const tekst = `${b.kop || ""} ${b.samenvatting || ""}`;
-    const voorkeur = gaatOverNederland(tekst) ? "nl" : "fr";
-    const schoon = (t: string) => ` ${normaal(t).replace(/[^a-z0-9]+/g, " ")} `;
-    const kopTekst = schoon(b.kop || "");
-    const samTekst = schoon(b.samenvatting || "");
-    // Trefwoord in de kop 2 punten, in de samenvatting 1; elk trefwoord telt hooguit één keer, met het hoogste gewicht.
-    const score = (i: Illustratie) => {
-      let s = 0;
-      for (const t of i.trefwoorden) {
-        const n = normaal(t).replace(/[^a-z0-9]+/g, " ").trim();
-        if (!n) continue;
-        if (kopTekst.includes(` ${n}`)) s += 2;
-        else if (samTekst.includes(` ${n}`)) s += 1;
-      }
-      // Nederland-onderwerp: een nl-beeld met minstens 1 treffer krijgt +3 (voorrang, geen tiebreak).
-      return voorkeur === "nl" && i.binding === "nl" && s > 0 ? s + 3 : s;
-    };
-    const gebruikPlek = new Map<string, number>(); // pad -> plaats in `recent` (0 = nieuwste)
-    recent.forEach((u, n) => {
-      const p = pad(u);
-      if (!gebruikPlek.has(p)) gebruikPlek.set(p, n);
-    });
-    const geleden = (i: Illustratie) => gebruikPlek.get(pad(i.svg)) ?? Infinity;
-    // Volgorde: hoogste score, eigen categorie, nl-voorrang (binding), langst niet gebruikt; daarna de vaste volgorde (eerste wint).
-    const kandidaten = alle.map((i) => ({ i, s: score(i), eigen: i.categorie === b.categorie ? 1 : 0, bind: i.binding === voorkeur ? 1 : 0, g: geleden(i) }));
-    const beter = (x: (typeof kandidaten)[number], y: (typeof kandidaten)[number]) =>
-      x.s !== y.s ? x.s > y.s : x.eigen !== y.eigen ? x.eigen > y.eigen : x.bind !== y.bind ? x.bind > y.bind : x.g > y.g;
-    const pak = (pool: typeof kandidaten) => pool.reduce<(typeof kandidaten)[number] | null>((m, k) => (!m || beter(k, m) ? k : m), null);
+    if (!lijst.beelden.length) return null;
+    const { kandidaten, voorkeur, pak } = maakKandidaten(b, recent, lijst);
     const top = pak(kandidaten);
     if (top && top.s > 0) return top.i;
     // Alles 0: de bestaande keuze in de eigen categorie (heeft die geen beelden, dan de hele set).
@@ -133,6 +143,63 @@ export function kiesIllustratie(b: IllustratieInvoer, recent: string[] = [], lij
   }
 }
 
+export const MAX_MODEL_KANDIDATEN = 12;
+
+/**
+ * Kandidaten voor de modelkeuze (besluit 28-11-2026): de 12 hoogste op trefwoordscore (inclusief Nederland-voorrang, score > 0);
+ * zijn het er minder dan 12, dan aangevuld met beelden uit de eigen categorie van het bericht (zelfde volgorde-regels).
+ */
+export function modelKandidaten(b: IllustratieInvoer, recent: string[] = [], lijst: IllustratieLijst = ILLUSTRATIES): Illustratie[] {
+  try {
+    if (!lijst.beelden.length) return [];
+    const { kandidaten, beter } = maakKandidaten(b, recent, lijst);
+    const gesorteerd = [...kandidaten].sort((x, y) => (beter(x, y) ? -1 : beter(y, x) ? 1 : 0));
+    const uit = gesorteerd.filter((k) => k.s > 0).slice(0, MAX_MODEL_KANDIDATEN);
+    if (uit.length < MAX_MODEL_KANDIDATEN) {
+      for (const k of gesorteerd) {
+        if (uit.length >= MAX_MODEL_KANDIDATEN) break;
+        if (k.eigen === 1 && !uit.includes(k)) uit.push(k);
+      }
+    }
+    return uit.map((k) => k.i);
+  } catch {
+    return [];
+  }
+}
+
+const SYSTEEM_KEUZE = `Je kiest een illustratie bij een nieuwsbericht over Frankrijk. Je krijgt kop en samenvatting en een genummerde lijst met beelden (id, naam, beschrijving, binding).
+Kies het beeld dat het onderwerp van het bericht het best verbeeldt, liefst letterlijk het onderwerp. Gaat het bericht over Nederlanders of Belgen, kies dan een beeld met binding nl als dat past. Een beeld dat een ander onderwerp suggereert (bijvoorbeeld een markt bij honger in Afrika) is fout: kies dan liever een neutraler beeld dat wel klopt.
+Antwoord uitsluitend met JSON: {"id":"..."}`;
+
+/**
+ * Kiest een illustratie met het goedkope model uit de kandidaten (max 1 aanroep). Bij een modelfout, een ongeldig antwoord
+ * (id niet in de lijst) of zonder client: de trefwoordkeuze. `keuze` zegt hoe het beeld gekozen is.
+ */
+export async function kiesIllustratieMetModel(
+  b: IllustratieInvoer, client: ModelClient | null, recent: string[] = [], lijst: IllustratieLijst = ILLUSTRATIES,
+): Promise<{ illustratie: Illustratie; keuze: "model" | "trefwoord" } | null> {
+  const terugval = () => {
+    const i = kiesIllustratie(b, recent, lijst);
+    return i ? { illustratie: i, keuze: "trefwoord" as const } : null;
+  };
+  if (!client) return terugval();
+  try {
+    const kand = modelKandidaten(b, recent, lijst);
+    if (!kand.length) return terugval();
+    const regels = kand.map((i, n) => `${n + 1}. id: ${i.id} | naam: ${i.naam} | beschrijving: ${i.beschrijving || "-"} | binding: ${i.binding}`).join("\n");
+    const antw = await client.tekst({
+      model: modelGoedkoop(), maxTokens: 60, system: SYSTEEM_KEUZE,
+      user: `Kop: ${b.kop}\nSamenvatting: ${b.samenvatting}\n\nBeelden:\n${regels}`,
+    });
+    const j = haalJson<{ id?: unknown }>(antw);
+    const id = typeof j?.id === "string" ? j.id.trim() : "";
+    const gekozen = id ? kand.find((i) => i.id === id) : undefined;
+    return gekozen ? { illustratie: gekozen, keuze: "model" } : terugval();
+  } catch {
+    return terugval();
+  }
+}
+
 /** Resultaat voor opslag: absolute SVG-url en bronvermelding met categorie, naam en PNG-url. Null zonder illustratie. */
 export function illustratieResultaat(b: IllustratieInvoer, recent: string[] = [], lijst: IllustratieLijst = ILLUSTRATIES): { url: string; credit: BeeldCredit } | null {
   const i = kiesIllustratie(b, recent, lijst);
@@ -140,6 +207,18 @@ export function illustratieResultaat(b: IllustratieInvoer, recent: string[] = []
   const basis = basisUrl();
   return {
     url: `${basis}${i.svg}`,
-    credit: { bron: "Illustratie", maker: "Communities Abroad", categorie: i.categorie, naam: i.naam, png: `${basis}${i.png}` },
+    credit: { bron: "Illustratie", maker: "Communities Abroad", categorie: i.categorie, naam: i.naam, png: `${basis}${i.png}`, keuze: "trefwoord" },
+  };
+}
+
+/** Als `illustratieResultaat`, maar met de modelkeuze (`kiesIllustratieMetModel`); `credit.keuze` is "model" of "trefwoord". */
+export async function illustratieResultaatMetModel(b: IllustratieInvoer, client: ModelClient | null, recent: string[] = [], lijst: IllustratieLijst = ILLUSTRATIES): Promise<{ url: string; credit: BeeldCredit } | null> {
+  const k = await kiesIllustratieMetModel(b, client, recent, lijst);
+  if (!k) return null;
+  const i = k.illustratie;
+  const basis = basisUrl();
+  return {
+    url: `${basis}${i.svg}`,
+    credit: { bron: "Illustratie", maker: "Communities Abroad", categorie: i.categorie, naam: i.naam, png: `${basis}${i.png}`, keuze: k.keuze },
   };
 }

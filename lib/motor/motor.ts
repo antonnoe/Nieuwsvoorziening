@@ -7,6 +7,11 @@ import { aantalBronnen, clusterItems } from "./cluster";
 import { oogstBronnen, type OogstBronResultaat } from "./feeds";
 import { schoneZoektermen, beeldResultaat, fotoSleutel, type BeeldGenerator, actieveGenerator } from "./beeld";
 import "./beeld-unsplash";
+import { illustratieResultaatMetModel } from "./illustraties";
+
+/** Stap 6b: hooguit zoveel berichten per run krijgen een nieuw beeld (Unsplash of trefwoordkeuze vervangen door modelkeuze). */
+export const MAX_BEELD_HERKIEZEN_PER_RUN = 25;
+export const BEELD_HERKIES_DAGEN = 30;
 import type { Opslag, RunRecord, PeilSignaalIn, OpgeslagenBericht, BerichtHerschreven } from "./opslag";
 import { laadPeil, peilKoppeling, type PeilOordeelLog } from "./peil";
 import { kwaliteitsPoort, type PoortUitslag } from "./poort";
@@ -347,7 +352,22 @@ export async function draaiOogst(o: RunOpties): Promise<RunUitslag> {
           if (r) (await o.opslag.zetBeeld(b.id, r.url, r.credit ?? null), (aangevuld += 1));
         }
         aantallen.beeldAangevuld = aangevuld;
-        noteer({ stap: "beeld_aanvullen", ok: true, aantal: aangevuld });
+        // Herkiezen (besluit 28-11-2026): Unsplash-foto's en illustraties zonder modelkeuze, laatste 30 dagen, nieuwste eerst.
+        let herkozen = 0;
+        for (const b of await o.opslag.teHerkiezenBeeld(new Date(nu - BEELD_HERKIES_DAGEN * 864e5).toISOString(), MAX_BEELD_HERKIEZEN_PER_RUN)) {
+          if (!tijdOver()) break;
+          try {
+            const r = await illustratieResultaatMetModel({ kop: b.kop, samenvatting: b.samenvatting, categorie: b.categorie }, o.client, recent);
+            if (!r) continue;
+            await o.opslag.zetBeeld(b.id, r.url, r.credit);
+            recent.unshift(r.url);
+            herkozen += 1;
+          } catch (e) {
+            noteer({ stap: "beeld_herkiezen", ok: false, fout: fout(e) });
+          }
+        }
+        aantallen.beeldHerkozen = herkozen;
+        noteer({ stap: "beeld_aanvullen", ok: true, aantal: aangevuld, detail: { herkozen } });
       } catch (e) {
         noteer({ stap: "beeld_aanvullen", ok: false, fout: fout(e) });
       }

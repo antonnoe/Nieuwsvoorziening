@@ -54,7 +54,8 @@ test("poort blokkeert en herkans: eerst meta-taal, dan een goede versie", async 
   const client = klein([(a) => (a.system.includes("groepeert") ? '{"groepen":[]}' : (n += 1) === 1 ? synthese({ tekst: tekst + " Ik kreeg alleen de koppen." }) : synthese())]);
   const r = await draaiOogst({ opslag, client, nu, config: cfg, bronnen, fetchFn, peil: [], generator: null });
   assert.equal(r.berichten[0].status, "gepubliceerd");
-  assert.equal(client.aanroepen.filter((c) => !c.system.includes("groepeert")).length, 2);
+  // 2 syntheses; de modelkeuze van het beeld (kies een illustratie) is een aparte aanroep.
+  assert.equal(client.aanroepen.filter((c) => !c.system.includes("groepeert") && !c.system.includes("illustratie")).length, 2);
 });
 
 test("blijvend slechte tekst wordt geblokkeerd en niet gepubliceerd", async () => {

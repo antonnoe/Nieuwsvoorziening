@@ -61,7 +61,7 @@ test("gelijke stand: het langst niet gebruikte beeld, nooit gebruikt telt als la
 test("resultaat: absolute SVG-url, credit met bron, maker, categorie, naam en PNG; basis uit NIEUWS_BASIS_URL", () => {
   const r = illustratieResultaat(b("Tol"), [], lijst)!;
   assert.equal(r.url, "https://nieuws.infofrankrijk.com/illustraties/v-tol-fr.svg");
-  assert.deepEqual(r.credit, { bron: "Illustratie", maker: "Communities Abroad", categorie: "reizen en verkeer", naam: "v-tol-fr", png: "https://nieuws.infofrankrijk.com/illustraties/v-tol-fr.png" });
+  assert.deepEqual(r.credit, { bron: "Illustratie", maker: "Communities Abroad", categorie: "reizen en verkeer", naam: "v-tol-fr", png: "https://nieuws.infofrankrijk.com/illustraties/v-tol-fr.png", keuze: "trefwoord" });
   const oud = process.env.NIEUWS_BASIS_URL;
   process.env.NIEUWS_BASIS_URL = "https://test.example/";
   try {

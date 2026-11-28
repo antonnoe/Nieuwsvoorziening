@@ -1,6 +1,7 @@
 import { jsonAntwoord, leesOpslag, opties } from "@/lib/motor/api";
 import { laadBronnen, modelGoedkoop, modelSynthese } from "@/lib/motor/config";
 import { controleerUnsplash } from "@/lib/motor/unsplash";
+import { beeldBron } from "@/lib/motor/beeld";
 
 export const dynamic = "force-dynamic";
 export const OPTIONS = (req: Request) => opties(req);
@@ -11,6 +12,7 @@ export async function GET(req: Request) {
   const basis = {
     bronnen: { actief: bronnen.filter((b) => b.status === "ACTIVE").length, concept: bronnen.filter((b) => b.status === "CONCEPT").length },
     modellen: { synthese: modelSynthese(), goedkoop: modelGoedkoop() },
+    beeldBron: beeldBron(),
     beeldGenerator: Boolean(String(process.env.BEELD_GENERATOR || "").trim()),
     opslag: Boolean(opslag),
     unsplash: await controleerUnsplash(),
