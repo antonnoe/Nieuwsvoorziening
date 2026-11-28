@@ -148,3 +148,11 @@ test("0 treffers in de eigen categorie: hoogste trefwoordscore over de hele set 
   // alles 0: blijft in de eigen categorie
   assert.equal(kiesIllustratie({ kop: "Qqqq", samenvatting: "", categorie: "politiek" })?.categorie, "politiek");
 });
+
+test("onderschrift: illustratie zonder categorie en link, Unsplash met fotograaf en bron", async () => {
+  const { onderschrift } = await import("../lib/site");
+  assert.deepEqual(onderschrift({ bron: "Illustratie", maker: "Communities Abroad", naam: "Markthal" }), { soort: "illustratie", tekst: "Markthal · illustratie Communities Abroad" });
+  assert.deepEqual(onderschrift({ bron: "Illustratie" }), { soort: "illustratie", tekst: "illustratie Communities Abroad" });
+  assert.deepEqual(onderschrift({ bron: "Unsplash", maker: "Marie Dupont" }), { soort: "foto", maker: "Marie Dupont", bron: "Unsplash" });
+  assert.equal(onderschrift(null), null);
+});

@@ -153,3 +153,12 @@ export async function laadVerwant(b: { id: string; categorie: Categorie; peil?: 
     return [];
   }
 }
+
+/** Onderschrift onder een beeld (besluit 28-11-2026): één regel; bij een illustratie alleen tekst, bij Unsplash met links. */
+export function onderschrift(credit: { bron?: string; maker?: string; naam?: string } | null | undefined): { soort: "illustratie"; tekst: string } | { soort: "foto"; maker: string; bron: string } | null {
+  if (!credit) return null;
+  if (credit.bron === "Illustratie") {
+    return { soort: "illustratie", tekst: `${credit.naam ? `${credit.naam} · ` : ""}illustratie Communities Abroad` };
+  }
+  return { soort: "foto", maker: credit.maker || "", bron: credit.bron || "Unsplash" };
+}

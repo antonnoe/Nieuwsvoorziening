@@ -8,10 +8,16 @@ a:focus-visible { outline: 3px solid var(--maroon); outline-offset: 2px; border-
 /* beeld: een echte afbeelding vult het vlak */
 .beeld { position: relative; overflow: hidden; }
 .beeld img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-/* bronvermelding van de foto (verplicht bij Unsplash), boven de klikbare kaart */
-.beeld .credit { position: absolute; right: 0; bottom: 0; z-index: 2; padding: 3px 8px; font-size: 11px; line-height: 1.4; color: var(--wit); background: rgba(31, 26, 24, 0.55); border-top-left-radius: 4px; }
-.beeld .credit.illustratie span { display: block; }
-.beeld .credit a { color: var(--wit); text-decoration: underline; }
+/* onderschrift (besluit 28-11-2026): één regel ONDER het beeld, geen overlay of achtergrond; links verplicht bij Unsplash, boven de klikbare kaart */
+.beeldblok { margin: 0; display: flex; flex-direction: column; min-width: 0; }
+.beeldblok .beeld { flex: 1 1 auto; }
+.beeldblok .credit { position: relative; z-index: 2; margin: 0; padding: 6px 12px 0; font-size: 12px; line-height: 1.4; color: var(--grijs); text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hoofd .beeldblok .credit { padding-bottom: 12px; }
+.art .beeldblok .credit { padding: 8px 0 0; text-align: left; }
+.beeldblok .credit a { color: var(--grijs); text-decoration: underline; }
+/* illustraties altijd volledig zichtbaar, gevuld met de eigen achtergrondkleur */
+.beeld.illu { background: var(--wit); }
+.beeld.illu img { object-fit: contain; }
 
 /* de kaart is als geheel klikbaar via de titel */
 .kaart, .hoofd { position: relative; }
@@ -34,8 +40,9 @@ a:focus-visible { outline: 3px solid var(--maroon); outline-offset: 2px; border-
 .paneel .knop { display: inline-block; }
 
 /* er is geen bijschrift: de ruimte die de schets daar geeft komt onder het beeld */
-.art .groot { margin-bottom: 30px; }
-@media (max-width: 720px) { .art .groot { margin-bottom: 22px; } }
+.art .groot { margin-bottom: 0; }
+.art .beeldblok { margin-bottom: 30px; }
+@media (max-width: 720px) { .art .beeldblok { margin-bottom: 22px; } }
 
 /* vak "Wat verandert er voor u": uitklapper, standaard dicht */
 .peilvak { background: var(--kaart); border: 1px solid var(--lijn); border-radius: 12px; margin: 16px 0 24px; }

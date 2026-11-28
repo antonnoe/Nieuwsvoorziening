@@ -1,28 +1,25 @@
 import type { OpgeslagenBericht } from "@/lib/motor/opslag";
-import { CATEGORIE_VOL, aantalBronnen, datumKort, leestijd, peilWeergave, veiligeUrl } from "@/lib/site";
+import { CATEGORIE_VOL, aantalBronnen, datumKort, leestijd, onderschrift, peilWeergave, veiligeUrl } from "@/lib/site";
 import PeilRegel from "./PeilRegel";
-
-const hoofdletter = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 
 export function Beeld({ b, klasse = "" }: { b: OpgeslagenBericht; klasse?: string }) {
   const url = b.beeldUrl ? veiligeUrl(b.beeldUrl) : null;
+  const os = url ? onderschrift(b.beeldCredit) : null;
+  const illustratie = os?.soort === "illustratie";
   return (
-    <div className={`beeld ${klasse}`.trim()}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      {url && <img src={url} alt="" loading="lazy" />}
-      {url && b.beeldCredit?.bron === "Illustratie" && (
-        <small className="credit illustratie">
-          <span>{hoofdletter(b.beeldCredit.categorie || "")}{b.beeldCredit.naam ? ` · ${b.beeldCredit.naam}` : ""}</span>
-          <span>Illustratie door {b.beeldCredit.maker || "Communities Abroad"}</span>
-        </small>
+    <figure className="beeldblok">
+      <div className={`beeld ${illustratie ? "illu " : ""}${klasse}`.trim()}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        {url && <img src={url} alt="" loading="lazy" />}
+      </div>
+      {os?.soort === "illustratie" && <figcaption className="credit">{os.tekst}</figcaption>}
+      {os?.soort === "foto" && b.beeldCredit && (
+        <figcaption className="credit">
+          Foto: <a href={veiligeUrl(b.beeldCredit.makerUrl || "") || undefined} rel="noopener">{os.maker}</a> via{" "}
+          <a href={veiligeUrl(b.beeldCredit.bronUrl || "") || undefined} rel="noopener">{os.bron}</a>
+        </figcaption>
       )}
-      {url && b.beeldCredit && b.beeldCredit.bron !== "Illustratie" && (
-        <small className="credit">
-          Foto: <a href={veiligeUrl(b.beeldCredit.makerUrl || "") || undefined} rel="noopener">{b.beeldCredit.maker}</a> via{" "}
-          <a href={veiligeUrl(b.beeldCredit.bronUrl || "") || undefined} rel="noopener">{b.beeldCredit.bron}</a>
-        </small>
-      )}
-    </div>
+    </figure>
   );
 }
 
